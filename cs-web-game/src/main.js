@@ -439,6 +439,17 @@ class Xash3DWebSocket extends Xash3D {
             console.log(`[DEBUG] Connecting Xash3D Net WebRTC to port ${this.connectPort} (${role})`);
             addConsoleLog(`[Ağ] WebRTC ile bağlanılıyor (${role.toUpperCase()}): port ${this.connectPort}`, 'warn');
             
+            // WebRTC bağlantısı 2 saniye içinde kurulamazsa, bekleme!
+            // Engine'in açılmasını (menüye girmesini) engellememek için resolve atıyoruz.
+            let resolved = false;
+            const safeResolve = () => {
+                if (!resolved) {
+                    resolved = true;
+                    resolve();
+                }
+            };
+            setTimeout(safeResolve, 2000);
+            
             const pc = new RTCPeerConnection({
                 iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
             });
@@ -463,13 +474,13 @@ class Xash3DWebSocket extends Xash3D {
                     }
                 }, 15000);
                 
-                resolve();
+                safeResolve();
             };
             
             dc.onerror = (e) => {
                 console.error('[DEBUG] Net WebRTC DataChannel error', e);
                 addConsoleLog('[Ağ] WebRTC bağlantı hatası!', 'err');
-                resolve();
+                safeResolve();
             };
             
             dc.onclose = () => {
@@ -577,7 +588,7 @@ class Xash3DWebSocket extends Xash3D {
             } catch (err) {
                 console.error('[WebRTC] Signaling Hatası:', err);
                 addConsoleLog('[Ağ] WebRTC Signaling Hatası: ' + err.message, 'err');
-                resolve();
+                safeResolve();
             }
         });
     }
@@ -971,9 +982,11 @@ function selectMap(name) {
   // Thumbnail background
   const thumb = document.getElementById('map-thumb-hero');
   if (thumb) {
-    // Harita thumbnail'larını dene
     const thumbUrl = `https://browsercs.com/cs-assets/thumbnails/${name}.jpg`;
-    thumb.style.backgroundImage = `url('${thumbUrl}')`;
+    thumb.style.backgroundImage = 'none';
+    fetch(thumbUrl, { mode: 'cors', cache: 'force-cache' }).then(r => r.blob()).then(blob => {
+        thumb.style.backgroundImage = `url('${URL.createObjectURL(blob)}')`;
+    }).catch(()=>{});
     thumb.style.backgroundSize = 'cover';
     thumb.style.backgroundPosition = 'center';
   }
@@ -2145,7 +2158,7 @@ async function loadServerList() {
           div.className = 'map-item';
           div.innerHTML = `
             <div style="position: relative; width: 100%; height: 80px; overflow: hidden; border-radius: 4px; border: 1px solid var(--border);">
-              <img src="${ASSET_URL}/maps/${server.map}.jpg" alt="${server.map}" style="width: 100%; height: 100%; object-fit: cover;" onerror="if(!this.dataset.err){this.dataset.err='1';this.src='${ASSET_URL}/maps/de_dust2.jpg';}else{this.style.display='none';}" />
+              <img crossorigin="anonymous" src="${ASSET_URL}/maps/${server.map}.jpg" alt="${server.map}" style="width: 100%; height: 100%; object-fit: cover;" onerror="if(!this.dataset.err){this.dataset.err='1';this.src='${ASSET_URL}/maps/de_dust2.jpg';}else{this.style.display='none';}" />
               <div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50;">
                 👤 ${playersCount}/${server.maxplayers}
               </div>
@@ -2166,9 +2179,10 @@ async function loadServerList() {
           const card = document.createElement('div');
           card.className = 'server-card-box anim-fade-in';
           card.innerHTML = `
-            <div class="server-card-thumb" style="background-image: url('${defaultImgUrl}');">
-              <span class="server-badge-live">${badgeText}</span>
-              <span class="server-thumb-map-text">${server.map}</span>
+            <div class="server-card-thumb" style="position: relative;">
+              <img crossorigin="anonymous" src="${defaultImgUrl}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;" onerror="this.style.display='none'" />
+              <span class="server-badge-live" style="z-index:2;">${badgeText}</span>
+              <span class="server-thumb-map-text" style="z-index:2;">${server.map}</span>
             </div>
             <div class="server-card-body">
               <div class="server-card-name">${displayName}</div>
