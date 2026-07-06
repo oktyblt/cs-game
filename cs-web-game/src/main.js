@@ -439,7 +439,7 @@ class Xash3DWebSocket extends Xash3D {
             console.log(`[DEBUG] Connecting Xash3D Net WebRTC to port ${this.connectPort} (${role})`);
             addConsoleLog(`[Ağ] WebRTC ile bağlanılıyor (${role.toUpperCase()}): port ${this.connectPort}`, 'warn');
             
-            // WebRTC bağlantısı 2 saniye içinde kurulamazsa, bekleme!
+            // WebRTC bağlantısı 8 saniye içinde kurulamazsa, bekleme!
             // Engine'in açılmasını (menüye girmesini) engellememek için resolve atıyoruz.
             let resolved = false;
             const safeResolve = () => {
@@ -448,7 +448,7 @@ class Xash3DWebSocket extends Xash3D {
                     resolve();
                 }
             };
-            setTimeout(safeResolve, 2000);
+            setTimeout(safeResolve, 8000);
             
             const pc = new RTCPeerConnection({
                 iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -1246,7 +1246,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '+bind', 'h', 'toggle_hand',
         '-heapsize', '65536',
         '+ip', '10.0.0.2',
-        '+clientport', '27005',
+        '+clientport', (27000 + Math.floor(Math.random() * 1000)).toString(),
         '+cl_updaterate', '101',
         '+cl_cmdrate', '101',
         '+rate', '100000',

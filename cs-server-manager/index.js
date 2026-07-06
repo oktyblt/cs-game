@@ -48,7 +48,7 @@ async function createServerContainer(options) {
   
   try {
     const exec = await container.exec({
-      Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nmp_timelimit 30\nmp_consistency 0\nsv_consistency 0\nrcon_password "browsercs"\n\' >> cstrike/server.cfg'],
+      Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nmp_timelimit 30\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\nrcon_password "browsercs"\n\' >> cstrike/server.cfg'],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
