@@ -1,4 +1,4 @@
-import { initAuth, getCurrentUsername } from "./auth.js";
+import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken } from "./auth.js";
 import { unzipSync } from 'fflate';
 
 const ASSET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -451,7 +451,12 @@ class Xash3DWebSocket extends Xash3D {
             setTimeout(safeResolve, 8000);
             
             const pc = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun.cloudflare.com:3478' },
+                    { urls: 'stun:stun.twilio.com:3478' },
+                    { urls: 'stun:stun.services.mozilla.com:3478' }
+                ]
             });
             this.pc = pc;
 
@@ -1123,9 +1128,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v9.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v9.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v9.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
@@ -1271,11 +1276,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         actualWsPort = (connectPort && connectPort !== 'listen') ? connectPort : null;
       } else {
         // İstemci olarak bağlanıyoruz.
-        // KRİTİK: +connect argümanı ile motoru doğrudan uzak sunucuya bağla.
-        // +map kullanılırsa motor kendi listen server'ını kuruyor ve uzak sunucuya bağlanmıyor.
-        // +connect ise motorun doğrudan uzak sunucuya bağlanmasını sağlar.
-        // Sunucu hangi haritayı yükleyeceğini istemciye söyleyecek.
-        xashArgs.push('+connect', '10.0.0.1:27015');
+        // KRİTİK FIX: İlk yüklemede engine henüz assetleri (PK3) tam çekmeden +connect
+        // komutu gelirse, Xash3D bağlantıyı reddedip ana menüye düşüyor.
+        // Bu yüzden +connect'i argüman olarak vermek yerine,
+        // PK3 indirmesi bitince executeEngineCommand() ile 'connect' göndereceğiz.
         actualWsPort = connectPort;
       }
 
@@ -1290,9 +1294,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         },
 
       libraries: {
-        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32.wasm',
+        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v9.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v9.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v9.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1300,10 +1304,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32.wasm',
-        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32.wasm',
-        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32.wasm',
+        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v9.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v9.wasm',
+        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v9.wasm',
+        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v9.wasm',
       },
 
       module: {
@@ -1422,7 +1426,8 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                 '/wasm/valve_sound.pk3',
                 '/wasm/valve_sprites.pk3',
                 '/wasm/valve_gfx.pk3',
-                '/wasm/valve_essential.pk3'
+                '/wasm/valve_essential.pk3',
+                '/wasm/cstrike_wads.pk3'
              ];
              
              let loadedCount = 0;
@@ -1672,6 +1677,13 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         loadingOverlay.classList.remove('active');
         gameCanvas.focus();
         startFPSCounter();
+
+        // Eğer istemciysek ve uzak sunucuya bağlanmamız gerekiyorsa:
+        if (!isHost && connectPort && connectPort !== 'listen' && connectPort !== true) {
+          console.log('[DEBUG] Assetler yüklendi, uzak sunucuya bağlanılıyor...');
+          if (typeof addConsoleLog === 'function') addConsoleLog('Assetler tamamlandı. Sunucuya bağlanılıyor...', 'ok');
+          executeEngineCommand('connect 10.0.0.1:27015');
+        }
 
         // ── Keybind overlay: oyuna girilince 9 saniye göster ─────────
         const keybindOverlay = document.getElementById('keybind-overlay');
@@ -1947,7 +1959,7 @@ function updateTeamSizes() {
   if (vsBadge) vsBadge.textContent = `${half}v${half}`;
 }
 // --- MOCK AUTHENTICATION SYSTEM (Supabase öncesi) ---
-let currentUser = null;
+// Removed local currentUser, using auth.js instead
 let isPremium = false;
 
 const btnLogin = $('btn-login');
@@ -1960,36 +1972,16 @@ const userDisplayName = $('user-display-name');
 const badgePremium = $('badge-premium');
 const premiumModal = $('premium-modal');
 
-if (btnLogin) {
-  btnLogin.addEventListener('click', () => {
-    currentUser = { username: 'Oyuncu123' };
-    authSection.style.display = 'none';
-    userProfileSection.style.display = 'flex';
-    userDisplayName.textContent = currentUser.username;
-    notify('Giriş yapıldı!', 'success');
-  });
-}
-if (btnLogout) {
-  btnLogout.addEventListener('click', () => {
-    currentUser = null;
-    isPremium = false;
-    authSection.style.display = 'flex';
-    userProfileSection.style.display = 'none';
-    badgePremium.style.display = 'none';
-    if (tabAdmin) tabAdmin.style.display = 'none';
-    notify('Çıkış yapıldı!', 'success');
-  });
-}
+// Removed dummy login and logout logic (handled by auth.js)
 if (btnBuyPremium) {
   btnBuyPremium.addEventListener('click', () => {
-    if (!currentUser) {
+    if (!getCurrentUser()) {
       notify('Önce giriş yapmalısınız!', 'error');
       return;
     }
     isPremium = true;
     if (premiumModal) premiumModal.style.display = 'none';
     if (badgePremium) badgePremium.style.display = 'inline-block';
-    if (tabAdmin) tabAdmin.style.display = 'inline-block';
     notify('Premium satın alındı! Artık sunucu kurabilirsiniz.', 'success');
   });
 }
@@ -2044,7 +2036,7 @@ if (btnQuickJoin) {
 btnLaunch.addEventListener('click', async () => {
   if (!currentMap) { notify('Önce bir harita seçin!', 'error'); return; }
   
-  if (!currentUser) {
+  if (!getCurrentUser()) {
     notify('Sunucu kurmak için giriş yapmalısınız!', 'error');
     return;
   }
@@ -2064,7 +2056,7 @@ btnLaunch.addEventListener('click', async () => {
   const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
 
   try {
-    const res = await fetch(`${API_URL}/api/create-server`, {
+    const res = await fetch(`${API_URL}/api/start-server`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ map: currentMap, maxplayers: maxP, name: sName, host: nickname })
@@ -2078,9 +2070,13 @@ btnLaunch.addEventListener('click', async () => {
       if (window._serverHeartbeat) clearInterval(window._serverHeartbeat);
       window._serverHeartbeat = setInterval(async () => {
         try {
-          await fetch(`${API_URL}/api/create-server`, {
+          const token = await getSessionToken();
+          await fetch(`${API_URL}/api/start-server`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({
               map: data.map || currentMap,
               maxplayers: maxP,
@@ -2193,7 +2189,9 @@ async function loadServerList() {
               <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${displayHost}</b></div>
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
                 <button class="btn-join-room" style="flex:1;">▶ ODAYA KATIL</button>
-                <button class="btn-join-room" style="background:var(--bg-deep); border:1px solid var(--border-bright); color:var(--text-bright); padding:0 0.8rem; font-size:1rem;" title="Sunucu Ayarları" onclick="openServerSettings('${server.id}')">⚙️</button>
+                ${(server.owner_id && getCurrentUser() && server.owner_id === getCurrentUser().id) ? 
+                  `<button class="btn-join-room" style="background:var(--bg-deep); border:1px solid var(--border-bright); color:var(--text-bright); padding:0 0.8rem; font-size:1rem;" title="Sunucu Ayarları" onclick="openServerSettings('${server.id}')">⚙️</button>`
+                  : ''}
               </div>
             </div>
           `;
@@ -2393,8 +2391,12 @@ window.masterAdminAction = async function(action, id) {
     if (!confirm('Bu sunucuyu yeniden başlatmak istediğine emin misin?')) return;
     try {
       // Mevcut restart endpoint'i (şimdilik tokensız da çalışıyor backend'de)
+      const token = await getSessionToken();
       const res = await fetch(`${API_URL}/api/servers/${id}/restart`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
       });
       const data = await res.json();
       if (data.success) {
@@ -2577,7 +2579,7 @@ if (btnRefreshServers) {
 
 if (btnCreateServer) {
   btnCreateServer.addEventListener('click', async () => {
-    if (!currentUser) {
+    if (!getCurrentUser()) {
       notify('Sunucu kurmak için giriş yapmalısınız!', 'error');
       return;
     }
@@ -2595,9 +2597,13 @@ if (btnCreateServer) {
       const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : 'Player';
       const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
 
-      const res = await fetch(`${API_URL}/api/create-server`, {
+      const token = await getSessionToken();
+      const res = await fetch(`${API_URL}/api/start-server`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ map: mapToPlay, maxplayers: maxP, name: sName, host: nickname })
       });
       const data = await res.json();
