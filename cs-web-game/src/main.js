@@ -1020,10 +1020,31 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
   setEngineStatus('Oyun dosyaları indiriliyor...', 'orange');
 
+  // Akıllı Önbellek (Cache API) - Her girişte 250MB indirmeyi engeller
+  async function cachedFetch(url, noCache = false) {
+    if (noCache) return fetch(url);
+    try {
+      const cache = await caches.open('cs-assets-v1');
+      const req = new Request(url);
+      let res = await cache.match(req);
+      if (res) {
+        console.log('[Cache] Yüklendi:', url);
+        return res;
+      }
+      res = await fetch(url);
+      if (res.ok && res.status === 200 && !(res.headers.get("content-type") || "").includes("text/html")) {
+         cache.put(req, res.clone());
+      }
+      return res;
+    } catch (e) {
+      return fetch(url);
+    }
+  }
+
   try {
     // ── Adım 1: Tüm Dosyaları RAM'e İndir (Engine başlamadan ÖNCE) ─────────
     setProgress(5, 'xash.wasm indiriliyor... (~3.7MB)');
-    const wasmRes = await fetch('/wasm/xash.wasm');
+    const wasmRes = await cachedFetch('/wasm/xash.wasm');
     if (!wasmRes.ok) throw new Error('xash.wasm indirilemedi');
     const wasmBinary = await wasmRes.arrayBuffer();
 
@@ -1039,12 +1060,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     // sprite fetch işlemleri "200 OK" dönüyor ve oyun .spr dosyası yerine HTML 
     // parse edip "wrong id" veya "unknown format" diyerek çöküyor.
     // Garantili olan muzzleflash1.spr dosyasını "dummy/fallback" sprite olarak kullanalım.
-    const dummySprRes = await fetch(`${ASSET_URL}/cs-assets/cstrike/sprites/muzzleflash1.spr`);
+    const dummySprRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/sprites/muzzleflash1.spr`);
     if (!dummySprRes.ok) throw new Error('muzzleflash1.spr (fallback) indirilemedi');
     const dummySprBuffer = new Uint8Array(await dummySprRes.arrayBuffer());
     window.dummySprBuffer = dummySprBuffer;
 
-    const dummyMdlRes = await fetch(`${ASSET_URL}/cs-assets/cstrike/models/p_galil.mdl`);
+    const dummyMdlRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/models/p_galil.mdl`);
     if (dummyMdlRes.ok) window.dummyMdlBuffer = new Uint8Array(await dummyMdlRes.arrayBuffer());
 
     window.dummyWavBuffer = new Uint8Array([
@@ -1055,7 +1076,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     // İhtiyaç duyulan diğer sprite'ları güvenli bir şekilde fetch eden yardımcı
     async function safeFetchSprite(path) {
       try {
-        const res = await fetch(path);
+        const res = await cachedFetch(path);
         const contentType = res.headers.get('content-type') || '';
         // Eğer SPA fallback yüzünden HTML geldiyse reddet
         if (res.ok && !contentType.includes('text/html')) {
@@ -1077,19 +1098,19 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       vDeltaRes, vRcRes, cDeltaRes, cCfgRes, serverCfgRes, cmdMenuRes,
       dotSprBuffer, animglowSprBuffer, richoSprBuffer, shellchromeSprBuffer, crosshairsSprBuffer
     ] = await Promise.all([
-      fetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
-      fetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      fetch('/wasm/dlls/cs_emscripten_wasm32.wasm'),
-      fetch('/wasm/cl_dlls/client_emscripten_wasm32.wasm'),
-      fetch('/wasm/cl_dlls/menu_emscripten_wasm32.wasm'),
-      fetch('/wasm/filesystem_stdio.wasm'),
-      fetch('/wasm/libref_webgl2.wasm'),
-      fetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
-      fetch(`${ASSET_URL}/cs-assets/valve/valve.rc`),
-      fetch(`${ASSET_URL}/cs-assets/cstrike/delta.lst`),
-      fetch(`${ASSET_URL}/cs-assets/cstrike/config.cfg`),
-      fetch(`${ASSET_URL}/cs-assets/cstrike/server.cfg`).catch(() => new Response("")),
-      fetch(`${ASSET_URL}/cs-assets/cstrike/commandmenu.txt`).catch(() => new Response("")),
+      cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
+      cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32.wasm'),
+      cachedFetch('/wasm/filesystem_stdio.wasm'),
+      cachedFetch('/wasm/libref_webgl2.wasm'),
+      cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
+      cachedFetch(`${ASSET_URL}/cs-assets/valve/valve.rc`),
+      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/delta.lst`),
+      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/config.cfg`),
+      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/server.cfg`).catch(() => new Response("")),
+      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/commandmenu.txt`).catch(() => new Response("")),
       safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/dot.spr`),
       safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/animglow01.spr`),
       safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/richo1.spr`),
@@ -1100,12 +1121,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     addLoadingLog(`✓ Sprite'lar yüklendi (Fallbacks aktif)`);
 
     setProgress(50, 'Ekstra harita dokuları (WAD) sırayla indiriliyor...');
-    const wadsRes = await fetch(`${ASSET_URL}/api/wads`);
+    const wadsRes = await cachedFetch(`${ASSET_URL}/api/wads`, true);
     const { wads } = await wadsRes.json();
     
     const downloadedWads = [];
     for (const wad of wads) {
-      const res = await fetch(`${ASSET_URL}/cs-assets/cstrike/${wad}`);
+      const res = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/${wad}`);
       if (res.ok && !(res.headers.get("content-type") || "").includes("text/html")) {
         const wadData = new Uint8Array(await res.arrayBuffer());
         downloadedWads.push({ name: wad, data: wadData });
@@ -1115,7 +1136,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     const valveWadsList = ['halflife1.wad', 'halflife2.wad', 'cached.wad', 'decals.wad', 'liquids.wad', 'pldecal.wad', 'spraypaint.wad', 'xeno.wad', 'fonts.wad', 'gfx.wad'];
     const downloadedValveWads = [];
     for (const wad of valveWadsList) {
-      const res = await fetch(`${ASSET_URL}/cs-assets/valve/${wad}`);
+      const res = await cachedFetch(`${ASSET_URL}/cs-assets/valve/${wad}`);
       if (res.ok && !(res.headers.get("content-type") || "").includes("text/html")) {
         const wadData = new Uint8Array(await res.arrayBuffer());
         downloadedValveWads.push({ name: wad, data: wadData });
@@ -1147,13 +1168,13 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
 
     setProgress(45, 'CS yapılandırma (liblist.gam) indiriliyor...');
-    const liblistRes = await fetch(`${ASSET_URL}/cs-assets/cstrike/liblist.gam`);
+    const liblistRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/liblist.gam`);
     if (!liblistRes.ok) throw new Error('liblist.gam indirilemedi');
     const liblistBuffer = (liblistRes.ok && !(liblistRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await liblistRes.arrayBuffer()) : new Uint8Array(0);
 
 
     setProgress(50, `Harita indiriliyor: ${mapName}.bsp...`);
-    const bspRes = await fetch(`${ASSET_URL}/cs-assets/cstrike/maps/${mapName}.bsp`);
+    const bspRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/maps/${mapName}.bsp`);
     if (!bspRes.ok) throw new Error(`${mapName}.bsp indirilemedi`);
     const bspBuffer = new Uint8Array(await bspRes.arrayBuffer());
 
@@ -1385,7 +1406,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
              for (const file of pk3Files) {
                 try {
                    addLoadingLog(`İndiriliyor: ${file.split('/').pop()}...`);
-                   const res = await fetch(file);
+                   const res = await cachedFetch(file);
                    if (res.ok) {
                        const contentLength = +res.headers.get('Content-Length');
                        const reader = res.body.getReader();
@@ -1439,7 +1460,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
              ];
              for (const fileUrl of customTexts) {
                 try {
-                   const res = await fetch(fileUrl);
+                   const res = await cachedFetch(fileUrl);
                    if (res.ok) {
                       const buf = new Uint8Array(await res.arrayBuffer());
                       const path = fileUrl.replace('/cs-assets', '');
