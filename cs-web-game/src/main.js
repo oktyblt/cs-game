@@ -525,6 +525,8 @@ class Xash3DWebSocket extends Xash3D {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ candidate: e.candidate.candidate, mid: e.candidate.sdpMid })
+                    }).then(res => {
+                        if (res.status === 404) this.peerId = null; // stop trying
                     }).catch(() => {});
                 }
             };
@@ -554,7 +556,15 @@ class Xash3DWebSocket extends Xash3D {
                         return;
                     }
                     try {
+                        if (!this.peerId) {
+                            clearInterval(this._candidateInterval);
+                            return;
+                        }
                         const cRes = await fetch(`${API_URL}/webrtc/candidates/${this.peerId}`);
+                        if (cRes.status === 404) {
+                            clearInterval(this._candidateInterval);
+                            return;
+                        }
                         if (cRes.ok) {
                             const cands = await cRes.json();
                             for (let c of cands) {
@@ -1408,38 +1418,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                    addLoadingLog(`İndiriliyor: ${file.split('/').pop()}...`);
                    const res = await cachedFetch(file);
                    if (res.ok) {
-                       const contentLength = +res.headers.get('Content-Length');
-                       const reader = res.body.getReader();
-                       let receivedLength = 0;
-                       let chunks = [];
-                       let lastPercent = 0;
-                       
-                       while(true) {
-                           const {done, value} = await reader.read();
-                           if (done) break;
-                           chunks.push(value);
-                           receivedLength += value.length;
-                           
-                           if (contentLength) {
-                               const percent = Math.floor((receivedLength / contentLength) * 100);
-                               if (percent - lastPercent >= 5 || percent === 100) {
-                                   setProgress(20 + Math.floor(percent * 0.6), `İndiriliyor: ${file.split('/').pop()} (${percent}%)`);
-                                   lastPercent = percent;
-                               }
-                           }
-                       }
-                       
-                       const buf = new Uint8Array(receivedLength);
-                       let position = 0;
-                       for(let chunk of chunks) {
-                           buf.set(chunk, position);
-                           position += chunk.length;
-                       }
-                       
+                       const buf = new Uint8Array(await res.arrayBuffer());
                        const filename = file.split('/').pop();
                        const targetPath = file.includes('valve_') ? `/valve/${filename}` : `/cstrike/${filename}`;
                        em.FS.writeFile(targetPath, buf);
                        loadedCount++;
+                       setProgress(20 + Math.floor((loadedCount / pk3Files.length) * 60), `İndirildi: ${filename}`);
                    }
                 } catch (e) {
                    console.error(`[Assets] Dosya indirilemedi: ${file}`, e);
