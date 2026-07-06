@@ -1,0 +1,54 @@
+// Command Menu definition
+// 
+// Basic Format:
+//		"<Bound Key>" "<Button Text>" "<Command sent to server>"
+//
+// 
+//
+//
+// Buttons can also open up submenus, as follows:
+// {
+// 	"Some More Options",
+//	{
+//		...
+//	}
+// }
+//
+//
+// Buttons preceded with "CUSTOM" are handled in special ways. They can only be moved
+// around or deleted.
+//
+//
+// Limitations:
+//		Maximum of 50 menus.
+//		Maximum of 100 buttons per menu.
+
+//--------------------------------------------------------
+// Everything below here is editable
+
+"6" "Kapat" 	"spec_menu 0"
+
+"5" "Yardim"	"spec_help"
+
+"4" "Ayarlar"
+{	
+	TOGGLE 	"6" "Chat Mesajlari"	"hud_saytext"
+	
+	TOGGLE	"5" "Ü stte Durumu Göster"	"spec_drawstatus"
+	
+	TOGGLE	"4" "Bakis Açilarini Göster"		"spec_drawcone"
+	
+	TOGGLE	"3" "Oyuncu Isimleri"	"spec_drawnames"
+}
+
+TOGGLE	"3" "Ufak Pencere Aç" "spec_pip"
+TOGGLE	"2" "Otomatik Yönetim"	"spec_autodirector"
+
+"1" "Skor Tablosunu Göster"	"togglescores"
+
+// Here are the rest of the buttons and submenus
+// You can change these safely if you want.
+
+
+
+

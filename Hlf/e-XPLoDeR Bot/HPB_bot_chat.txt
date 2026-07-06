@@ -1,0 +1,26 @@
+[bot_chat]
+Herkese Selam
+Bana surdan bir bira soyleyin
+Abiiiiiiiiii O neydi
+Hey, sote yapmayin
+e-XPLoDeR'in sitesini gordunuz mu? www.e-xploder.net
+Oyundakilerin hepsi bot mu?
+%r seni oldurmek kolay olmali
+%r cok sanslisin
+
+[bot_taunt]
+Guzel bir olum
+%n cok kolay oluyorsun
+%n biraz daha gayret
+Bir sonraki
+%n sote yapmayi birak da duzgun oyna
+%n kac yildir oynuyorsun?
+%n bir daha karsima cikma
+%n iyi bir takla
+
+[bot_whine]
+%n hileci olabilir
+%n hileyi kapatir misin?
+%n son duani et
+%n Sotede
+%n kicklenmek mi istiyorsun?

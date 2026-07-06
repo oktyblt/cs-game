@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 1700$
+Yapildigi Ü lke	: Italya
+Kalibre		: 12 gauge
+Sarjör Kapasitesi(CS)	: 8 mermi
+Atesleme Hizi	: -
+Agirlik(Bos iken)	: 3.5 kg
+
+Ç ekirdek Agirligi	: 3.8 gram/kovan
+Ç ikis Hizi	: 381 metre/saniye
+Ç ikis Enerjisi	: 2429 joule
+
+
+
+
+

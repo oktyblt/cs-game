@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 2350$
+Yapildigi Ü lke	: Belcika
+Kalibre		: .338 Lapua Magnum
+Sarjör Kapasitesi	: 50 mermi
+Atesleme Hizi	: 900
+Agirlik(Dolu iken)	: 3 kg.
+
+Ç ekirdek Agirligi	: 2 gram
+Ç ikis Hizi	: 715 metre/saniye
+Ç ikis Enerjisi	: 465 joule
+
+
+
+
+

@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 1500$
+Yapildigi Ü lke	: Almanya
+Kalibre		: 9mm Parabellum
+Sarjör Kapasitesi(CS)	: 30 mermi
+Atesleme Hizi	: 800 rpm
+Agirlik(Bos iken)	: 3.42 kg
+
+Ç ekirdek Agirligi	: 8 gram
+Ç ikis Hizi	: 400 metre/saniye
+Ç ikis Enerjisi	: 637 joule
+
+
+
+
+

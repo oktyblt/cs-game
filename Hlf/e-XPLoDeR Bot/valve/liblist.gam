@@ -1,0 +1,7 @@
+game "Half-Life 1.5"
+startmap "c0a0"
+trainingmap "t0a0"
+mpentity "info_player_deathmatch"
+//gamedll "dlls\hl.dll"
+gamedll "dlls\HPB_bot.dll"
+gamedll_linux "dlls/hl_i386.so"

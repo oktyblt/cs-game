@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 750$
+Yapildigi Ü lke	: Belçika
+Kalibre		: 5.7 x 28mm
+Sarjör Kapasitesi	: 20 mermi
+Atesleme Hizi	: -
+Agirlik(Dolu iken)	: 0.618 kg.
+
+Ç ekirdek Agirligi	: 2 gram
+Ç ikis Hizi	: 716 metre/saniye
+Ç ikis Enerjisi	: 465 joule
+
+
+
+
+

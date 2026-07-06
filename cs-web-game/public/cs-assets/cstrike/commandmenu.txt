@@ -1,0 +1,29 @@
+"1" "Silah Elini Degistir"
+{
+	"1" "Sag El" "cl_righthand 1"
+	"2" "Sol El" "cl_righthand 0"
+}
+"2" "Bot Ayarlari"
+{
+	"1" "Bot Ekle (Rastgele)" "bot_add"
+	"2" "Terorist Bot Ekle" "bot_add_t"
+	"3" "Anti-Terorist Bot Ekle" "bot_add_ct"
+	"4" "Botlari Oldur" "bot_kill"
+	"5" "Botlari At" "bot_kick"
+	"6" "Sadece Bicak" "bot_knives_only"
+	"7" "Normal Silahlar" "bot_all_weapons"
+}
+"3" "Sunucu & Oyun"
+{
+	"1" "Oyunu Yeniden Baslat" "sv_restart 1"
+	"2" "Zaman Siniri 20" "mp_timelimit 20"
+	"3" "Zaman Siniri 0 (Sinirsiz)" "mp_timelimit 0"
+	"4" "Para 16000" "mp_startmoney 16000"
+}
+"4" "Gorunum / Hud"
+{
+	"1" "Net Graph Ac" "net_graph 3"
+	"2" "Net Graph Kapat" "net_graph 0"
+	"3" "FPS Goster" "cl_showfps 1"
+	"4" "FPS Gizle" "cl_showfps 0"
+}

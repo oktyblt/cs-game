@@ -1,0 +1,45 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/create-server",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/create-server.js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/maps",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/maps.js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/servers",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/servers.js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/wads",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/wads.js:onRequest"
+      ]
+    },
+    {
+      "routePath": "/relay",
+      "mountPath": "/",
+      "method": "",
+      "module": [
+        "relay.js:onRequest"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

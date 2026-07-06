@@ -1,0 +1,5 @@
+Counter-Strike v1.5 WebGL'e Hosgeldiniz!
+TR'nin ilk tarayici tabanli CS deneyimi.
+
+Iyi oyunlar!
+www.browsercs.com

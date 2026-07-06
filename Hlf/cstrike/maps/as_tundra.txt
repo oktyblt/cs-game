@@ -1,0 +1,32 @@
+Tundra - Suikast
+Harita: Zaphod_Beeblebrox 
+(zaphod_beeblebrox@eudoramail.com)
+Kaplamalar: by MacMan
+
+Hikaye:
+Alaska'nin derinliklerinde yapilan gizli silahlarin 
+satisi ile ilgili gizlilik bozuldu. Silahlari calan 
+teroristler, VIP'yi etkisiz hale getirmek icin bekliyorlar.
+
+Counter-Teroristler: 
+Iki guvenli bolgeden birine kadar VIP'ye eskortluk edin.
+Bir APC ve kurtarma helikopteri emrinizde bekliyor.
+Teroristler:
+Eliminate the VIP and prevent him from
+reaching the safety zones.
+
+(Devam etmek icin "Ates"e basin)
+
+
+
+
+[as_tundra'ya katkida bulunanlar]
+Joshua (Euro*Brew) DeJong
+Devnull (compiler)
+Mr_Deth
+Janitor209
+Fletch
+N0TH1NG
+Boxlor
+The Guy
+Agent

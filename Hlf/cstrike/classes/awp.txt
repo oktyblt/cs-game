@@ -1,0 +1,16 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 4750$
+Yapildigi Ü lke	: Ingiltere
+Kalibre		: .338 Lapua Magnum
+Sarjör Kapasitesi(CS)	: 10 mermi
+Atesleme Hizi	: -
+Agirlik(Bos iken)	: 6 kg.
+
+Ç ekirdek Agirligi	: 16.2 gram
+Ç ikis Hizi	: 915 metre/saniye
+Ç ikis Enerjisi	: 7000 joule
+
+
+
+

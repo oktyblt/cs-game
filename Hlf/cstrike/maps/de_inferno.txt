@@ -1,0 +1,16 @@
+Inferno - Bombalama/Imha etme
+Harita: Chris Auty (Barney) (fragged101@yahoo.com)
+Kaplamalar: by Valve software
+
+Teroristler ufak bir koyden gecen iki tane kritik 
+petrol boru hattini patlaymaya hazirlaniyorlar.
+
+Counter-Teroristler: Teroristlerin petrol
+boru hattini yoketmelerini engelleyin.
+
+Teroristler: Petrol boru hattini yokedin.
+
+Diger Notlar: Bu gorevde 2 tane bomba
+koyulabilecek yer bulunuyor.
+
+(Devam etmek icin "Ates"e basin)

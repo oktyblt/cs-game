@@ -1,0 +1,172 @@
+{
+  "scannedFilesCount": 1765,
+  "caseIssuesFound": 0,
+  "caseIssues": [],
+  "mapDependencies": {
+    "as_oilrig.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "as_tundra.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_747.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_assault.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_backalley.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_estate.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_havana.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_italy.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_militia.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_office.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "cs_siege.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_aztec.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_cbble.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_chateau.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_dust.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_dust2.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_inferno.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [
+        "Bssu.SPR"
+      ],
+      "wav": []
+    },
+    "de_nuke.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_piranesi.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_prodigy.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_storm.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_survivor.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_torn.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_train.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_vegas.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    },
+    "de_vertigo.bsp": {
+      "wad": [],
+      "mdl": [],
+      "spr": [],
+      "wav": []
+    }
+  },
+  "missingAssets": [
+    {
+      "map": "de_inferno.bsp",
+      "type": "spr",
+      "file": "Bssu.SPR"
+    }
+  ]
+}

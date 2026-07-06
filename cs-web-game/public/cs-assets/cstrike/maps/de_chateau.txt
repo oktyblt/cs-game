@@ -1,0 +1,18 @@
+Sato - Bombalama/Imha etme
+
+Macman    *chrisa@valvesoftware.com*
+Ido Magal *ido@valvesoftware.com*
+
+Teroristler: Cobble'in kaybedilmesinin
+ardindan Lord Williams yazlik satosunu
+yeniden yaptiriyor.  Onun bu girisimini
+engellemeniz lazim.  C4'u on avluya 
+veya arka avluya koyabilirsiniz.
+
+
+Counter-Teroristler:  Lord Williams'in 
+yatirimini koruyun ve teroristlerin
+yeni evi yoketmesini engelleyin.
+
+
+(Devam etmek icin "Ates"e basin)

@@ -1,0 +1,107 @@
+SetupType=Custom
+GroupNames=|Main Group|
+Version=1.0
+ComposerVersion=3.5.0.3
+
+PROG_NAME=e-XPLoDeR & HPB Bot
+COMPANY_URL=www.panta-ray.com
+CHAR_SET=1
+GET_DIALOG_BITMAP_3D_FRAME=0
+GET_AUTO_UPDATE_EXE_FILE_NAME=
+CONFIRM_CAPTION=Doðrulama
+CONFIRM_TEXT=Programý silmek istediðinizden emin misiniz?
+BUTTON_CLOSE=Kapat
+S1=<b>PROG_NAME</b> isimli program bilgisayarýnýzdan silinecektir. Lütfen bekleyiniz...
+S2=Silme iþlemi baþarýyla tamamlandý !
+LABEL1=Paylaþýlan Dosyalar...
+LABEL2=Standart Dosyalar...
+LABEL3=Klasörler...
+LABEL4=Program Klasörleri...
+LABEL5=Program Dizinleri...
+LABEL6=Kayýt Defteri Girdileri...
+
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\UnInstall_19720.txt);
+RunTimeDir_1=|0||0||0||1|0|0||1|0|1|C:\Sierra\Half-Life|0|0|0|0|
+RunTimeDir_2=|||||||1||||1||1|<ProgramFilesDir>|||||
+RunTimeDir_3=|||||||1||||1||1|<ProgramFilesDir>|||||
+REMOVE_REG_KEY(HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\UnInstall\e-XPLoDeR & HPB Bot);
+REMOVE_REG_KEY(HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\App Management\ARPCache\e-XPLoDeR & HPB Bot);
+
+REMOVE_REG_KEY(HKEY_LOCAL_MACHINE\Software\e-XPLoDeR.NET\e-XPLoDeR & HPB Bot);
+REMOVE_REG_KEY(HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\App Paths\Beni Oku.htm);
+TargetDir=C:\Full-Oyunlar\SIERRA\Half-Life
+SharedDir=
+AuxiliaryDir=C:\Windows\Fonts
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life);
+
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\Beni Oku.htm);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\bot_logo.exe);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\HPB_bot.dll);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\HPB_bot_chat.txt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\HPB_bot_logo.cfg);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\HPB_bot_names.txt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\Web Sitemiz.url);
+
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\cstrike);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\cstrike\HPB_bot.cfg);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\cstrike\sil.bat);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\cstrike\liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\cstrike\old_liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\cstrike\kur.bat);
+
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\dmc_dm1.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\dmc_dm2.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\dmc_dm3.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\dmc_dm4.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\dmc_dm6.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\dmc_e1m2.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\HPB_bot.cfg);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\sil.bat);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\old_liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\dmc\kur.bat);
+
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox\HPB_bot.cfg);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox\sil.bat);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox\liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox\old_liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox\op4ctf_crash.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\gearbox\kur.bat);
+
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\2fort.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\badlands.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\casbah.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\crossover2.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\epicenter.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\HPB_bot.cfg);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\hunted.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\old_liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\push.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\kur.bat);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\rock2.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\sniprwar.HPB_wpt);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\tfc\sil.bat);
+
+REMOVE_DIR(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\valve);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\valve\HPB_bot.cfg);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\valve\liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\valve\old_liblist.gam);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\valve\kur.bat);
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\e-XPLoDeR Bot\valve\sil.bat);
+
+REMOVE_FILE(C:\Full-Oyunlar\SIERRA\Half-Life\qsetup.html);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot\Counter-Strike);
+REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot);
+REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot\Half-Life);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot\Team Fortress);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot\Opposing Force);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot\Death Match);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot\Ayarlar);
+FORCE_REMOVE_FOLDER(C:\ProgramData\Microsoft\Windows\Start Menu\Programs\e-XPLoDeR.NET\HPB Bot);
+REMOVE_REG_KEY(HKEY_LOCAL_MACHINE\Software\e-XPLoDeR.NET\e-XPLoDeR & HPB Bot\v1.0);

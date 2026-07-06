@@ -1,0 +1,57 @@
+# This File contains all Botnames which are used if you don't
+# specify a name using "addbot"
+# There must be at least 9 names in here and you're allowed a maximum
+# of 21 chars for the name ! Why ? The "[POD]" will be
+# placed before the Name and the Skill will be appended...
+#
+# Line below contains 21 chars as a marker for you
+#23456789012345678901
+#
+#
+[WoL]aLEN
+MaNiaC[mt]
+[WoL]PentiumIII
+-Fulminate.rd-
+psycho.rd
+[WoL]Bergkamp
+WoL/Birofilo
+[WoL]bL
+[ONC]CATLI
+[T2k]McGyver
+[JA]AnhkTepoT
+Ja.McFly
+[JA]BeCe
+Ditt0
+DoST
+KraL[J.V] 
+[WoL]Fisto
+MinDark[J.V]
+Mutyk[J.V]
+[C4]JamSESSION
+[LVL]gorcanabi
+[LVL]sukebe
+C4| GLad
+[LVL]CooL_As_Ice
+[LVL]Santiago
+Madrox.theSage
+[LVL]kk_pembe_fil
+[LVL]Brush
+[ONC]AmoRPHouS 
+LVL_Zol_Sauza
+LVL_Blaxis
+LVL_Deus
+[LVL]RhYtManiaSimBa
+#
+# 32 Names
+# 
+[RsF]Rage
+riva[mt] 
+[LvL]SiSL
+zorro[mt] 
+[ONC]Cudi 
+[ONC]uLuBeY
+ioCS,undertaker
+AvaAdore[mt]
+[ONC]Ahmet_Baba 
+brubaker[mt] 
+d3st1ny[mt] 

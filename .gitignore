@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.DS_Store
+.env
+wasm_build/
+*.pak
+*.pk3
+*.7z
+*.zip
+*.tar.gz
+pack/
+cstrike-assets/
+amx.tar.gz
+amxmodx.tar.gz
+loggan_s_15_transformation_pack_18.7z

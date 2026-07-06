@@ -1,0 +1,7 @@
+name = "cs-web-game"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-05-22"
+
+[[kv_namespaces]]
+binding = "SERVERS"
+id = "c9a96ab707fb4a1685d0a77410c2de37"

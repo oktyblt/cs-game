@@ -1,0 +1,50 @@
+  <!-- AUTH MODALS -->
+  <div id="login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:4000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;width:320px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;text-align:center;">GİRİŞ YAP</h2>
+      <input type="email" id="login-email" class="room-input" placeholder="E-posta" style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
+      <input type="password" id="login-pass" class="room-input" placeholder="Şifre" style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
+      <button class="toolbar-btn" id="btn-submit-login" style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">GİRİŞ</button>
+      <button onclick="document.getElementById('login-modal').style.display='none'" style="margin-top:0.7rem;width:100%;padding:0.6rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);cursor:pointer;">İPTAL</button>
+    </div>
+  </div>
+
+  <div id="register-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:4000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;width:320px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;text-align:center;">KAYIT OL</h2>
+      <input type="text" id="reg-username" class="room-input" placeholder="Kullanıcı Adı" style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
+      <input type="email" id="reg-email" class="room-input" placeholder="E-posta" style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
+      <input type="password" id="reg-pass" class="room-input" placeholder="Şifre" style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
+      <button class="toolbar-btn" id="btn-submit-register" style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">KAYIT OL</button>
+      <button onclick="document.getElementById('register-modal').style.display='none'" style="margin-top:0.7rem;width:100%;padding:0.6rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);cursor:pointer;">İPTAL</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD MODAL -->
+  <div id="dashboard-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3500;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;width:600px;max-width:90vw;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;flex-direction:column;max-height:80vh;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="font-family:var(--font-hud);color:var(--text-bright);font-size:1.2rem;margin:0;">KULLANICI PANELİ</h2>
+        <button onclick="document.getElementById('dashboard-modal').style.display='none'" style="background:transparent;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">&times;</button>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+        <div style="flex:1;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;text-align:center;">
+          <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">CÜZDAN BAKİYESİ</div>
+          <div style="font-family:var(--font-ui);font-size:1.8rem;color:var(--cs-yellow);font-weight:bold;"><span id="dash-wallet">0</span> <span style="font-size:1rem;">₺</span></div>
+          <button id="btn-add-balance" class="toolbar-btn" style="margin-top:0.8rem;font-size:0.7rem;padding:0.3rem 0.6rem;">+ BAKİYE YÜKLE</button>
+        </div>
+        <div style="flex:1;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+          <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">SUNUCU KİRALAMA</div>
+          <div style="font-family:var(--font-ui);font-size:0.8rem;color:var(--text-dim);text-align:center;margin-bottom:0.8rem;">Aylık 50 ₺ karşılığında kendi 7/24 açık sunucunuzu başlatın.</div>
+          <button id="btn-buy-server" class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);">50 ₺ - SATIN AL</button>
+        </div>
+      </div>
+
+      <h3 style="font-family:var(--font-hud);color:var(--text-bright);font-size:0.9rem;margin-bottom:0.8rem;">SATIN ALINAN SUNUCULARIM</h3>
+      <div id="my-servers-list" style="flex:1;overflow-y:auto;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:0.5rem;display:flex;flex-direction:column;gap:0.5rem;">
+        <!-- JS will populate this -->
+        <div style="text-align:center;padding:1rem;color:var(--text-dim);font-family:var(--font-ui);font-size:0.8rem;">Henüz satın aldığınız bir sunucu bulunmuyor.</div>
+      </div>
+    </div>
+  </div>

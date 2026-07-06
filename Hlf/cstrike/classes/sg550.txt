@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 4200$
+Yapildigi Ü lke	: Isviçre
+Kalibre		: 5.56mm NATO
+Sarjör Kapasitesi	: 30 mermi
+Atesleme Hizi(CS)	: -
+Agirlik(Bos iken)	: 7.02 kg.
+
+Ç ekirdek Agirligi	: 4 gram
+Ç ikis Hizi	: 927 metre/saniye
+Ç ikis Enerjisi	: 1650 joule
+
+
+
+
+

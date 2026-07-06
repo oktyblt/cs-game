@@ -1,0 +1,2119 @@
+Team_Select
+{
+\yBir takim secin\w
+
+1. Terorist Grubu
+2. Counter-Terorist Timi
+
+5. Otomatik Sec
+}
+
+Team_Select_Spect
+{
+\yBir takim secin\w
+
+1. Terorist Grubu
+2. Counter-Terorist Timi
+
+5. Otomatik Sec
+6. Izleyici
+}
+
+IG_Team_Select
+{
+\yBir takim secin\w
+
+1. Terorist Grubu
+2. Counter-Terorist Timi
+
+5. Otomatik Sec
+
+0. Vazgec
+}
+
+IG_Team_Select_Spect
+{
+\yBir takim secin\w
+
+1. Terorist Grubu
+2. Counter-Terorist Timi
+
+5. Otomatik Sec
+6. Izleyici
+
+0. Vazgec
+}
+IG_VIP_Team_Select
+{
+\yBir takim secin\w
+
+1. Terorist Grubu
+2. Counter-Terorist Timi
+3. VIP
+
+5. Otomatik Sec
+
+0. Vazgec
+}
+
+IG_VIP_Team_Select_Spect
+{
+\yBir takim secin\w
+
+1. Terorist Grubu
+2. Counter-Terorist Timi
+3. VIP
+
+5. Otomatik Sec
+6. Izleyici
+
+0. Vazgec
+}
+
+Terrorist_Select
+{
+\yTipinizi secin\w
+
+1. Phoenix Connektion
+2. L337 Krew
+3. Arctic Avengers
+4. Gorilla Warface
+
+5. Otomatik Sec
+}
+
+CT_Select
+{
+\yTipinizi secin\w
+
+1. Seal Team 6 (DEVGRU)
+2. Alman GSG-9
+3. Ingiliz SAS
+4. Fransiz GIGN
+
+5. Otomatik Sec
+}
+
+		Menu_Buy,
+		Menu_BuyPistol,
+		Menu_BuyRifle,
+		Menu_BuyMachineGun,
+		Menu_BuyShotgun,
+		Menu_BuySubMachineGun,
+		Menu_BuyItem
+
+Buy
+{
+\ySatin Al\w
+
+1. Tabanca
+2. Pompali Tufekler
+3. Hafif Makinalilar
+4. Tufekler
+5. Makinalilar
+
+6. Ana Silah mermisi
+7. Yedek Silah mermisi
+
+8. Donanim
+
+0. Kapat
+}
+
+BuyItem
+{
+\yEkipmanlar\R$   Fiyat
+
+\w1. Yelek\y\R650
+\w2. Yelek & Kask\y\R1000
+\w3. Flash Bombasi\y\R200	
+\w4. El Bombasi\y\R300
+\w5. Sis Bombasi\y\R300
+\w7. Gecegorus Gozlukleri\y\R1250
+
+\w0. Kapat
+}
+
+DCT_BuyItem
+{
+\yEkipmanlar\R$   Fiyat
+
+\w1. Yelek\y\R650
+\w2. Yelek & Kask\y\R1000
+\w3. Flash Bombasi\y\R200	
+\w4. El Bombasi\y\R300
+\w5. Sis Bombasi\y\R300
+\w6. Imha Kiti\y\R200
+\w7. Gecegorus Gozlukleri\y\R1250
+
+\w0. Kapat
+}
+
+DT_BuyItem
+{
+\yEkipmanlar\R$   Fiyat
+
+\w1. Yelek\y\R650
+\w2. Yelek & Kask\y\R1000
+\w3. Flash Bombasi\y\R200	
+\w4. El Bombasi\y\R300
+\w5. Sis Bombasi\y\R300
+\d6. Imha Kiti\y\R200
+\w7. Gecegorus Gozlukleri\y\R1250
+
+\w0. Kapat
+}
+
+CT_BuyPistol
+{
+\yTabancalar\R$   Fiyat
+(Yedek Silah)
+
+\w1. H&K USP .45 Tactical\y\R500
+\w2. Glock18 Select Fire\y\R400
+\w3. Desert Eagle .50AE\y\R650
+\w4. SIG P228\y\R600
+\d5. cift Beretta 96G Elite\y\R1000
+\w6. FN Five-Seven\y\R750
+
+\w0. Kapat
+}
+
+T_BuyPistol
+{
+\yTabancalar\R$   Fiyat
+(Yedek Silah)
+
+\w1. H&K USP .45 Tactical\y\R500
+\w2. Glock18 Select Fire\y\R400
+\w3. Desert Eagle .50AE\y\R650
+\w4. SIG P228\y\R600
+\w5. cift Beretta 96G Elite\y\R1000
+\d6. FN Five-Seven\y\R750
+
+\w0. Kapat
+}
+
+
+AS_BuyShotgun
+{
+\yPompali Tufekler\R$   Fiyat
+(Ana Silah)
+
+\d1. Benelli M3 Super90\y\R1700
+\d2. Benelli XM1014\y\R3000
+
+\w0. Kapat
+}
+
+
+BuyShotgun
+{
+\yPompali Tufekler\R$   Fiyat
+(Ana Silah)
+
+\w1. Benelli M3 Super90\y\R1700
+\w2. Benelli XM1014\y\R3000
+
+\w0. Kapat
+}
+
+T_BuyRifle
+{
+\yCatisma Tufekleri (Ana Silah)\R$   Fiyat
+
+\w1. AK-47\y\R2500
+\w2. Sig SG-552 Commando\y\R3500
+\d3. Colt M4A1 Carbine\R3100
+\d4. Steyr Aug\R3500
+
+\yKeskin Nisancilar (Ana Silah)
+
+\w5. Steyr Scout\y\R2750
+\w6. AI Arctic Warfare/Magnum\y\R4750
+\w7. H&K G3/SG-1 Sniper Rifle\y\R5000
+\d8. Sig SG-550 Sniper\y\R4200
+
+\w0. Kapat
+}
+
+CT_BuyRifle
+{
+\yCatisma Tufekleri (Ana Silah)\R$   Fiyat
+
+\d1. AK-47\R2500
+\d2. Sig SG-552 Commando\y\R3500
+\w3. Colt M4A1 Carbine\y\R3100
+\w4. Steyr Aug\R3500
+
+\yKeskin Nisancilar (Ana Silah)
+
+\w5. Steyr Scout\y\R2750
+\w6. AI Arctic Warfare/Magnum\y\R4750
+\w7. H&K G3/SG-1 Sniper Rifle\y\R5000
+\w8. Sig SG-550 Sniper\y\R4200
+
+\w0. Kapat
+}
+
+
+AS_T_BuyRifle
+{
+\yCatisma Tufekleri (Ana Silah)\R$   Fiyat
+
+\w1. AK-47\y\R2500
+\d2. Sig SG-552 Commando\y\R3500
+\d3. Colt M4A1 Carbine\R3100
+\d4. Steyr Aug\R3500
+
+\yKeskin Nisancilar (Ana Silah)
+
+\w5. Steyr Scout\y\R2750
+\w6. AI Arctic Warfare/Magnum\y\R4750
+\w7. H&K G3/SG-1 Sniper Rifle\y\R5000
+\d8. Sig SG-550 Sniper\y\R4200
+
+\w0. Kapat
+}
+
+AS_CT_BuyRifle
+{
+\yCatisma Tufekleri (Ana Silah)\R$   Fiyat
+
+\d1. AK-47\R2500
+\d2. Sig SG-552 Commando\y\R3500
+\w3. Colt M4A1 Carbine\y\R3100
+\w4. Steyr Aug\R3500
+
+\yKeskin Nisancilar (Ana Silah)
+
+\d5. Steyr Scout\y\R2750
+\d6. AI Arctic Warfare/Magnum\y\R4750
+\w7. H&K G3/SG-1 Sniper Rifle\y\R5000
+\w8. Sig SG-550 Sniper\y\R4200
+
+\w0. Kapat
+}
+
+
+
+CT_BuySubMachineGun
+{
+\yHafif-Makinalilar\R$   Fiyat
+(Ana Silah)
+
+\w1. H&K MP5-Navy\y\R1500
+\w2. Steyr Tactical Machine Pistol\y\R1250
+\w3. FN P90\y\R2350
+\d4. Ingram MAC-10\y\R1400
+\w5. H&K UMP45\y\R1700
+
+\w0. Kapat
+}
+
+T_BuySubMachineGun
+{
+\yHafif-Makinalilar\R$   Fiyat
+(Ana Silah)
+
+\w1. H&K MP5-Navy\y\R1500
+\d2. Steyr Tactical Machine Pistol\y\R1250
+\w3. FN P90\y\R2350
+\w4. Ingram MAC-10\y\R1400
+\w5. H&K UMP45\y\R1700
+
+\w0. Kapat
+}
+
+AS_CT_BuySubMachineGun
+{
+\yHafif-Makinalilar\R$   Fiyat
+(Ana Silah)
+
+\w1. H&K MP5-Navy\y\R1500
+\w2. Steyr Tactical Machine Pistol\y\R1250
+\w3. FN P90\y\R2350
+\d4. Ingram MAC-10\y\R1400
+\w5. H&K UMP45\y\R1700
+
+\w0. Kapat
+}
+
+AS_T_BuySubMachineGun
+{
+\yHafif-Makinalilar\R$   Fiyat
+(Ana Silah)
+
+\d1. H&K MP5-Navy\y\R1500
+\d2. Steyr Tactical Machine Pistol\y\R1250
+\d3. FN P90\y\R2350
+\w4. Ingram MAC-10\y\R1400
+\w5. H&K UMP45\y\R1700
+
+\w0. Kapat
+}
+
+AS_T_BuyMachineGun
+{
+\yMakinali Tufekler\R$   Fiyat
+(Ana Silah)
+
+\d1. FN M249 Para\y\R5750
+
+\w0. Kapat
+}
+
+
+BuyMachineGun
+{
+\yMakinali Tufekler\R$   Fiyat
+(Ana Silah)
+
+\w1. FN M249 Para\y\R5750
+
+\w0. Kapat
+}
+
+RadioA
+{
+\yTelsiz Komutlari\w
+
+1. "Koruyun Beni"
+2. "Sen burayi al"
+3. "Pozisyonunu Koru"
+4. "Takim toparlanin"
+5. "Beni takip edin"
+6. "Ates altindayim, yardim edin"
+
+0. Kapat
+}
+
+RadioB
+{
+\yGrup Telsiz Komutlari\w
+
+1. "Hadi hadi hadi"
+2. "Takim geri cekil"
+3. "Takim halinde gidelim"
+4. "Pozisyon alin ve emrimi bekleyin"
+5. "Onden girelim"
+6. "Takim rapor ver"
+
+0. Kapat
+}
+
+RadioC
+{
+\yTelsiz cevaplari/Reports\w
+
+1. "Olumlu/Anlasildi"
+2. "Dusman goruldu"
+3. "Yardima ihtiyacim var"
+4. "Bolge Temiz"
+5. "Yerimdeyim"
+6. "Rapor veriyorum"	
+7. "Uzaklasin bomba patlamak uzere!"
+8. "Olumsuz"
+9. "Birini indirdim"
+
+0. Kapat
+}
+
+
+// RIFLES
+AK47
+{
+Avtomat Kalashnikov AK-47
+}
+
+SG552
+{
+Sig SG-552 Commando
+}
+
+M4A1
+{
+Colt M4A1
+}
+
+Aug
+{
+Steyr Aug
+}
+
+Scout
+{
+Steyr Scout
+}
+
+ArcticWarfareMagnum
+{
+Accuracy Int. Arctic Warfare/Magnum (AWM)
+}
+
+G3SG1
+{
+Heckler and Koch G3/SG-1
+}
+
+SG550
+{
+Sig SG-550 Commando
+}
+
+USP45
+{
+Heckler and Koch USP45
+}
+
+Glock18
+{
+Glock 18
+}
+
+DesertEagle
+{
+IMI Desert Eagle
+}
+
+P228
+{
+Sig Sauer P-228
+}
+
+Beretta96G
+{
+Cift Beretta 96G Elites
+}
+
+FiveSeven
+{
+Fabrique Nationale Five-Seven
+}
+
+// shotguns
+Super90
+{
+Benelli M3 Super 90
+}
+
+XM1014
+{
+Benelli XM1014
+}
+
+// smg's
+mp5navy
+{
+Heckler & Koch MP5/Navy
+}
+
+tmp
+{
+Steyr Tactical Machine Pistol
+}
+
+FNP90
+{
+Fabrique Nationale P90
+}
+
+Mac10
+{
+Ingram Mac-10
+}
+
+UMP45
+{
+Heckler and Koch UMP45
+}
+
+// mg
+M249
+{
+FN M249 Para
+}
+
+// weapon short names
+Krieg552
+{
+SG-552
+}
+
+M4A1_Short
+{
+M4A1
+}
+
+Schmidt
+{
+Steyr Scout
+}
+
+Magnum
+{
+AW/M
+}
+
+D3AU1
+{
+G3/SG-1
+}
+
+Krieg550
+{
+SIG 550
+}
+
+// pistol
+KM45Tactical
+{
+USP Tact.
+}
+
+Sidearm9X19mm
+{
+Glock 18
+}
+
+NightHawk
+{
+Desert Eagle
+}
+
+P228Compact
+{
+P228
+}
+
+Dual40
+{
+96G Elites
+}
+
+ESFiveSeven
+{
+Five-Seven
+}
+
+// shotgun short names
+Leone12
+{
+M3 Super 90
+}
+
+AutoShotgun
+{
+XM1014
+}
+
+
+// smg short names
+SubMachineGun
+{
+MP5/N
+}
+
+SchmidtMP
+{
+TMP
+}
+
+ESC90
+{
+P90
+}
+
+Mac10_Short
+{
+Mac-10
+}
+
+KMUMP45
+{
+UMP45
+}
+
+// mg short name
+ESM249
+{
+M249
+}
+
+
+// SDK 2.0 Spectator Menu
+Spec_Mode1
+{
+Takipci Kamera (Sabit)
+}
+
+Spec_Mode2
+{
+Takipci Kamera (Serbest)
+}
+
+Spec_Mode3
+{
+Serbest Bakis
+}
+
+Spec_NoTarget
+{
+Geçerli bir hedef yok. Takipci kameraya gecilemez
+}
+
+Spec_Health
+{
+Saglik
+}
+
+Spec_Help
+{
+Sonraki için ATES'e, önceki için ATES2'ye görünüm icin ZIPLAMA tusuna basiniz
+}
+
+Spec_Help2
+{
+Yazdiklariniz ancak diger izleyiciler tarafindan görülebilir.
+}
+
+Spectators
+{
+Izleyici
+}
+
+Unassigned
+{
+Yerlesmemis
+}
+
+// Scoreboard
+TEAMS
+{
+Takimlar
+}
+
+PLAYERS
+{
+Oyuncular
+}
+
+CLASS
+{
+Sinif
+}
+
+SCORE
+{
+Skorlar
+}
+
+DEATHS
+{
+Ö lüm
+}
+
+LATENCY
+{
+Ping
+}
+
+VOICE
+{
+Ses
+}
+
+// other menu text
+Menu_OK
+{
+Tamam
+}
+
+Menu_CanCel
+{
+Vazgec
+}
+
+Menu_Spectate
+{
+Izleyici
+}
+
+
+Team_AutoAssign
+{
+Otomatik Yerlestir
+}
+
+Title_SelectYourTeam
+{
+Takiminizi secin
+}
+
+Target_Bombed
+{
+Hedef basariyla bombalandi!
+}
+
+VIP_Escaped
+{
+VIP kacmayi basardi!
+}
+
+VIP_Assassinated
+{
+VIP olduruldu!
+}
+
+Terrorists_Escaped
+{
+Teroristler kacmayi basardi!
+}
+
+CTs_PreventEscape
+{
+CT'ler Teroristlerin cogunu yakaladi!
+}
+
+Escaping_Terrorists_Neutralized
+{
+Kaçmaya calisan Teroristlerin hepsi imha edildi!
+}
+
+Bomb_Defused
+{
+Bomba etkisiz hale getirildi!
+}
+
+CTs_Win
+{
+Counter-Teroristler Kazandi!
+}
+
+Terrorists_Win
+{
+Teroristler Kazandi!
+}
+
+Round_Draw
+{
+Berabere!
+}
+
+All_Hostages_Rescued
+{
+Tum rehineler kurtarildi!
+}
+
+Target_Saved
+{
+Hedef kurtarildi!
+}
+
+Hostages_Not_Rescued
+{
+Rehineler kurtarilamadi!
+}
+
+Terrorists_Not_Escaped
+{
+Teroristler kacamadi!
+}
+
+VIP_Not_Escaped
+{
+VIP kacamadi!
+}
+
+Cannot_Buy_This
+{
+Bunu satin alamazsiniz!
+}
+
+Not_Enough_Money
+{
+Yeterli paraniz yok!
+}
+
+Weapon_Not_Available
+{
+Bu silah sizin icin alinabilir degil!
+}
+
+Already_Have_Kevlar_Helmet
+{
+Zaten celik yeleginiz ve kaskiniz var!
+}
+
+Already_Have_Kevlar_Bought_Helmet
+{
+Celik yeleginiz bulunuyordu, 
+simdi bir de kask aldiniz!
+}
+
+Already_Have_Helmet_Bought_Kevlar
+{
+Kaskiniz bulunuyordu,
+simdi bir de celik yelek aldiniz!
+}
+
+Cannot_Carry_Anymore
+{
+Aynisindan daha fazla satin alamazsiniz!
+}
+
+Already_Have_One
+{
+Sizde zaten mevcut!
+}
+
+Cannot_Switch_From_VIP
+{
+VIP'siniz. Su an gorev degistiremezsiniz
+}
+
+All_Teams_Full
+{
+Su anda tum takimlar dolu!
+}
+
+Terrorists_Full
+{
+Su anda Terorist takimi dolu!
+}
+
+CTs_Full
+{
+Su anda CT takimi dolu!
+}
+
+Too_Many_Terrorists
+{
+Su an Terorist sayisi fazla!
+}
+
+Too_Many_CTs
+{
+Su an CT sayisi fazla!
+}
+
+Wait_3_Seconds
+{
+Lutfen 3 saniye bekleyiniz...
+}
+
+Only_1_Team_Change
+{
+Yalnizca 1 kez takim degistirebilirsiniz...
+}
+
+Ignore_Broadcast_Messages
+{
+Genel konusmalari duymayacaksiniz.
+}
+
+Ignore_Broadcast_Team_Messages
+{
+Takim ici konusmalari duymayacaksiniz
+}
+
+Accept_All_Messages
+{
+Su an TUM konusmalari kabul ediyorsunuz
+}
+
+Ignore_Radio
+{
+Su an tum telsiz mesajlarini KAPATTINIZ
+}
+
+Accept_Radio
+{
+Su an telsiz mesajlarini kabul ediyorsunuz
+}
+
+Command_Not_Available
+{
+Bu komutu su anda kullanamazsiniz
+}
+
+Defusing_Bomb_With_Defuse_Kit
+{
+Bomba-Imha Kiti ILE imha ediliyor...
+}
+
+Defusing_Bomb_Without_Defuse_Kit
+{
+Bomba-Imha Kiti OLMADAN imha ediliyor..
+}
+
+Killed_Hostage
+{
+Bir rehineyi vurdunuz!
+}
+
+Injured_Hostage
+{
+Bir rehineyi yaraladiniz!
+}
+
+Auto_Team_Balance_Next_Round
+{
+Bir sonraki turda takimlar esitlenecek
+}
+
+All_VIP_Slots_Full
+{
+5 VIP slotu da su anda dolu. Lutfen daha sonra tekrar deneyin
+}
+
+Killed_Teammate
+{
+Takim arkadasinizi vurdunuz!
+}
+
+Banned_For_Killing_Teammates
+{
+Fazla takim arkadasinizi vurdugunuz icin sunucudan atildiniz
+}
+
+Cannot_Vote_Map
+{
+Yeni haritanin ilk 3 dakikasinda yeni bir oylama yapamazsiniz
+}
+
+Weapon_Cannot_Be_Dropped
+{
+Bu silah yere atilamaz!
+}
+
+Terrorist_Escaped
+{
+Bir Terorist kacmayi basardi!
+}
+
+C4_Plant_At_Bomb_Spot
+{
+C4 sadece belirlenen hedefe konulabilir!
+}
+
+C4_Plant_Must_Be_On_Ground
+{
+Bombayi koymak icin
+ziplamamaniz gerekiyor!
+}
+
+C4_Arming_CanCelled
+{
+Bomba kurulamiyor cunku belirlenen hedefin disina ciktiniz!
+}
+
+Bomb_Planted
+{
+Bomba yerlestirildi!
+}
+
+C4_Activated_At_Bomb_Spot
+{
+C4 belirlenen hedefte aktif hale getirilmeli!
+}
+
+Switch_To_BurstFire
+{
+Tek-Atis durumuna gecildi
+}
+
+Switch_To_SemiAuto
+{
+Yari-Otomatik durumuna gecildi
+}
+
+//***************************
+//** Training map messages **
+//***************************
+
+$position -1 -1
+$color 12 200 12
+$effect 0
+$fadein 0.2
+$holdtime 2
+$fadeout 1
+
+
+TRAINING1
+{
+SATIN ALMA tusu ile:
+      - Bir yari-otomatik Tufek ve
+      - Ana Silahiniza mermi alin   
+}
+
+TRAINING2
+{
+SATIN ALMA tusu ile:
+- Magnum Keskin Nisan Tufegi alin.
+}
+
+TRAINING3
+{
+SATIN ALMA tusu ile:
+     - Sis Bombasi alin.
+}
+
+TRAINING4
+{
+C4'u masadan alin.
+}
+
+TRAINING5
+{
+C4'u yerlestirip, guvenli bir yere cekilin.
+}
+
+TRAINING6
+{
+KULLANMA tusunuzla bombayi imha edin.
+}
+
+TRAINING7
+{
+Rehineleri bulup, kurtarin.
+}
+
+// In-Game messages
+$position -1 0.65
+$effect 2
+// This is the final color
+$color 100 100 100
+// This is the highlight color
+$color2 240 110 0
+// This is the time it takes to fade each character
+$fadein 0.01
+// This is the amount of time the highlight lags behind the leading edge of the text
+$fxtime 0.25
+// How long to hold the message on the screen (after it scans out)
+$holdtime 2.0
+// How long it takes to fade out the message after holding
+$fadeout 0.5
+
+GAMESAVED
+{
+Kaydedildi...
+}
+
+Game_Commencing
+{
+Oyun basliyor!
+}
+Game_connected
+{
+%s baglandi
+}
+
+Game_disconnected
+{
+%s oyundan cikti
+}
+
+Game_join_terrorist
+{
+%s, Terorist Grubuna gecti.
+}
+
+Game_join_ct
+{
+%s, Counter-Terorist Timine gecti
+}
+
+Game_join_terrorist_auto
+{
+%s, Terorist Grubuna gecti. (Otomatikman)
+}
+
+Game_join_ct_auto
+{
+%s, Counter-Terorist Timine gecti (Otomatikman)
+}
+
+Game_scoring
+{
+Iki takimin da oyuncusu olmadan skor verme baslamayacak
+}
+
+Game_idle_kick
+{
+%s cok uzun sure hareketsiz durdugu icin sunucudan atildi.
+}
+
+Game_bomb_drop
+{
+%s bombayi dusurdu
+}
+
+Game_bomb_pickup
+{
+%s bombayi yerden aldi
+}
+
+Game_no_timelimit
+{
+* Zaman sinirlamasi yok *
+}
+
+Game_timelimit
+{
+Kalan sure:  %s:%.2s
+}
+
+Game_unknown_command
+{
+Bilinmeyen komut: %s
+}
+
+Game_in_position
+{
+Zaten 5 kisiden %s . durumdasin
+}
+
+Game_added_position
+{
+5 kisiden %s durumuna alindin.
+}
+
+Game_teammate_kills
+{
+Takimarkadasi oldurme: 3'te %s 
+}
+
+Game_required_votes
+{
+Yeni harita icin gerekli oy sayisi = %s
+}
+
+Game_radio
+{
+%s (Telsiz): %s
+}
+
+Game_teammate_attack
+{
+%s takim arkadasina saldirdi.
+}
+
+Game_kicked
+{
+%s atildi.
+}
+
+Game_vote_cast
+{
+# %s numarali oyuncu icin oy kullanildi
+}
+
+Game_vote_usage
+{
+Kullanim:  vote <id>
+}
+
+Game_vote_player_not_found
+{
+Oyuncu # %s bulunamadi
+}
+
+Game_vote_players_on_your_team
+{
+Sadece kendi takiminizdaki oyuncular icin oy verebilirsiniz
+}
+
+Game_vote_not_yourself
+{
+Kendinizi kick etmek icin oy veremezsiniz?!
+}
+
+Game_voted_for_map
+{
+# %s nolu harita icin oy verdiniz
+}
+
+Game_votemap_usage
+{
+Kullanim:  votemap <id>
+}
+
+Cannot_Vote_Need_More_People
+{
+Bir harita icin kendi basiniza oy veremezsiniz!
+}
+
+Map_Vote_Extend
+{
+Harita 30 dakika uzatildi
+}
+
+Cannot_Vote_With_Less_Than_Three
+{
+Kendi takiminizda 3 kisi yoksa oy kullanamazsiniz
+}
+
+Game_will_restart_in
+{
+%s saniye sonra oyun tekrar baslayacak
+}
+
+Cover_me
+{
+Koruyun Beni!
+}
+
+You_take_the_point
+{
+Sen burayi Al.
+}
+
+Hold_this_position
+{
+Pozisyonunu Koru.
+}
+
+Regroup_team
+{
+Takim toparlanin.
+}
+
+Follow_me
+{
+Beni takip edin.
+}
+
+Taking_fire
+{
+Ates altindayim, Yardim Edin!
+}
+
+Go_go_go
+{
+Hadi hadi hadi!
+}
+
+Team_fall_back
+{
+Takim! Geri Cekil!
+}
+
+Stick_together_team
+{
+Takim halinde gidelim.
+}
+
+Get_in_position_and_wait
+{
+Pozisyon alin ve emrimi bekleyin.
+}
+
+Storm_the_front
+{
+Onden girelim!
+}
+
+Report_in_team
+{
+Takim, Rapor ver!
+}
+
+Affirmative
+{
+Olumlu.
+}
+
+Roger_that
+{
+Anlasildi, Tamam.
+}
+
+Enemy_spotted
+{
+Dusman goruldu.
+}
+
+Need_backup
+{
+Yardima ihtiyacim var.
+}
+
+Sector_clear
+{
+Bolge Temiz.
+}
+
+In_position
+{
+Yerimdeyim.
+}
+
+Reporting_in
+{
+Rapor veriyorum.
+}
+
+Get_out_of_there
+{
+Uzaklasin, bomba patlamak uzere!
+}
+
+Negative
+{
+Olumsuz.
+}
+
+Enemy_down
+{
+Birini indirdim.
+}
+
+Hostage_down
+{
+Rehine Oldu.
+}
+
+Fire_in_the_hole
+{
+Bomba Atiyorum!
+}
+
+Cant_buy
+{
+%s saniye gecti. Artik hicbirsey satin alamazsiniz!
+}
+
+VIP_cant_buy
+{
+VIP'siniz, bir sey satin alamazsiniz
+}
+
+CT_cant_buy
+{
+CT'ler bu haritada hicbirsey satin alamazlar!
+}
+
+Terrorist_cant_buy
+{
+Teroristler bu haritada hicbirsey satin alamazlar!
+}
+
+Vote
+{
+%s :  %s (%s oy)
+}
+
+Votes
+{
+%s :  %s (%s oy)
+}
+
+Hint_press_buy_to_purchase
+{
+Birsey almak icin SATIN ALMA tusuna basin.
+}
+
+Hint_use_nightvision
+{
+Gecegorusu gozlugunu kullanmak icin
+Gecegorusu tusuna basiniz.
+Bu gozlukler konsola:
++nvgadjust
+-nvgadjust
+yazarak da kullanilabilirler.
+}
+
+Hint_lost_money
+{
+Bir rehine oldurdugunuz icin paranizin bir kismini kaybettiniz.
+}
+
+Hint_removed_for_next_hostage_killed
+{
+Bir yada daha fazla rehine oldururseniz, sunucudan atilacaksiniz.
+}
+
+Hint_careful_around_hostages
+{
+Rehinelerin yaninda dikkatli olun.
+Eger birini oldururseniz, para kaybedersiniz.
+}
+
+Hint_careful_around_teammates
+{
+Dikkat!
+Takim arkadaslarinizi oldurmeniz hos gorulemez!
+}
+
+Hint_reward_for_killing_vip
+{
+VIP'yi oldurdugunuz icin 2500$'la odullendirildiniz!
+}
+
+Hint_win_round_by_killing_enemy
+{
+Bir dusmani oldurdunuz!
+Karsi takimi yoketmeye 
+calisarak bu eli kazanin.
+}
+
+Hint_try_not_to_injure_teammates
+{
+Takim arkadaslarinizi yaralamamaya ozen gosterin.
+}
+
+Hint_you_are_in_targetzone
+{
+Hedef bolgesindesiniz.
+Elinizdeki bombayi secip, onu
+ATES'e basarak yerlestirin!
+}
+
+Hint_hostage_rescue_zone
+{
+Bir rehine kurtarma bolgesindesiniz.
+Rehineleri bulup, buraya getirin!
+}
+
+Hint_terrorist_escape_zone
+{
+Bir firar bolgesindesiniz.
+Teroristlerin buraya gelmesine engel olun!
+}
+
+Hint_ct_vip_zone
+{
+VIP koruma bolgesindesiniz.
+Bu bolgelere kadar VIP'e eslik edip, koruyun!
+}
+
+Hint_terrorist_vip_zone
+{
+VIP kacis bolgesindesiniz.
+VIP'nin buraya gelmesini engelleyin!
+}
+
+Hint_cannot_play_because_tk
+{
+Gecen turda takim arkadasinizi oldurdugunuz
+icin bu turda oynayamazsiniz.
+}
+
+Hint_use_hostage_to_stop_him
+{
+KULLAN tusuna tekrar basarak 
+rehinenin sizi takip etmesini
+durdurabilirsiniz.
+}
+
+Hint_lead_hostage_to_rescue_point
+{
+Rehinleri, Kurtarma bolgesine goturun!
+KULLAN tusu ile sizi takip etmesini
+engelleyebilirsiniz.
+}
+
+Hint_you_have_the_bomb
+{
+Bomba sizde!
+Hedef bolgesini bulun YADA
+Diger bir teroristin yapmasi icin
+bombayi atin.
+}
+
+Hint_you_are_the_vip
+{
+Su anda VIP'siniz
+Guvenli yollari tercih edin!
+}
+
+Hint_out_of_ammo
+{
+Merminiz bitti.
+Daha fazlasi icin satin alma 
+bolgelerine gidin.
+}
+
+Hint_spotted_a_friend
+{
+Hedefi bir arkadasiniza dogrulttunuz.
+}
+
+Hint_spotted_an_enemy
+{
+Hedefi bir dusmana dogrulttunuz.
+}
+
+Hint_prevent_hostage_rescue
+{
+Counter-Teroristlerin, rehineleri
+kurtarmalarina engel olun!
+}
+
+Hint_rescue_the_hostages
+{
+Para kazanmak icin rehineleri kurtarin!
+}
+
+Hint_press_use_so_hostage_will_follow
+{
+Rehinelerin sizi takip etmesi icin KULLAN tusuna basin.
+}
+
+Friend
+{
+Takim Arkadasi
+}
+
+Enemy
+{
+Dusman
+}
+
+Hostage
+{
+Rehine
+}
+
+Health
+{
+Saglik
+}
+
+Map_descr_not_avail
+{
+Harita aciklamasi bulunmuyor.
+}
+
+Class_descr_not_avail
+{
+Sinif aciklamasi bulunmuyor.
+}
+
+Title_terrorist_model_selection
+{
+Terorist Tipi Secimi
+}
+
+Phoenix_Connexion
+{
+Phoenix Connexion
+}
+
+L337_Krew
+{
+L337 Krew
+}
+
+Arctic_Avengers
+{
+Arctic Avengers
+}
+
+Guerilla_Warfare
+{
+Guerilla Warfare
+}
+
+Auto_Select
+{
+Otomatik
+}
+
+Title_ct_model_selection
+{
+CT Tipi Secimi
+}
+
+Seal_Team_6
+{
+Seal Team 6
+}
+
+Title_seal_team
+{
+ABD Seal Takimi 6 (DEVGRU)
+}
+
+GSG_9
+{
+GSG-9
+}
+
+Title_gsg9
+{
+Alman GSG-9
+}
+
+SAS
+{
+SAS
+}
+
+Title_sas
+{
+Ingiliz Ö zel Hava Servisi (SAS)
+}
+
+GIGN
+{
+GIGN
+}
+
+Title_gign
+{
+Fransiz GIGN
+}
+
+Title_select_category_of_purchase
+{
+Satin Alma Kategorisi secin
+}
+
+Title_equipment_selection
+{
+Ekipman Secimi
+}
+
+Kevlar
+{
+Celik Yelek
+}
+
+Kevlar_Vest
+{
+Celik Yelek
+}
+
+Kevlar_Helmet
+{
+Yelek ve Kask
+}
+
+Kevlar_Vest_Ballistic_Helmet
+{
+Celik Yelek + Balistik Kask
+}
+
+Flashbang
+{
+Flash Bombasi
+}
+
+HE_Grenade
+{
+El Bombasi
+}
+
+High_Explosive_Grenade
+{
+Yuksek Patlayicili El Bombasi
+}
+
+Smoke_Grenade
+{
+Sis Bombasi
+}
+
+Defusal_Kit
+{
+Bomba-Imha Kiti
+}
+
+Bomb_Defusal_Kit
+{
+Bomba Imha Kiti
+}
+
+NightVision
+{
+Gecegorusu
+}
+
+Nightvision_Goggles
+{
+GeceGorus Gozlukleri
+}
+
+Title_pistol_selection
+{
+Tabanca Secimi
+}
+
+Pistols
+{
+Tabancalar
+}
+
+Buy_pistols
+{
+Tabancalar
+}
+
+Title_shotgun_selection
+{
+Pompali Tufek Secimi
+}
+
+Shotguns
+{
+Pompali Tufekler
+}
+
+Buy_shotguns
+{
+Pompali Tufekler
+}
+
+Title_smg_selection
+{
+Hafif-Makinalilar
+}
+
+SMGs
+{
+Hafif-Makinalilar
+}
+
+Buy_smgs
+{
+Hafif-Makinalilar
+}
+
+Title_rifle_selection
+{
+Tufek Secimi
+}
+
+Rifles
+{
+Tufekler
+}
+
+Buy_rifles
+{
+Tufekler
+}
+
+Title_machinegun_selection
+{
+Makinali Tufek Secimi
+}
+
+MachineGuns
+{
+Makinalilar
+}
+
+Buy_machineguns
+{
+Makinali Tufekler
+}
+
+Prim_Ammo
+{
+Ana Silah Mermisi
+}
+
+Buy_prim_ammo
+{
+Ana Silaha Mermi
+}
+
+Sec_Ammo
+{
+Yedek Silaha Mermi
+}
+
+Buy_sec_ammo
+{
+Yedek silah icin Mermi
+}
+
+Equipment
+{
+Ekipmanlar
+}
+
+Buy_equipment
+{
+Ekipmanlar
+}
+
+Terrorist_Forces
+{
+Terorist Grubu
+}
+
+CT_Forces
+{
+Anti-Terorist Timi
+}
+UNASSIGNED
+{
+GiRMEMiS
+}
+VIP
+{
+VIP
+}
+
+WINS
+{
+KZN
+}
+
+BOMB
+{
+BOMBALI
+}
+
+DEAD
+{
+Ö LÜ
+}
+
+// spaces are on purpose
+SCORES
+{
+  SONUC
+}
+
+Player
+{
+oyuncu
+}
+
+Player_plural
+{
+oyuncu
+}
+
+Got_defuser
+{
+Imha Kitini aldiniz!
+}
+
+Got_bomb
+{
+Bombayi Aldiniz!
+}
+
+Mic_Volume
+{
+Mikrofon Sesi
+}
+
+Speaker_Volume
+{
+Hoparlor Sesi
+}
+
+Voice_Properties
+{
+Ses Ozellikleri
+}
+
+Cannot_Be_Spectator
+{
+Izleyici olamazsiniz.
+}
+
+Map_Description_not_available
+{
+Harita hakkinda bilgi mevcut degil.
+}
+
+Muted
+{
+%s nickli oyuncunun sesini kapattiniz.
+}
+
+Unmuted
+{
+%s nickli oyuncunun sesini actiniz.
+}
+
+No_longer_hear_that_player
+{
+Artik onun konusmalarini duymayacak, yazilarini gormeyeceksiniz.
+}
+
+OBS_NONE
+{
+Kamera Secenekleri
+}
+
+OBS_CHASE_LOCKED
+{
+Takipçi Kamera (Sabit)
+}
+
+OBS_CHASE_FREE
+{
+Takipçi Kamera (Serbest)
+}
+
+OBS_ROAMING
+{
+Serbest Bakis
+}
+
+OBS_IN_EYE
+{
+Oyuncunun Gözünden
+}
+
+OBS_MAP_FREE
+{
+Üstten Görünüm (Serbest)
+}
+
+OBS_MAP_CHASE
+{
+Üstten Görünüm (Takipçi)
+}
+
+SPECT_OPTIONS
+{
+Seçenekler
+}
+
+CAM_OPTIONS
+{
+Kamera Seçenekleri
+}
+
+Name_change_at_respawn
+{
+Nick degisikliginiz bir sonraki round basladiginda aktif olacaktir.
+}
+
+C4_Defuse_Must_Be_On_Ground
+{
+Bombayi imha etmek icin
+yerde olmalisiniz!
+}
+
+Mute_Unmute
+{
+Oyuncunun Sesini Ac/Kapa
+}
+
+Vote_Kick
+{
+Kick Oylamasi
+}
+
+Vote_Kick_Ban
+{
+Kick/Ban Oylamasi
+}
+
+// SDK 2.0 Spectator Menu
+
+Spec_Mode1
+{
+Takipci Kamera (Sabit)
+}
+
+Spec_Mode2
+{
+Takipci Kamera (Serbest)
+}
+
+Spec_Mode3
+{
+Serbest Bakis
+}
+
+Spec_Mode4
+{
+Oyuncunun Gozunden
+}
+
+Spec_Mode5
+{
+Ustten Gorunum (Serbest)
+}
+
+Spec_Mode6
+{
+Ustten Gorunum (Takipci)
+}
+
+Spec_NoTarget
+{
+Izlenebilecek oyuncu bulunmuyor, bu yuzden kamera moduna gecilemiyor.
+}
+
+Spec_Help_Title
+{
+Izleyici Modu
+}
+
+Spec_Help_Text
+{
+Gorus stilinizi degistirmek icin asagidaki tuslari kullanabilirsiniz:
+
+ FIRE1 - Bir sonraki oyuncuyu takip et
+ FIRE2 - Bir onceki oyuncuyu takip et
+ JUMP - Gorus modunu degistir
+ USE - Oyunici pencere modunu degistir
+ 
+ DUCK  - Izleyici menusunu aktif hale getir
+  
+Harita Gorunumu modunda hareket etmek icin:
+
+ MOVELEFT - sola git
+ MOVERIGHT - saga git
+ FORWARD - zoom yap
+ BACK - zoomu kapat
+ MOUSE - harita/oyuncu etrafinda don
+}
+
+Spec_Slow_Motion
+{
+Agir Cekim
+}
+
+Spec_Replay
+{
+Anlik Tekrar
+}
+
+Spec_Auto
+{
+Otomatik
+}
+
+Spec_Time
+{
+Zaman
+}
+
+Spec_Map
+{
+Harita
+}
+
+Spectators
+{
+Izleyiciler
+}
+
+Unassigned
+{
+Takimsiz
+}
+
+Only_CT_Can_Move_Hostages
+{
+Rehineleri sadece Counter-Teroristler hareket ettirebilir
+}
+
+Spec_Duck
+{
+Izleyici menusu icin comelme tusuna bas
+}

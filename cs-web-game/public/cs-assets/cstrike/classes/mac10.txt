@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 1400$
+Yapildigi Ü lke	: Amerika Birlesik Devletleri
+Kalibre		: .45 ACP
+Sarjör Kapasitesi	: 30 mermi
+Atesleme Hizi(CS)	: 857 rpm
+Agirlik(Bos iken)	: 3.82 kg.
+
+Ç ekirdek Agirligi	: 15.2 gram
+Ç ikis Hizi	: 280 metre/saniye
+Ç ikis Enerjisi	: 584 joule
+
+
+
+
+

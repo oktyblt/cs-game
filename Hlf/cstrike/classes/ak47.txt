@@ -1,0 +1,16 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 2500$
+Yapildigi Ü lke	: Rusya
+Kalibre		: 7.62mm NATO
+Sarjör Kapasitesi	: 30 mermi
+Atesleme Hizi	: 600 rpm
+Agirlik(Dolu iken)	: 4.79 kg.
+
+Ç ekirdek Agirligi	: 7.9 gram
+Ç ikis Hizi	: 710 metre/saniye
+Ç ikis Enerjisi	: 1992 joule
+
+
+
+

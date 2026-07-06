@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 1700$
+Yapildigi Ü lke	: Almanya
+Kalibre		: .45 ACP
+Sarjör Kapasitesi(CS)	: 25 mermi
+Atesleme Hizi	: 600 rpm
+Agirlik(Bos iken)	: 2.27 kg
+
+Ç ekirdek Agirligi	: 15.2 gram
+Ç ikis Hizi	: 305 metre/saniye
+Ç ikis Enerjisi	: 625 joule
+
+
+
+
+

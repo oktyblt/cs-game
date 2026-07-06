@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # HLDS: Half-Life Dedicated Server (CS 1.6)
+  hlds:
+    image: hlds/cs16
+    container_name: cs16_server
+    restart: unless-stopped
+    ports:
+      - "27015:27015/udp"
+    environment:
+      - START_MAP=de_dust2
+      - MAXPLAYERS=16
+      - SV_LAN=0
+    volumes:
+      - ./public/cs-assets/cstrike/maps:/opt/hlds/cstrike/maps
+      - ./public/cs-assets/cstrike/server.cfg:/opt/hlds/cstrike/server.cfg
+
+  # WSS to UDP Proxy: Browser tabanlı oyunu gerçek sunucuya bağlar
+  wss-proxy:
+    image: node:20-alpine
+    container_name: cs16_wss_proxy
+    restart: unless-stopped
+    ports:
+      - "8080:8080/tcp" # Load balancer arkasına konacak port (WSS)
+    environment:
+      - TARGET_UDP=hlds:27015
+      - LISTEN_PORT=8080
+    volumes:
+      - ./server.js:/app/server.js
+      - ./package.json:/app/package.json
+    working_dir: /app
+    command: sh -c "npm install && node server.js"
+    depends_on:
+      - hlds

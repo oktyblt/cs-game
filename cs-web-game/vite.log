@@ -1,0 +1,178 @@
+
+> cs-browser-game@1.0.0 dev
+> node server.js & vite
+
+CRITICAL UNCAUGHT ERROR: Error: listen EADDRINUSE: address already in use 0.0.0.0:3001
+    at Server.setupListenHandle [as _listen2] (node:net:2008:16)
+    at listenInCluster (node:net:2065:12)
+    at node:net:2274:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3001
+}
+
+  VITE v5.4.21  ready in 203 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose
+4:00:00 PM [vite] page reload main.js
+4:00:07 PM [vite] page reload main.js
+4:03:38 PM [vite] page reload main.js
+4:05:15 PM [vite] page reload main.js
+4:07:27 PM [vite] page reload main.js
+4:08:00 PM [vite] page reload main.js
+4:08:18 PM [vite] page reload main.js
+4:08:37 PM [vite] page reload main.js
+4:23:55 PM [vite] page reload main.js
+4:27:18 PM [vite] page reload main.js
+4:28:12 PM [vite] page reload main.js
+4:28:30 PM [vite] page reload main.js
+4:28:46 PM [vite] page reload main.js
+4:46:46 PM [vite] page reload index.html
+4:47:20 PM [vite] page reload main.js
+4:47:43 PM [vite] page reload main.js
+4:52:40 PM [vite] page reload index.html
+4:53:22 PM [vite] page reload main.js
+4:53:30 PM [vite] page reload index.html
+4:53:34 PM [vite] page reload main.js
+4:54:07 PM [vite] page reload main.js
+4:54:35 PM [vite] page reload main.js
+5:10:01 PM [vite] page reload main.js
+5:26:01 PM [vite] page reload main.js
+5:33:34 PM [vite] page reload main.js
+5:35:51 PM [vite] page reload main.js
+5:45:37 PM [vite] page reload main.js
+6:05:38 PM [vite] page reload main.js
+6:26:52 PM [vite] page reload main.js
+6:39:10 PM [vite] page reload main.js
+6:47:19 PM [vite] page reload main.js
+6:53:14 PM [vite] page reload main.js
+7:03:47 PM [vite] page reload index.html
+7:08:40 PM [vite] page reload main.js
+7:09:24 PM [vite] page reload main.js
+7:12:19 PM [vite] page reload index.html
+7:12:46 PM [vite] page reload main.js
+7:15:44 PM [vite] page reload main.js
+7:16:44 PM [vite] page reload main.js
+7:17:40 PM [vite] page reload main.js
+7:19:37 PM [vite] page reload main.js
+7:19:46 PM [vite] page reload main.js
+7:22:52 PM [vite] page reload main.js
+7:25:15 PM [vite] page reload main.js
+7:27:59 PM [vite] page reload main.js
+7:32:16 PM [vite] page reload main.js
+7:32:23 PM [vite] page reload main.js
+7:52:27 PM [vite] page reload main.js
+7:52:32 PM [vite] page reload main.js
+7:52:47 PM [vite] page reload main.js
+8:08:58 PM [vite] page reload main.js
+8:09:05 PM [vite] page reload main.js
+8:13:49 PM [vite] page reload index.html
+8:14:10 PM [vite] page reload main.js
+8:27:54 PM [vite] page reload main.js
+8:28:00 PM [vite] page reload main.js
+8:37:15 PM [vite] page reload main.js
+8:37:28 PM [vite] page reload main.js
+8:39:21 PM [vite] page reload main.js
+8:39:33 PM [vite] page reload main.js
+8:50:38 PM [vite] page reload index.html
+8:50:50 PM [vite] page reload index.html
+8:51:56 PM [vite] page reload main.js
+8:52:01 PM [vite] page reload main.js
+8:57:45 PM [vite] page reload index.html
+8:58:03 PM [vite] page reload index.html
+9:05:49 PM [vite] page reload index.html
+9:06:06 PM [vite] page reload main.js
+9:10:28 PM [vite] page reload main.js
+9:10:34 PM [vite] page reload main.js
+9:16:46 PM [vite] page reload main.js
+9:20:21 PM [vite] page reload index.html
+9:28:33 PM [vite] page reload main.js
+9:34:29 PM [vite] page reload main.js
+9:34:57 PM [vite] page reload main.js
+9:58:13 PM [vite] page reload main.js
+10:10:05 PM [vite] page reload index.html
+10:10:30 PM [vite] page reload main.js
+10:10:36 PM [vite] page reload main.js
+10:20:00 PM [vite] page reload index.html
+10:20:06 PM [vite] page reload index.html
+10:20:34 PM [vite] page reload main.js
+10:20:50 PM [vite] page reload main.js
+10:48:08 PM [vite] page reload main.js
+10:48:32 PM [vite] page reload main.js
+11:10:52 PM [vite] page reload main.js
+11:11:06 PM [vite] page reload main.js
+11:12:11 PM [vite] page reload main.js
+11:12:22 PM [vite] page reload main.js
+11:13:18 PM [vite] page reload main.js
+11:17:03 PM [vite] page reload main.js
+11:33:06 PM [vite] page reload main.js
+11:33:34 PM [vite] page reload main.js
+11:33:46 PM [vite] page reload main.js
+11:36:28 PM [vite] page reload main.js
+11:49:40 PM [vite] page reload main.js
+11:50:06 PM [vite] page reload main.js
+11:51:03 PM [vite] page reload main.js
+11:51:26 PM [vite] page reload main.js
+11:51:54 PM [vite] page reload main.js
+11:52:05 PM [vite] page reload main.js
+11:52:16 PM [vite] page reload main.js
+11:53:34 PM [vite] page reload main.js
+11:53:50 PM [vite] page reload main.js
+11:54:13 PM [vite] page reload main.js
+11:54:22 PM [vite] page reload main.js
+11:55:35 PM [vite] page reload main.js
+11:55:42 PM [vite] page reload main.js
+11:57:04 PM [vite] page reload main.js
+11:59:11 PM [vite] page reload main.js
+12:03:03 AM [vite] page reload main.js
+12:23:56 AM [vite] page reload main.js
+12:25:09 AM [vite] page reload main.js
+12:42:05 AM [vite] page reload main.js
+1:00:00 AM [vite] page reload main.js
+1:05:45 AM [vite] page reload main.js
+1:09:41 AM [vite] page reload main.js
+1:16:24 AM [vite] page reload main.js
+1:24:35 AM [vite] page reload main.js
+1:28:23 AM [vite] page reload main.js
+1:28:31 AM [vite] page reload main.js
+1:32:09 AM [vite] page reload main.js
+1:37:27 AM [vite] page reload main.js
+1:41:24 AM [vite] page reload main.js
+1:59:18 AM [vite] page reload main.js
+1:59:38 AM [vite] page reload main.js
+2:02:20 AM [vite] page reload main.js
+2:07:40 AM [vite] page reload main.js
+2:10:47 AM [vite] page reload main.js
+2:11:58 AM [vite] page reload main.js
+2:12:22 AM [vite] page reload main.js
+2:12:28 AM [vite] page reload main.js
+2:12:49 AM [vite] page reload main.js
+2:18:28 AM [vite] page reload main.js
+2:18:38 AM [vite] page reload main.js
+2:18:49 AM [vite] page reload main.js
+2:18:55 AM [vite] page reload main.js
+2:19:08 AM [vite] page reload main.js
+2:20:14 AM [vite] page reload main.js
+2:20:29 AM [vite] page reload main.js
+2:23:14 AM [vite] page reload main.js
+2:25:55 AM [vite] page reload main.js
+2:39:59 AM [vite] page reload main.js
+2:40:33 AM [vite] page reload main.js
+2:47:07 AM [vite] page reload main.js
+2:47:36 AM [vite] page reload main.js
+3:04:13 AM [vite] page reload main.js
+3:08:23 AM [vite] page reload main.js
+3:14:37 AM [vite] page reload main.js
+3:19:06 AM [vite] page reload main.js
+3:24:54 AM [vite] page reload main.js
+3:33:30 AM [vite] page reload main.js
+3:34:48 AM [vite] page reload main.js
+3:35:48 AM [vite] page reload main.js
+3:50:07 AM [vite] page reload main.js
+3:53:16 AM [vite] ✨ new dependencies optimized: fflate, @supabase/supabase-js
+3:53:16 AM [vite] ✨ optimized dependencies changed. reloading
+sh: line 1: 98250 Killed: 9               vite

@@ -1,0 +1,389 @@
+# http://www.csmerkezi.com - Counter-Strike Merkezi © 2001
+# Hazýrlayan: DoST , <dost@csmerkezi.com>
+#
+# All comments start with a "#" char
+# You can write as much comments as you like, but
+# please avoid using tabs, whitespaces and blank lines
+# (they will be parsed out but you never know!)
+# Also be sure that a Line doesn't exceed 80 chars
+# (including carriage return)
+#
+# Messages for each Type of Chat begin with a marker
+# enclosed in []
+# Marker Types:
+# [BOMBPLANT] Holds the Messages for the Counter Terrorists
+#	      if a Bomb got planted
+# [KILLED]    Bots say this Message if they killed somebody
+# [DEADCHAT]  Bots say these Lines if they are dead and in
+#	      Spectator Mode
+#
+# %f = Name of Player with the most frags
+# %m = Mapname
+# %r = Time until Round ends
+# %s = Name of Player to reply
+# %t = Name of Teammate alive
+# %v = Last Victim of this Bot
+#
+#
+#
+# Counter Messages for Bomb planted:
+# Minimum Number is 1
+#
+[BOMBPLANT]
+Aman allahim yine mi bomba kondu?
+Kahretsin lanet terroristler gene mi bomba koydunuz ya :((
+Gecen sefer bombayi bulup etkisiz hale getirmem 5 saniyemi aldi
+Hangisi ?! Kirmizi kablo muydu yesil mi?
+Bombayi defuse etmek benim icin bebek isi
+Hasiktir defuse kit almayi unutmusuz iyi mi...
+#
+#
+#
+#
+#
+#
+# Messages after killing somebody:
+# Minimum Number is 1
+# For the %v the name of the victim will
+# be inserted
+# NOTE: Include a %v placeholder in every Line!
+#
+[KILLED]
+%v, seni oldurmek bebek isi ehehe
+Bu sana ders olsun %v bir daha yoluma cikma
+Geri ucusun muhtesemdi %v
+Biliyorsun %v, seni oldurmek zorundaydim
+Sansin varken kacmaliydin %v
+Oluceksin demistim %v
+Iddia ediyorum  %v, seni oldurmemden nefret ediyorsun!
+Bu seni kacinci vurusum %v sayamadim muaahha
+Aferim %v. Bu sefer beni neredeyse incitmeyi basarabildin
+Ha...ha! %v acimis olmali :-)
+%v benim 3925939539. le$imsin. Yoksa 3925939540 miydi?
+%v, sana cok uzuluyorum. eheheheh
+Uzgunum %v. Benim headshot scriptim seninkinden daha iyi
+#
+#
+#
+#
+#
+#
+#
+# Chat Messages when dead and bored
+# !!Minimum Number is 9!!
+#
+[DEADCHAT]
+herkese selam
+Su aptal botlari izlemek beni hasta ediyor
+Artik harita degistirmenin zamani gelmedi mi?
+Soteci zavallilar!
+Cok SIKILDIM ya!
+Kesinlikle biz kazanacagiz :)
+Izleyici olmak cok boktan bisey...
+Colt sizcede cok guclu degil mi?
+Counter-Strike oynamak cok eglenceli bence
+Bu kadar kotu oynayabilecegimi hic dusunmemistim
+Bugun neden herkes beni vurmaya calisiyor :)
+Bizim arkadasin sitesini gordunuz mu? Adresi http://www.csmerkezi.com
+Counter-Strike oynamaktan bileklerim acimaya basladi ehe
+Bu harita cok boktan bence...
+Tum sotecilere olum!
+Beklemeyi birakicaklar mi acaba?
+Day Of Defeat de CS'den daha iyi oldugum kesin
+PODBot hakkinda ne dusunuyorsunuz beyler?
+Bu harita super bence
+Gerizekali botlar!
+Su aptal heriflere bak ya
+Kiz kardesim bile bundan daha iyi oynuyor!
+Bugun cok yoruldum ...
+Cok uykum geldi
+Genelde bu kadar kotu oynamam
+Bugun de_dust oynamayalim, lutfeeeen!
+Bu haritadan gercekten nefret ediyorum :(
+Lamerlerin tek yaptiklari sey pusu
+Bir dahaki el hepinizi mahvedecegim
+Harita degisimi icin oylama yapilsin ya!!!
+Botlardan biri takildi mi?
+#32 upto here
+Boooooooooom!!!!
+Keske iyi bir oyuncu oyuna girse...
+Arkadaslar eminim %f AIMBOT kullaniyor!
+Oyunda bot mu var?
+Biri headshot scriptini odunc verebilir mi?
+Bir dahaki el beraber hareket etmeliyiz!
+Takim arkadaslarini olduren herkesin *mina koyim
+Beyler clan ariyorum!!
+En iyi clan sizce hangisi beyler?
+%f wallhack kullaniyor bence!
+%t hadi basarabilirsin kocum biz kazancaz!
+OFF KOYIIM YA LAG !!!
+Bence NNBot RealBot dan cok daha iyi
+Beyler 2 dakka yemek molasi, awayim. Atmayin beni sakIn!
+Sigara molasi icin bi sure yokum...
+%t alir bence
+Beyler saat kac yaf?
+Tam sarjor degistiriyordum ki kafadan koydu!
+Coluk cocuk dolmus bu server ya ben gidicem ...
+Muahah pingime bakin :)
+CS 1.3 ne zaman cikacak bilen var mi?
+Nerdensin %s?
+Burada asiri yagmur yagiyor lam elektrikler gidebilir
+Bu serverda cok lag var
+Burayi uzatalim mi beyler?
+Cok yorgunum uykum var off
+ICQ'un kac %s?
+Ne tur muzik dinlersin %s?
+
+# Start of the "dynamic" replies from here
+# After each @KEY Tag you need to specify the
+# keywords in quotation marks and uppercase. You can
+# have several keywords (aliases) each separated by a comma.
+# After the keywords line, the answers or messages to this
+# special keyword need to be given. In theory there can be an unlimited
+# number of answers of course you should care about the used memory ;)    
+
+[REPLIES]
+
+@KEY "AIMBOT", "WALLHACK"
+xqz diye (bence Hz Muhammedin yazdigi ve Ebubekirin compile ettigi) bir hile var
+%s, yoksa sende mi hile yapiyorsun?
+PunkBuster bile bazi hileleri bulamiyor...
+Bugunlerde birinin hilemi yaptigina yoksa iyi mi oynadigina karar vermek cok guc
+Aimbot rulz, kapa gagani %s!
+
+@KEY "BOTMAN"
+Herkesin bahsettigi BOTMAN kim yaf???
+
+@KEY " BOT ", "BOTLAR"
+Neden hep botlardan bahsediyorsun ki?
+Bu serverda bot olmadigina emin olabilirsin %s !
+Botlar sahane bence!!!
+En iyi bot nedir %s?
+BOTMAN in sitesine bakarak kendi botunu yapabilirsin
+Botlari bosver, bence insanlarla oynamak daha zevkli
+Bence butun botlar salak
+
+@KEY "HTTP://WWW.CSMERKEZI.COM", "CSMERKEZI"
+Ben zaten o siteye hergun giriyorum ya
+Ya beni CS Merkezi forumlarindan banladilar sacma mesajlar atiyorum diye :(
+Ben o sitenin adminlerine kIL oluyorum
+Guzel mi bari hic gitmedim o siteye...
+
+@KEY "LEVEL", "LVL"
+Turkiye'nin 1 numarali oyun dergisi
+LEVEL rulez!
+Sinan abi, gelmiyor artik
+Ben SiSL'i taniyorum feci kotu oyuncu!
+Tek takintim.
+
+
+@KEY "SOTE", "SOTECI"
+Ben butun sotecilerden nefret ediyorum!
+Sote yapmak sux!
+Sen hic sote yapmiyor musun %s ?
+Bazen kazanmak icin sote yapmak gerekiyor...
+Eskiden soteci mi varmis... Pehh
+Quake mi oynuyoruz tabi sote yapcak eleman
+
+@KEY "HILECI"
+Bu hileciler oyunun *mina koyuyolar ya!
+Bence %f kesin hile yapiyo
+Hilecilerden nefret ediyorum!
+Hile yapmak sux!
+Niye bu kadar cok hileci var yaf? :(
+Punkbuster hilecileri onleyebilir bence...
+Sen de botlarla oyna - onlar hile yapmiyorlar! eheh
+
+@KEY "CLAN", "KLAN"
+Dun serverda oynarken ONC clanindan birisini gordum
+Bu clan dedikleri sey nedir yaf?
+Bir zamanlar bir clandayim, ama cok boktandi
+Sen hangi clandasin %s?
+Bizim clana gelmek ister misin %s?
+
+@KEY "DOD", "DAY OF DEFEAT"
+Insanlarin DoD da ne buldugunu anlamiyorum?
+CS 4ever!
+%s sence DOD Counter-Strike kadar populer olabilecek mi?
+%s neden CS yerine DoD oynayayim ki?
+Day of Defeat bence cok dandirik bir MOD
+
+@KEY "*MINA", "SIKEYIM", "APTAL", "SALAK", "GERIZEKALI"
+Kufur etme %s!
+Efendi ol %s!
+Tabi tabi haklisin %s. Simdi KAPA CENENI!
+%s terbiyeli ol! Yoksa agzina biber surerim!
+
+@KEY "EHEHEHE", "HAHA", "EKI", ":)"
+Egleniyosun galiba %s?
+Cok komik %s!
+Alemsin %s...
+mauahah
+
+@KEY "HARITA"
+%m benim en sevdigim haritadir!
+%s sen haritadan ne anlarsin ki?
+Harita yapmasini bilen var mi?
+Dun butun gun dust oynadim mauahah
+
+@KEY "MUZIK"
+Ben metalciyim %s
+Ne bulursam dinlerim valla
+Techno falan ...
+Iyi bir mp3 sitesi bilen var mi?
+
+@KEY "PING ", "LAG"
+Benim genelde pingim 5 falan, kablo rulz !!
+Lag ne zaman yok ki...
+Baglantin nedir %s?
+Baglantin kotuyse botlarla oyna sende?
+ISP'ni degistir %s!
+
+@KEY "POD-BOT", "POD", "PODBOT"
+CS icin en iyi botmus sanirim PODBot
+PODBot rulz!
+Millet PODBot wallhack kullaniyo diyolar, dogru mu?
+
+@KEY "PUNKBUSTER"
+Bu sunucu da punkbuster var mi yaf?
+PunkBuster benim makinayi cok yavaslatiyo :(
+Dun hilecilerin yayinlandigi bir site buldum: http://www.cstr-cheaters.org
+
+@KEY "Q3", "QUAKE"
+Q3'un isiklandirmasi cok boktan
+Bence Half-Life hala Quake'e 10 basar %s!
+DMC'yi duydun mu %s? ;-)
+
+@KEY "REALBOT"
+Realbot cidden o kadar iyi mi yaf
+Realbot ile butun haritalarda oynanabiliyormus %s dogru mu?
+Abow Realbot da ne yaf?
+
+@KEY "SCRIPTINI"
+Scriptler ezikler icindir
+%s, hileye karsiyim
+%s allah versin kocum
+
+@KEY "SERVER", "SUNUCU"
+Ben bu serveri cok seviyorum!
+Biz hep bu serverda oynariz...
+Bu serverdaki haritalar cok kotu bence
+
+@KEY "YORULDUM", "UYKUM", "YORGUNUM"
+Kahve ister misin %s iyi gelir. Emaille yollayabilirim :P
+Git yat %s
+%s git dinlen o zaman
+Bosver %s CS a$kI uyku , yorgunluk falan tanImaz.
+
+@KEY "DEGISIMI", "DEGISTIRMENIN"
+Hayir, ben %m haritasini seviyorum
+%m harika bence kapa ceneni
+%m rulz
+Evet. Oylama yapalim!
+
+@KEY "ONC", "ULUBEY"
+%s, OKKE KARDESIM!!!
+Hersey Sadece Bir Oyun Olsada Biz Daha Farkli Oldugunu Dusunuyoruz %s !!!
+OKKE!!!
+CAY ICEN VAR MI CAY!!!
+
+@KEY "NERDENSIN"
+Ben Bursaliyim %s
+Ordan burdan ...
+16/Ist/G
+Dunyadan ... eki eki
+
+@KEY "CHAT"
+Chat sux %s
+4 y1LdIr ch4t y4p1y0rum c0k mu b3LL1 0Luy0r¿
+Dun IRC'den bi kiz tavladim ehehehe
+Ben zamanýnda dalnette IRCOPluk yapmistim... Ne gunlerdi bea!
+
+@KEY "YEMEK"
+Afiyet olsun kocum
+%s yemekte ne var?
+%s insan bize de getirir biraz :P
+Ben de pizza ismarladim gelir simdi mauah
+
+@KEY "SIGARA"
+zIkkIm ic muahahah
+Sigara sagliga zararlidir :P
+
+@KEY "SELAM", "SLM"
+slm %s
+slm %s naber?
+selam kocum
+
+@KEY "NABER?"
+ii saol
+Bugun cok yoruldum ya
+iyidir sagol
+bok gibi
+
+@KEY "BYE", "BY", "BAI"
+bye %s
+bai %s
+
+@KEY "COLT", "AK-47", "AK"
+Bence AK47 rulz!
+Colt en iyi silah bence
+Paran yoksa iyi ama param varsa AUG veya COMMANDO alirim ...
+Colt cok boktan bence
+
+@KEY "1.3"
+Hic cikmicak bence
+CS 1.3 cok gecikti ya iki aydir bekliyorum
+1.3de sesli iletisim olacakmis, artik daha rahat kufur etcez birbirimize ehehehe
+
+@KEY "DUST"
+En sevdigim haritadir dust
+Dustdan nefret ederim
+24/7 dust oynarim
+dust acalim beyler
+
+@KEY "OFF"
+pof
+puf
+
+@KEY "SAAT"
+ne bileyim %s
+kimin umrunda %s ...
+Saat kacmaz %s eki eki
+
+@KEY "ICQ"
+unuttum %s
+sen uinin ver ben eklerim %s
+icq kullanmiyorum %s
+
+@KEY "CS", "COUNTERSTRIKE", "COUNTER-STRIKE", "CSTRIKE"
+Bizim kapici Hamza abi de CS oynuyo...
+Counter-Strike artik baymaya basladi...
+%s ne zamandir CS oynuyorsun?
+CS Beta 5.2'yi oynamis olan var mi!
+CS'de cok hileci var
+CS eskiden daha zevkliydi
+
+[UNKNOWN]
+ehehehe
+Ne diyon %s annamiom ehe
+Konusmayi birak da oyuna konsantre ol %s!
+Sen ne zaman oyuna girdin ya %s
+Cok konusuyosun %s
+%s hadi ya inanmam!
+Butun bu sacmaliklari yazdiginizi gore cok bos zamaniniz var galiba???
+Tabi tabi. Haklisin %s!!
+Inanmam!
+Emin misin %s?
+Hmm %s!
+Neden bahsediyorsun %s tam anlamadim?
+Kapa ceneni de oyuna bak %s!
+Bisi mi demistin %s?
+Kim demis?
+Hadi ya?
+Cok komik %s!
+Off
+Cooooooook sIkILdIm... 
+%s buraya CS oynamaya mi geldin yoksa geyik yapmaya mi?
+Umurumda degil %s
+Tabiki
+Ha ne ?

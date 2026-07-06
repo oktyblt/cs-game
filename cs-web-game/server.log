@@ -1,0 +1,230 @@
+[CS Asset Server] http://localhost:3001 üzerinde çalışıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28000)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28000
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28000] 👑 HOST tarayıcısı köprüye bağlandı!
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28000] 🎮 Yeni bir CLIENT tarayıcısı bağlandı! (Aktif Oyuncu: 2)
+[Relay WS:28000] Client -> Host paket (23 byte)
+[Relay WS:28000] Client -> Host paket (33 byte)
+[Relay WS:28000] Client -> Host paket (308 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] Client -> Host paket (16 byte)
+[Relay WS:28000] 🎮 CLIENT ayrıldı. (Kalan: 1)
+[Relay WS:28000] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28001)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28001
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /valve.rc
+📦 Valve Asset request: /delta.lst
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28001] 👑 HOST tarayıcısı köprüye bağlandı!
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28001] 🎮 Yeni bir CLIENT tarayıcısı bağlandı! (Aktif Oyuncu: 2)
+[Relay WS:28001] Client -> Host paket (23 byte)
+[Relay WS:28001] Client -> Host paket (33 byte)
+[Relay WS:28001] Client -> Host paket (308 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] Client -> Host paket (16 byte)
+[Relay WS:28001] 🎮 CLIENT ayrıldı. (Kalan: 1)
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28001] 🎮 Yeni bir CLIENT tarayıcısı bağlandı! (Aktif Oyuncu: 2)
+[Relay WS:28001] 🎮 CLIENT ayrıldı. (Kalan: 1)
+[Relay WS:28001] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28002)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28002
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /valve.rc
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28002] 👑 HOST tarayıcısı köprüye bağlandı!
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28002] 🎮 Yeni bir CLIENT tarayıcısı bağlandı! (Aktif Oyuncu: 2)
+[Relay WS:28002] Client -> Host paket (23 byte)
+[Relay WS:28002] Client -> Host paket (33 byte)
+[Relay WS:28002] Client -> Host paket (308 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] Client -> Host paket (16 byte)
+[Relay WS:28002] 🎮 CLIENT ayrıldı. (Kalan: 1)
+[Relay WS:28002] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28003)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28003
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28003] 👑 HOST tarayıcısı köprüye bağlandı!
+[Relay WS:28003] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28004)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28004
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /valve.rc
+📦 Valve Asset request: /delta.lst
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28004] 👑 HOST tarayıcısı köprüye bağlandı!
+[Relay WS:28004] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28005)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28005
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28005] 👑 HOST tarayıcısı köprüye bağlandı!
+[Relay WS:28005] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28006)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28006
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28006] 👑 HOST tarayıcısı köprüye bağlandı!
+[Relay WS:28006] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28007)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28007
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28007] 👑 HOST tarayıcısı köprüye bağlandı!
+[Relay WS:28007] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28008)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28008
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28008] 👑 HOST tarayıcısı köprüye bağlandı!
+[Relay WS:28008] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28009)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28009
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /valve.rc
+📦 Valve Asset request: /delta.lst
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28009] 👑 HOST tarayıcısı köprüye bağlandı!
+📦 Valve Asset request: /gfx.wad
+📦 Valve Asset request: /fonts.wad
+📦 Valve Asset request: /delta.lst
+📦 Valve Asset request: /valve.rc
+📦 Fallback asset: /sprites/dot.spr (dmc)
+📦 Fallback asset: /sprites/animglow01.spr (dmc)
+📦 Fallback asset: /sprites/richo1.spr (dmc)
+📦 Fallback asset: /sprites/shellchrome.spr (valve)
+📦 Fallback asset: /sprites/crosshairs.spr (dmc)
+[Relay WS:28009] 🎮 Yeni bir CLIENT tarayıcısı bağlandı! (Aktif Oyuncu: 2)
+[Relay WS:28009] Client -> Host paket (23 byte)
+[Relay WS:28009] Client -> Host paket (34 byte)
+[Relay WS:28009] Client -> Host paket (309 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Relay WS:28009] Client -> Host paket (16 byte)
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28010)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28010
+[Listen Server] Oda oluşturuldu: "CS 1.5 Web Oda" (Kurucu: ananın amı, Harita: de_dust2, Port: 28011)
+[Relay Hub] Oda "CS 1.5 Web Oda" için köprü başlatıldı: WS:28011
+[Relay WS:28009] 👑 HOST tarayıcısı ayrıldı, oda kapanıyor.
+[Relay WS:28009] 🎮 CLIENT ayrıldı. (Kalan: 1)

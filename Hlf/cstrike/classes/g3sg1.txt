@@ -1,0 +1,20 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 5000$
+Yapildigi Ü lke	: Almanya
+Kalibre		: 7.62mm NATO
+Sarjör Kapasitesi(CS)	: 20 mermi
+Atesleme Hizi	: -
+Agirlik(Bos iken)	: 4.41 kg
+
+Ç ekirdek Agirligi	: 8 gram
+Ç ikis Hizi	: 853 metre/saniye
+Ç ikis Enerjisi	: 2200 joule
+
+
+
+
+
+
+
+

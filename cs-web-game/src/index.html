@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrowserCS — Counter-Strike 1.5 Online</title>
+  <meta name="description" content="Counter-Strike 1.5'i tarayıcınızda oynayın. Xash3D WebAssembly engine ile gerçek CS deneyimi." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cs-yellow:#f0a000; --cs-yellow-dim:#8a5c00; --cs-green:#4caf50; --cs-green-dim:#1b5e20;
+      --cs-red:#f44336; --cs-blue:#2196f3; --cs-ct-blue:#1565c0; --cs-t-orange:#e65100;
+      --bg-deep:#040608; --bg-dark:#0a0e14; --bg-panel:#0d1319; --bg-card:#111720; --bg-hover:#1a2535;
+      --border:#1e2d3d; --border-bright:#2a3f55; --text-primary:#c8d8e8; --text-dim:#5a7a9a; --text-bright:#e8f4ff;
+      --font-hud:'Share Tech Mono',monospace; --font-ui:'Rajdhani',sans-serif; --font-title:'Orbitron',sans-serif;
+      --glow-yellow:0 0 20px rgba(240,160,0,0.4);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{width:100%;height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:var(--font-ui);overflow:hidden;user-select:none;}
+    ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:var(--bg-dark);} ::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px;}
+
+    /* SPLASH */
+    #splash{position:fixed;inset:0;background:var(--bg-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;transition:opacity 0.8s ease;}
+    #splash.fade-out{opacity:0;pointer-events:none;}
+    .splash-logo-text{font-family:var(--font-title);font-size:clamp(3rem,8vw,5rem);font-weight:900;letter-spacing:0.08em;color:var(--cs-yellow);text-shadow:0 0 30px rgba(240,160,0,0.5),0 0 80px rgba(240,160,0,0.2);animation:splash-pulse 2s ease-in-out infinite;margin-bottom:0.3rem;}
+    .splash-logo-text .cs-w{color:#fff;}
+    .splash-engine-txt{font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);letter-spacing:0.3em;margin-bottom:2.5rem;text-transform:uppercase;}
+    .splash-bar-wrap{width:300px;height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:1rem;}
+    .splash-bar-fill{height:100%;background:linear-gradient(90deg,var(--cs-yellow),#fff8e1);transition:width 0.4s ease;box-shadow:0 0 8px var(--cs-yellow);width:0%;}
+    .splash-status{font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);letter-spacing:0.15em;}
+    @keyframes splash-pulse{0%,100%{text-shadow:0 0 30px rgba(240,160,0,0.5),0 0 80px rgba(240,160,0,0.2);}50%{text-shadow:0 0 50px rgba(240,160,0,0.8),0 0 120px rgba(240,160,0,0.4);}}
+
+    /* LAYOUT */
+    #app{width:100vw;height:100vh;display:grid;grid-template-rows:48px 1fr;grid-template-columns:260px 1fr;grid-template-areas:"header header" "sidebar main";}
+
+    /* HEADER */
+    #header{grid-area:header;background:linear-gradient(90deg,#080d14 0%,#0d1319 60%,#080d14 100%);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem;position:relative;z-index:10;}
+    .header-logo{font-family:var(--font-title);font-size:1rem;font-weight:900;color:var(--cs-yellow);letter-spacing:0.1em;white-space:nowrap;display:flex;align-items:baseline;gap:0.4rem;}
+    .header-logo .cs-w{color:#fff;} .header-logo .ver-tag{font-size:0.55rem;color:var(--text-dim);font-weight:400;letter-spacing:0.1em;}
+    .header-div{width:1px;height:20px;background:var(--border);}
+    .header-status{display:flex;align-items:center;gap:0.4rem;font-family:var(--font-hud);font-size:0.68rem;color:var(--text-dim);}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--cs-green);box-shadow:0 0 6px var(--cs-green);animation:blink 1.5s ease-in-out infinite;}
+    .status-dot.orange{background:var(--cs-yellow);box-shadow:0 0 6px var(--cs-yellow);}
+    .status-dot.red{background:var(--cs-red);box-shadow:0 0 6px var(--cs-red);animation:none;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.35;}}
+    .header-spacer{flex:1;}
+    .h-badge{font-family:var(--font-hud);font-size:0.6rem;color:var(--cs-yellow-dim);border:1px solid var(--cs-yellow-dim);padding:0.12rem 0.45rem;border-radius:2px;letter-spacing:0.08em;}
+    .toolbar-btn{font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:0.2rem 0.6rem;border-radius:2px;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;}
+    .toolbar-btn:hover{color:var(--text-bright);border-color:var(--border-bright);background:var(--bg-hover);}
+    .toolbar-btn.danger:hover{border-color:var(--cs-red);color:var(--cs-red);}
+
+    /* SIDEBAR */
+    #sidebar{grid-area:sidebar;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+    .sidebar-section{padding:0.8rem;border-bottom:1px solid var(--border);}
+    .sidebar-section-label{font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:0.65rem;}
+    .filter-tabs{display:flex;gap:0.35rem;margin-bottom:0.6rem;}
+    .filter-tab{flex:1;font-family:var(--font-hud);font-size:0.6rem;padding:0.28rem 0;border:1px solid var(--border);background:transparent;color:var(--text-dim);border-radius:2px;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s;}
+    .filter-tab.active{background:var(--cs-yellow);color:var(--bg-deep);border-color:var(--cs-yellow);font-weight:700;}
+    .filter-tab:hover:not(.active){border-color:var(--border-bright);color:var(--text-primary);}
+    .map-search{width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-family:var(--font-hud);font-size:0.78rem;padding:0.45rem 0.7rem;border-radius:3px;outline:none;transition:border-color 0.2s;}
+    .map-search:focus{border-color:var(--cs-yellow);} .map-search::placeholder{color:var(--text-dim);}
+    .map-list{flex:1;overflow-y:auto;padding:0.4rem;}
+    .map-item{display:flex;align-items:center;padding:0.55rem 0.65rem;border-radius:4px;cursor:pointer;transition:all 0.15s;border:1px solid transparent;margin-bottom:2px;gap:0.55rem;}
+    .map-item:hover{background:var(--bg-hover);border-color:var(--border);}
+    .map-item.selected{background:rgba(240,160,0,0.08);border-color:var(--cs-yellow);}
+    .map-badge{font-family:var(--font-hud);font-size:0.58rem;padding:0.12rem 0.3rem;border-radius:2px;font-weight:700;letter-spacing:0.04em;min-width:26px;text-align:center;flex-shrink:0;}
+    .map-badge.de{background:rgba(244,67,54,0.12);color:#f44336;border:1px solid rgba(244,67,54,0.3);}
+    .map-badge.cs{background:rgba(33,150,243,0.12);color:#2196f3;border:1px solid rgba(33,150,243,0.3);}
+    .map-badge.as{background:rgba(156,39,176,0.12);color:#9c27b0;border:1px solid rgba(156,39,176,0.3);}
+    .map-badge.es{background:rgba(255,152,0,0.12);color:#ff9800;border:1px solid rgba(255,152,0,0.3);}
+    .map-name{font-size:0.83rem;font-weight:600;color:var(--text-bright);flex:1;}
+    .map-size{font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);}
+    .sidebar-info{padding:0.65rem 0.8rem;border-top:1px solid var(--border);font-family:var(--font-hud);font-size:0.6rem;color:var(--text-dim);line-height:1.9;}
+
+    /* MAIN */
+    #main{grid-area:main;position:relative;overflow:hidden;background:var(--bg-deep);}
+    #preview-panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;transition:opacity 0.4s;}
+    #preview-panel.hidden{opacity:0;pointer-events:none;}
+    .preview-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(21,101,192,0.05) 0%,transparent 60%),radial-gradient(ellipse at 70% 40%,rgba(230,81,0,0.04) 0%,transparent 60%);}
+    .preview-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:0.22;}
+    .no-map-selected{font-family:var(--font-hud);font-size:0.82rem;color:var(--text-dim);text-align:center;}
+    .no-map-selected .icon{font-size:3rem;margin-bottom:1rem;opacity:0.2;}
+    .no-map-selected .hint{margin-top:0.5rem;font-size:0.68rem;}
+
+    /* MAP CARD */
+    .map-preview-card{position:relative;background:var(--bg-card);border:1px solid var(--border-bright);border-radius:10px;width:100%;max-width:700px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+    .map-thumb-hero{height:150px;background-size:cover;background-position:center;background-color:#080d14;position:relative;}
+    .map-thumb-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.15),var(--bg-card) 100%);}
+    .map-thumb-badge{position:absolute;top:10px;left:12px;z-index:2;font-family:var(--font-hud);font-size:0.62rem;letter-spacing:0.12em;padding:3px 8px;border-radius:3px;font-weight:700;backdrop-filter:blur(6px);}
+    .map-thumb-badge.bomb{background:rgba(244,67,54,0.22);color:#f44336;border:1px solid rgba(244,67,54,0.4);}
+    .map-thumb-badge.hostage{background:rgba(33,150,243,0.22);color:#2196f3;border:1px solid rgba(33,150,243,0.4);}
+    .map-thumb-badge.escape{background:rgba(255,152,0,0.22);color:#ff9800;border:1px solid rgba(255,152,0,0.4);}
+    .map-preview-body{padding:1.4rem 1.8rem;}
+    .map-preview-title{font-family:var(--font-title);font-size:clamp(1.3rem,2.5vw,2rem);font-weight:700;color:var(--cs-yellow);text-shadow:var(--glow-yellow);letter-spacing:0.05em;margin-bottom:0.2rem;}
+    .map-preview-type{font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:1.1rem;}
+    .teams-row{display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:center;margin-bottom:1.2rem;}
+    .team-card{padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--border);text-align:center;}
+    .team-card.ct{border-color:rgba(33,150,243,0.3);background:rgba(21,101,192,0.08);}
+    .team-card.t{border-color:rgba(230,81,0,0.3);background:rgba(230,81,0,0.08);}
+    .team-label{font-family:var(--font-hud);font-size:0.6rem;letter-spacing:0.18em;margin-bottom:0.25rem;}
+    .team-card.ct .team-label{color:var(--cs-blue);} .team-card.t .team-label{color:var(--cs-t-orange);}
+    .team-name{font-weight:700;font-size:1rem;color:var(--text-bright);}
+    .vs-badge{font-family:var(--font-title);font-size:0.9rem;color:var(--text-dim);font-weight:700;}
+    .room-settings-group{display:grid;grid-template-columns:1fr 1fr 110px;gap:0.6rem;margin:0.9rem 0;text-align:left;}
+    .room-field{display:flex;flex-direction:column;gap:0.3rem;}
+    .room-field label{font-family:var(--font-hud);font-size:0.62rem;color:var(--cs-yellow);letter-spacing:0.05em;font-weight:bold;}
+    .room-input,.room-select{background:var(--bg-deep);border:1px solid var(--border-bright);color:var(--text-bright);font-family:var(--font-hud);font-size:0.82rem;padding:0.42rem 0.6rem;border-radius:4px;outline:none;transition:all 0.2s;width:100%;}
+    .room-input:focus,.room-select:focus{border-color:var(--cs-yellow);box-shadow:0 0 0 2px rgba(240,160,0,0.13);}
+    #btn-launch{width:100%;background:linear-gradient(135deg,#b37700 0%,#f0a000 50%,#b37700 100%);background-size:200% 100%;color:#050810;font-family:var(--font-title);font-size:1.05rem;font-weight:900;letter-spacing:0.12em;padding:0.82rem;border:none;border-radius:5px;cursor:pointer;text-transform:uppercase;transition:all 0.25s;box-shadow:0 4px 24px rgba(240,160,0,0.35);margin-top:0.5rem;margin-bottom:0.5rem;position:relative;overflow:hidden;}
+    #btn-launch::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.15) 50%,transparent 100%);transform:translateX(-100%);transition:transform 0.4s;}
+    #btn-launch:hover::after{transform:translateX(100%);}
+    #btn-launch:hover{background-position:100% 0;box-shadow:0 6px 36px rgba(240,160,0,0.55);transform:translateY(-1px);}
+    #btn-launch:active{transform:translateY(0);}
+    #btn-launch:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+    .launch-note{font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);letter-spacing:0.1em;text-align:center;}
+
+    /* SERVER BROWSER */
+    #full-server-browser{position:absolute;inset:0;background:rgba(4,6,10,0.96);backdrop-filter:blur(16px);z-index:100;display:flex;flex-direction:column;padding:1.75rem 2rem;opacity:0;pointer-events:none;transition:opacity 0.3s ease;}
+    #full-server-browser.active{opacity:1;pointer-events:auto;}
+    .server-browser-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:0.9rem;}
+    .server-browser-title{font-family:var(--font-title);font-size:1.5rem;color:var(--text-bright);display:flex;align-items:center;gap:0.65rem;letter-spacing:0.05em;}
+    .server-grid-container{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.25rem;overflow-y:auto;padding-right:0.4rem;}
+    .server-card-box{position:relative;background:var(--bg-card);border:1px solid var(--border-bright);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;aspect-ratio:1;justify-content:space-between;transition:all 0.25s cubic-bezier(0.4,0,0.2,1);box-shadow:0 4px 16px rgba(0,0,0,0.35);}
+    .server-card-box:hover{transform:translateY(-4px);border-color:var(--cs-yellow);box-shadow:0 8px 28px rgba(240,160,0,0.22);}
+    .server-card-thumb{height:50%;background-size:cover;background-position:center;background-color:var(--bg-deep);position:relative;display:flex;align-items:center;justify-content:center;}
+    .server-thumb-map-text{position:relative;z-index:5;color:var(--cs-yellow);font-family:var(--font-title);font-size:1.1rem;text-shadow:0 2px 4px rgba(0,0,0,0.9),0 0 10px rgba(0,0,0,0.8);letter-spacing:0.05em;text-transform:uppercase;}
+    .server-card-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,16,26,0.1),var(--bg-card));}
+    .server-badge-live{position:absolute;top:6px;right:6px;z-index:2;background:rgba(76,175,80,0.22);border:1px solid #4caf50;color:#4caf50;font-family:var(--font-hud);font-size:0.58rem;font-weight:bold;padding:2px 6px;border-radius:3px;backdrop-filter:blur(4px);animation:blink 2s ease-in-out infinite;}
+    .server-card-body{padding:0.75rem;flex:1;display:flex;flex-direction:column;gap:0.3rem;}
+    .server-card-name{font-weight:bold;font-size:0.88rem;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .server-card-meta{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);}
+    .btn-join-room{margin-top:0.4rem;background:linear-gradient(135deg,var(--cs-yellow) 0%,#d48800 100%);color:#0b0f19;font-weight:bold;font-family:var(--font-hud);font-size:0.72rem;padding:0.42rem;border:none;border-radius:3px;cursor:pointer;transition:all 0.2s;text-align:center;letter-spacing:0.06em;}
+    .btn-join-room:hover{filter:brightness(1.15);transform:scale(1.02);}
+
+    /* GAME CANVAS */
+    #game-wrapper{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;opacity:0;pointer-events:none;transition:opacity 0.5s;}
+    #game-wrapper.active{opacity:1;pointer-events:all;position:fixed;z-index:2000;background:var(--bg-deep);}
+    #game-toolbar{width:100%;box-sizing:border-box;height:34px;background:rgba(8,13,20,0.96);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 0.75rem;gap:0.65rem;flex-shrink:0;}
+    .game-map-name{font-family:var(--font-hud);font-size:0.72rem;color:var(--cs-yellow);letter-spacing:0.08em;}
+    .toolbar-spacer{flex:1;}
+    .fps-counter{font-family:var(--font-hud);font-size:0.65rem;color:var(--cs-green);min-width:55px;text-align:right;}
+    #canvas{flex:1;display:block;width:100%;height:100%;min-height:0;object-fit:contain;background:#000;outline:none;}
+
+    /* MOUSE LOCK TIP */
+    #mouselock-tip{position:absolute;top:46px;left:50%;transform:translateX(-50%);background:rgba(240,160,0,0.1);border:1px solid var(--cs-yellow);color:var(--cs-yellow);font-family:var(--font-hud);font-size:0.7rem;padding:0.4rem 1.1rem;border-radius:4px;z-index:2100;display:none;pointer-events:none;letter-spacing:0.08em;}
+    @keyframes fadeout-tip{0%,50%{opacity:1;}100%{opacity:0;}}
+
+    /* KEYBIND OVERLAY */
+    #keybind-overlay{position:absolute;right:12px;top:44px;background:rgba(4,6,10,0.9);border:1px solid var(--border-bright);border-radius:6px;padding:0.75rem 0.9rem;z-index:2050;font-family:var(--font-hud);font-size:0.6rem;color:var(--text-dim);display:none;line-height:1.85;backdrop-filter:blur(8px);min-width:175px;animation:keybind-fade 9s ease forwards;}
+    .keybind-title{color:var(--cs-yellow);font-size:0.62rem;letter-spacing:0.15em;margin-bottom:0.5rem;border-bottom:1px solid var(--border);padding-bottom:0.3rem;}
+    .keybind-row{display:flex;justify-content:space-between;gap:1rem;}
+    .keybind-key{background:rgba(255,255,255,0.07);border:1px solid var(--border-bright);padding:0 4px;border-radius:2px;color:var(--text-bright);font-size:0.58rem;}
+    @keyframes keybind-fade{0%,55%{opacity:1;}85%,100%{opacity:0;}}
+
+    /* RECONNECT OVERLAY */
+    #reconnect-overlay{position:absolute;inset:0;z-index:2200;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;}
+    #reconnect-overlay.show{display:flex;}
+    .reconnect-icon{font-size:3rem;}
+    .reconnect-title{font-family:var(--font-title);font-size:1.5rem;color:var(--cs-red);letter-spacing:0.05em;}
+    .reconnect-msg{font-family:var(--font-hud);font-size:0.75rem;color:var(--text-dim);}
+    #btn-reconnect{background:var(--cs-yellow);color:#050810;font-family:var(--font-title);font-size:0.95rem;font-weight:900;letter-spacing:0.12em;padding:0.7rem 2.5rem;border:none;border-radius:4px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(240,160,0,0.4);}
+    #btn-reconnect:hover{filter:brightness(1.12);transform:translateY(-2px);}
+
+    /* LOADING */
+    #loading-overlay{position:absolute;inset:0;background:rgba(4,6,8,0.94);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+    #loading-overlay.active{opacity:1;pointer-events:all;}
+    .loading-title{font-family:var(--font-title);font-size:1.3rem;color:var(--cs-yellow);letter-spacing:0.12em;margin-bottom:0.4rem;}
+    .loading-map{font-family:var(--font-hud);font-size:0.78rem;color:var(--text-dim);margin-bottom:1.8rem;letter-spacing:0.12em;}
+    .loading-progress{width:340px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:0.65rem;}
+    .loading-progress-fill{height:100%;background:linear-gradient(90deg,var(--cs-yellow),#fff8e1);border-radius:2px;box-shadow:0 0 10px var(--cs-yellow);transition:width 0.5s ease;width:0%;}
+    .loading-log{font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);height:75px;overflow-y:auto;width:340px;border:1px solid var(--border);padding:0.4rem;border-radius:3px;background:var(--bg-dark);}
+    .loading-log p{line-height:1.6;} .loading-log p.warn{color:var(--cs-yellow);} .loading-log p.ok{color:var(--cs-green);}
+
+    /* NOTIFICATIONS */
+    #notifications{position:fixed;bottom:1rem;right:1rem;z-index:999;display:flex;flex-direction:column-reverse;gap:0.4rem;}
+    .notif{background:var(--bg-card);border:1px solid var(--border-bright);border-left:3px solid var(--cs-yellow);padding:0.55rem 0.9rem;border-radius:3px;font-family:var(--font-hud);font-size:0.7rem;color:var(--text-primary);max-width:290px;animation:slide-in 0.2s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+    .notif.error{border-left-color:var(--cs-red);} .notif.success{border-left-color:var(--cs-green);}
+    @keyframes slide-in{from{transform:translateX(20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+    /* CONSOLE */
+    #console-panel{position:absolute;bottom:0;left:0;right:0;height:195px;background:rgba(4,6,8,0.96);border-top:1px solid var(--border);display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.25s ease;z-index:40;}
+    #console-panel.open{transform:translateY(0);}
+    .console-copy-btn{background:rgba(16,20,24,0.9);border:1px solid var(--border-bright);color:var(--cs-yellow);padding:0.2rem 0.45rem;font-size:0.58rem;font-family:var(--font-ui);cursor:pointer;border-radius:3px;transition:all 0.2s ease;}
+    .console-copy-btn:hover{background:var(--cs-yellow);color:#000;}
+    .console-log{flex:1;overflow-y:auto;padding:0.4rem;font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);line-height:1.6;user-select:text;-webkit-user-select:text;}
+    .console-log .log-line{color:var(--text-dim);} .console-log .log-line.warn{color:var(--cs-yellow);} .console-log .log-line.err{color:var(--cs-red);} .console-log .log-line.ok{color:var(--cs-green);}
+    .console-input-row{display:flex;align-items:center;border-top:1px solid var(--border);padding:0.2rem 0.5rem;gap:0.4rem;}
+    .console-prompt{font-family:var(--font-hud);font-size:0.7rem;color:var(--cs-yellow);}
+    #console-input{flex:1;background:transparent;border:none;color:var(--text-bright);font-family:var(--font-hud);font-size:0.7rem;outline:none;}
+    #console-input::placeholder{color:var(--text-dim);}
+
+    /* ADMIN */
+    .admin-section-title{font-family:var(--font-hud);font-size:0.7rem;color:var(--cs-yellow);margin-bottom:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.4rem;font-weight:bold;letter-spacing:0.05em;}
+    .admin-field{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.7rem;}
+    .admin-field label{font-family:var(--font-hud);font-size:0.6rem;color:var(--text-dim);letter-spacing:0.05em;}
+    .admin-field-row{display:flex;gap:0.4rem;}
+
+    /* ANIMATIONS */
+    @keyframes fade-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .anim-fade-in{animation:fade-in 0.3s ease forwards;}
+
+    /* FATAL ERROR */
+    #fatal-error-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:monospace;}
+  </style>
+</head>
+<body>
+
+  <!-- SPLASH -->
+  <div id="splash">
+    <div class="splash-logo-text"><span class="cs-w">BROWSER</span>CS</div>
+    <div class="splash-engine-txt">Xash3D WebAssembly · WebGL2</div>
+    <div class="splash-bar-wrap"><div class="splash-bar-fill" id="splash-bar"></div></div>
+    <div class="splash-status" id="splash-status">Sistem başlatılıyor...</div>
+  </div>
+
+  <!-- APP -->
+  <div id="app">
+
+    <!-- HEADER -->
+    <header id="header">
+      <div class="header-logo"><span class="cs-w">BROWSER</span>CS<span class="ver-tag">v1.5 ENGINE</span></div>
+      <div class="header-div"></div>
+      <div class="header-status">
+        <div class="status-dot orange" id="engine-dot"></div>
+        <span id="engine-status-text">Engine hazırlanıyor...</span>
+      </div>
+      <div class="header-spacer"></div>
+      <div id="auth-section" style="display:flex;gap:0.5rem;">
+        <button class="toolbar-btn" id="btn-login">Giriş Yap</button>
+        <button class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);" id="btn-register">Üye Ol</button>
+      </div>
+      <div id="user-profile-section" style="display:none;align-items:center;gap:0.5rem;">
+        <div class="h-badge" id="badge-premium" style="display:none;background:var(--cs-yellow);color:var(--bg-deep);border-color:var(--cs-yellow);font-weight:bold;">PREMIUM</div>
+        <div style="font-family:var(--font-ui);font-size:0.88rem;color:var(--text-bright);" id="user-display-name">Player</div>
+        <button class="toolbar-btn" id="btn-dashboard" style="margin-right:0.5rem;border-color:var(--cs-yellow);color:var(--cs-yellow);">PANEL</button><button class="toolbar-btn danger" id="btn-logout">Çıkış</button>
+      </div>
+      <div class="header-div"></div>
+      <button class="toolbar-btn" id="btn-master-admin">🔑 ADMIN</button>
+      <div class="h-badge">XASH3D · WebGL2</div>
+    </header>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div id="admin-login-modal" style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.96);backdrop-filter:blur(8px);z-index:9000;align-items:center;justify-content:center;flex-direction:column;">
+      <div style="background:var(--bg-card);border:1px solid var(--cs-yellow);padding:2rem;border-radius:8px;text-align:center;width:300px;">
+        <h2 style="color:var(--cs-yellow);font-family:var(--font-title);margin-bottom:1rem;">MASTER ADMIN</h2>
+        <input type="password" id="admin-password-input" class="room-input" placeholder="Admin Şifresi" style="margin-bottom:1rem;" />
+        <div style="display:flex;gap:0.5rem;">
+          <button class="toolbar-btn" id="btn-admin-login-cancel" style="flex:1;">İPTAL</button>
+          <button class="toolbar-btn" id="btn-admin-login-submit" style="flex:1;border-color:var(--cs-yellow);color:var(--cs-yellow);">GİRİŞ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL OVERLAY -->
+    <div id="master-admin-panel" style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.98);backdrop-filter:blur(16px);z-index:8000;flex-direction:column;padding:2rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1rem;">
+        <h1 style="color:var(--cs-yellow);font-family:var(--font-title);">MASTER ADMIN PANELİ</h1>
+        <button class="toolbar-btn danger" id="btn-admin-panel-close" style="padding:0.5rem 1rem;">KAPAT</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;">
+        <table style="width:100%;border-collapse:collapse;font-family:var(--font-hud);font-size:0.8rem;text-align:left;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-bright);color:var(--text-dim);">
+              <th style="padding:0.5rem;">SUNUCU ADI</th>
+              <th style="padding:0.5rem;">TÜR</th>
+              <th style="padding:0.5rem;">HARİTA</th>
+              <th style="padding:0.5rem;">OYUNCU</th>
+              <th style="padding:0.5rem;">PORT</th>
+              <th style="padding:0.5rem;">İŞLEMLER</th>
+            </tr>
+          </thead>
+          <tbody id="master-admin-table-body">
+            <!-- JS WILL POPULATE -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SERVER SETTINGS MODAL -->
+    <div id="server-settings-modal" style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.96);backdrop-filter:blur(10px);z-index:9500;align-items:center;justify-content:center;flex-direction:column;">
+      <div style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:8px;width:90%;max-width:500px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+        <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <h2 style="color:var(--cs-yellow);font-family:var(--font-title);margin:0;font-size:1.2rem;" id="settings-modal-title">SUNUCU AYARLARI</h2>
+          <button class="toolbar-btn danger" id="btn-settings-close">KAPAT</button>
+        </div>
+        
+        <div style="display:flex;border-bottom:1px solid var(--border);">
+          <button class="filter-tab active" style="flex:1;border:none;border-radius:0;border-bottom:2px solid var(--cs-yellow);" id="tab-rcon">RCON / KONSOL</button>
+          <button class="filter-tab" style="flex:1;border:none;border-radius:0;" id="tab-general">GENEL AYARLAR</button>
+          <button class="filter-tab" style="flex:1;border:none;border-radius:0;" id="tab-amx">AMX MOD / ADMİN</button>
+        </div>
+
+        <div style="padding:1.5rem;flex:1;overflow-y:auto;min-height:300px;">
+          <!-- RCON TAB -->
+          <div id="settings-rcon-view" style="display:flex;flex-direction:column;gap:1rem;height:100%;">
+            <div class="room-field">
+              <label>RCON ŞİFRESİ (Yetki İçin)</label>
+              <input type="password" id="rcon-auth-pass" class="room-input" placeholder="Sunucunun RCON şifresini girin" />
+            </div>
+            <div class="room-field" style="flex:1;">
+              <label>KONSOL ÇIKTISI</label>
+              <div id="rcon-console-output" style="flex:1;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:0.5rem;font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);overflow-y:auto;min-height:100px;white-space:pre-wrap;">Bağlantı bekleniyor...</div>
+            </div>
+            <div class="room-field">
+              <label>KOMUT GÖNDER</label>
+              <div style="display:flex;gap:0.5rem;">
+                <input type="text" id="rcon-command-input" class="room-input" style="flex:1;" placeholder="Örn: changelevel de_inferno, sv_restart 1" />
+                <button class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);" id="btn-rcon-send">GÖNDER</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GENERAL SETTINGS TAB -->
+          <div id="settings-general-view" style="display:none;flex-direction:column;gap:1rem;">
+            <div class="room-field">
+              <label>YENİ RCON ŞİFRESİ</label>
+              <input type="text" id="cfg-rcon-pass" class="room-input" placeholder="Boş bırakırsanız değişmez" />
+            </div>
+            <div class="room-field">
+              <label>BAŞLANGIÇ PARASI (mp_startmoney)</label>
+              <input type="number" id="cfg-startmoney" class="room-input" placeholder="800" />
+            </div>
+            <div style="display:flex;gap:1rem;">
+              <div class="room-field" style="flex:1;">
+                <label>YERÇEKİMİ (sv_gravity)</label>
+                <input type="number" id="cfg-gravity" class="room-input" placeholder="800" />
+              </div>
+              <div class="room-field" style="flex:1;">
+                <label>ROUND SÜRESİ (DK)</label>
+                <input type="number" id="cfg-roundtime" class="room-input" placeholder="5" />
+              </div>
+            </div>
+            <button class="toolbar-btn" style="width:100%;padding:0.8rem;border-color:var(--cs-yellow);color:var(--cs-yellow);font-weight:bold;margin-top:0.5rem;" id="btn-cfg-save">AYARLARI KAYDET VE SUNUCUYU YENİDEN BAŞLAT</button>
+          </div>
+
+          <!-- AMX MOD TAB -->
+          <div id="settings-amx-view" style="display:none;flex-direction:column;gap:1rem;">
+            <div style="font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);margin-bottom:0.5rem;">
+              AMX Mod sunucunuzda eklidir. Aşağıdan yeni bir Admin ekleyebilirsiniz. (Oyunda şifre ile giriş yapmak için konsola <code>setinfo _pw "şifreniz"</code> yazmanız gerekir).
+            </div>
+            <div class="room-field">
+              <label>OYUNCU (NICKNAME)</label>
+              <input type="text" id="amx-admin-name" class="room-input" placeholder="Örn: Oktay" />
+            </div>
+            <div class="room-field">
+              <label>ADMİN ŞİFRESİ</label>
+              <input type="text" id="amx-admin-pass" class="room-input" placeholder="Örn: gizli123" />
+            </div>
+            <button class="toolbar-btn" style="width:100%;padding:0.8rem;border-color:var(--cs-yellow);color:var(--cs-yellow);font-weight:bold;margin-top:0.5rem;" id="btn-amx-save">ADMİNİ EKLE VE SUNUCUYU YENİDEN BAŞLAT</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Oyun Seçimi</div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" id="tab-maps">HARİTALAR</button>
+          <button class="filter-tab" id="tab-servers">SUNUCULAR</button>
+          <button class="filter-tab" id="tab-admin" style="display:none;">ADMİN</button>
+        </div>
+        <input type="search" class="map-search" id="map-search" placeholder="de_dust2, cs_assault..." />
+      </div>
+      <div class="map-list" id="map-list">
+        <div style="padding:1rem;font-family:var(--font-hud);font-size:0.68rem;color:var(--text-dim);">Haritalar yükleniyor...</div>
+      </div>
+      <div class="map-list" id="server-list" style="display:none;padding:0.5rem;">
+        <button id="btn-create-server" class="toolbar-btn" style="width:100%;margin-bottom:0.8rem;padding:0.4rem;">+ YENİ SUNUCU KUR</button>
+        <div id="active-servers-container">
+          <div style="font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);text-align:center;padding:1rem;">Sunucu aranıyor...</div>
+        </div>
+      </div>
+      <div class="map-list" id="admin-panel" style="display:none;padding:0.6rem;">
+        <div class="admin-section-title">SUNUCU YÖNETİMİ (RCON)</div>
+        <div class="admin-field">
+          <label>HARİTA DEĞİŞTİR</label>
+          <div class="admin-field-row">
+            <select id="admin-map-select" class="room-select" style="flex:1;background:var(--bg-deep);border:1px solid var(--border-bright);color:var(--text-bright);font-family:var(--font-hud);font-size:0.82rem;padding:0.42rem 0.6rem;border-radius:4px;outline:none;">
+              <option value="de_dust2">de_dust2</option><option value="cs_assault">cs_assault</option>
+              <option value="de_inferno">de_inferno</option><option value="de_aztec">de_aztec</option>
+            </select>
+            <button class="toolbar-btn" id="btn-admin-changemap">DEĞİŞTİR</button>
+          </div>
+        </div>
+        <div class="admin-field">
+          <label>SUNUCU ŞİFRESİ</label>
+          <div class="admin-field-row">
+            <input type="text" id="admin-rcon-pass" class="room-input" style="flex:1;background:var(--bg-deep);border:1px solid var(--border-bright);color:var(--text-bright);font-family:var(--font-hud);font-size:0.82rem;padding:0.42rem 0.6rem;border-radius:4px;outline:none;" placeholder="Şifresiz" />
+            <button class="toolbar-btn" id="btn-admin-setpass">AYARLA</button>
+          </div>
+        </div>
+        <button class="toolbar-btn" style="width:100%;padding:0.5rem;margin-top:0.3rem;border-color:var(--cs-yellow);color:var(--cs-yellow);" id="btn-admin-restart">SUNUCUYU BAŞLAT</button>
+        <button class="toolbar-btn danger" style="width:100%;padding:0.5rem;margin-top:0.4rem;" id="btn-admin-stop">SUNUCUYU KAPAT</button>
+      </div>
+      <div class="sidebar-info">
+        <div id="map-count-info">📁 Haritalar ve Sunucular</div>
+        <div>🎮 CS 1.5 · Xash3D WASM</div>
+        <div>🌐 browsercs.com</div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main id="main">
+      <div id="preview-panel">
+        <div class="preview-bg"></div>
+        <div class="preview-grid"></div>
+        <div id="preview-content" style="position:relative;width:100%;max-width:700px;">
+          <div class="no-map-selected anim-fade-in" id="no-map-state">
+            <div class="icon">🎯</div>
+            <div>Soldan bir harita seçin</div>
+            <div class="hint">CS 1.5 · de_dust2, cs_assault, de_inferno ve daha fazlası</div>
+          </div>
+          <div class="map-preview-card anim-fade-in" id="map-card" style="display:none;">
+            <div class="map-thumb-hero" id="map-thumb-hero">
+              <div class="map-thumb-badge bomb" id="map-type-badge">BOMB DEFUSAL</div>
+            </div>
+            <div class="map-preview-body">
+              <div class="map-preview-title" id="card-map-name">de_dust2</div>
+              <div class="map-preview-type" id="card-map-type">BOMB DEFUSAL — COUNTER-STRIKE 1.5</div>
+              <div class="teams-row">
+                <div class="team-card ct"><div class="team-label">COUNTER-TERRORIST</div><div class="team-name" id="ct-team-capacity">8 Oyuncu</div></div>
+                <div class="vs-badge" id="vs-badge-text">8v8</div>
+                <div class="team-card t"><div class="team-label">TERRORIST</div><div class="team-name" id="t-team-capacity">8 Oyuncu</div></div>
+              </div>
+              <div class="room-settings-group">
+                <div class="room-field"><label>👤 KULLANICI ADI</label><input type="text" id="user-nickname" class="room-input" value="Player" placeholder="Oyuncu adı..." /></div>
+                <div class="room-field"><label>🏷️ SUNUCU ADI</label><input type="text" id="server-name-input" class="room-input" value="BrowserCS Oda" placeholder="Sunucu adı..." /></div>
+                <div class="room-field"><label>👥 KAPASİTE</label>
+                  <select id="max-players-select" class="room-select">
+                    <option value="4">4 Kişi</option><option value="8">8 Kişi</option><option value="12">12 Kişi</option>
+                    <option value="16" selected>16 Kişi</option><option value="24">24 Kişi</option><option value="32">32 Kişi</option>
+                  </select>
+                </div>
+              </div>
+              <button id="btn-launch">⭐ SUNUCU KUR (PREMIUM)</button>
+              <div class="launch-note">Xash3D WASM engine · WebGL2 gerekli · browsercs.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Server Browser -->
+      <div id="full-server-browser">
+        <div class="server-browser-header">
+          <div class="server-browser-title">🌐 SUNUCU TARAYICI <span style="font-size:0.82rem;color:var(--cs-yellow);font-family:var(--font-hud);" id="online-servers-count">(0 Açık)</span></div>
+          <div style="display:flex;gap:0.65rem;">
+            <button id="btn-refresh-servers" class="toolbar-btn">🔄 YENİLE</button>
+            <button id="btn-close-server-browser" class="toolbar-btn" style="border-color:var(--cs-red);color:var(--cs-red);">✕ KAPAT</button>
+          </div>
+        </div>
+        <div class="server-grid-container" id="full-active-servers-grid"></div>
+      </div>
+
+      <!-- Game Canvas -->
+      <div id="game-wrapper">
+        <div id="game-toolbar">
+          <div class="game-map-name" id="toolbar-map-name">de_dust2</div>
+          <div style="font-family:var(--font-hud);font-size:0.6rem;color:var(--text-dim);margin-left:0.3rem;">· BrowserCS</div>
+          <div class="toolbar-spacer"></div>
+          <div class="fps-counter" id="ram-display" style="color:var(--cs-yellow);">— RAM</div>
+          <div class="fps-counter" id="fps-display">— FPS</div>
+          <button class="toolbar-btn" id="btn-console">KONSOL [`]</button>
+          <button class="toolbar-btn" id="btn-map-change">HARİTA</button>
+          <button class="toolbar-btn danger" id="btn-quit">ÇIKIŞ</button>
+        </div>
+        <canvas id="canvas" width="1024" height="768" tabindex="0"></canvas>
+
+        <!-- Mouse lock tip -->
+        <div id="mouselock-tip">🖱️ Fare kilitlendi — ESC ile serbest bırak</div>
+
+        <!-- Keybind overlay -->
+        <div id="keybind-overlay">
+          <div class="keybind-title">⌨️ TUŞ ATAMALARI</div>
+          <div class="keybind-row"><span>Hareket</span><span class="keybind-key">WASD</span></div>
+          <div class="keybind-row"><span>Zıpla</span><span class="keybind-key">SPACE</span></div>
+          <div class="keybind-row"><span>Çömel</span><span class="keybind-key">CTRL</span></div>
+          <div class="keybind-row"><span>Yavaş</span><span class="keybind-key">SHIFT</span></div>
+          <div class="keybind-row"><span>Ateş</span><span class="keybind-key">MOUSE1</span></div>
+          <div class="keybind-row"><span>Nişan</span><span class="keybind-key">MOUSE2</span></div>
+          <div class="keybind-row"><span>Şarjör</span><span class="keybind-key">R</span></div>
+          <div class="keybind-row"><span>Satın Al</span><span class="keybind-key">B</span></div>
+          <div class="keybind-row"><span>Takım</span><span class="keybind-key">M</span></div>
+          <div class="keybind-row"><span>Skor</span><span class="keybind-key">TAB</span></div>
+          <div class="keybind-row"><span>Genel Chat</span><span class="keybind-key">Y</span></div>
+          <div class="keybind-row"><span>Takım Chat</span><span class="keybind-key">U</span></div>
+          <div class="keybind-row"><span>Silah</span><span class="keybind-key">1-5</span></div>
+        </div>
+
+        <!-- Reconnect overlay -->
+        <div id="reconnect-overlay">
+          <div class="reconnect-icon">🔌</div>
+          <div class="reconnect-title">BAĞLANTI KESİLDİ</div>
+          <div class="reconnect-msg">Sunucu bağlantısı koptu</div>
+          <button id="btn-reconnect">🔄 YENİDEN BAĞLAN</button>
+          <button class="toolbar-btn danger" onclick="location.reload()" style="margin-top:0.3rem;padding:0.45rem 1.5rem;">Sayfayı Yenile</button>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay">
+          <div class="loading-title">YÜKLENİYOR</div>
+          <div class="loading-map" id="loading-map-name">de_dust2</div>
+          <div class="loading-progress"><div class="loading-progress-fill" id="loading-progress-fill"></div></div>
+          <div class="loading-log" id="loading-log"></div>
+        </div>
+
+        <!-- Console -->
+        <div id="console-panel">
+          <div style="display:flex;gap:6px;position:absolute;top:0.4rem;right:0.8rem;z-index:50;">
+            <button id="btn-copy-console" class="console-copy-btn">LOGLAR</button>
+            <button id="btn-download-qconsole" class="console-copy-btn">QCONSOLE</button>
+          </div>
+          <div class="console-log" id="console-log"></div>
+          <div class="console-input-row">
+            <span class="console-prompt">]</span>
+            <input type="text" id="console-input" placeholder="Komut gir... (map de_dust2, noclip, sv_cheats 1)" />
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="notifications"></div>
+
+  <div id="fatal-error-overlay">
+    <div style="font-size:3rem;">💥</div>
+    <div style="color:#ff4444;font-size:1.4rem;font-weight:bold;font-family:var(--font-title);">ENGINE CRASH</div>
+    <div id="fatal-error-msg" style="color:#888;font-size:0.82rem;max-width:480px;text-align:center;font-family:var(--font-hud);"></div>
+    <div style="color:#555;font-size:0.7rem;font-family:var(--font-hud);">Genellikle eksik sprite/model kaynağından kaynaklanır.</div>
+    <button onclick="location.reload()" style="margin-top:10px;padding:10px 28px;background:#c0392b;border:none;color:#fff;font-family:var(--font-title);font-size:0.9rem;border-radius:4px;cursor:pointer;letter-spacing:2px;">SAYFAYI YENİLE</button>
+  </div>
+
+  <div id="premium-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:3000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--cs-yellow);border-radius:10px;padding:2.5rem;width:400px;text-align:center;font-family:var(--font-ui);">
+      <h2 style="font-family:var(--font-title);color:var(--cs-yellow);margin-bottom:1rem;font-size:1.5rem;letter-spacing:0.05em;">⭐ PREMIUM</h2>
+      <p style="font-size:0.9rem;color:var(--text-dim);margin-bottom:1.5rem;">Özel sunucu kurmak ve yönetici olmak için Premium üye olun.</p>
+      <div style="background:rgba(240,160,0,0.08);border:1px dashed var(--cs-yellow);padding:1rem;border-radius:6px;margin-bottom:1.5rem;">
+        <div style="font-size:2.2rem;font-weight:bold;color:var(--text-bright);font-family:var(--font-title);">350 ₺ <span style="font-size:0.9rem;color:var(--text-dim);font-weight:normal;font-family:var(--font-ui);">/ Aylık</span></div>
+      </div>
+      <ul style="text-align:left;font-size:0.88rem;color:var(--text-primary);margin-bottom:2rem;padding-left:1.5rem;line-height:1.9;">
+        <li>🛡️ <b>7/24 Açık</b> Özel CS 1.5 Sunucusu</li>
+        <li>👑 <b>Admin Paneli</b> ve RCON Erişimi</li>
+        <li>🗺️ <b>Sınırsız</b> Harita Değiştirme</li>
+        <li>💬 Premium Oyuncu Etiketi</li>
+      </ul>
+      <button id="btn-buy-premium" style="width:100%;padding:0.85rem;background:var(--cs-yellow);color:#050810;font-family:var(--font-title);font-size:1rem;font-weight:900;border:none;border-radius:4px;cursor:pointer;text-transform:uppercase;box-shadow:0 0 18px rgba(240,160,0,0.4);">💳 Satın Al</button>
+      <button onclick="document.getElementById('premium-modal').style.display='none'" style="margin-top:0.7rem;width:100%;padding:0.7rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);font-size:0.95rem;font-weight:600;border-radius:4px;cursor:pointer;">Daha Sonra</button>
+    </div>
+  </div>
+
+  <script type="module" src="/main.js?v=30"></script>
+
+
+  <!-- AUTH MODALS -->
+  <div id="login-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:4000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;width:320px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;text-align:center;">GİRİŞ YAP</h2>
+      <input type="email" id="login-email" class="room-input" placeholder="E-posta" style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
+      <input type="password" id="login-pass" class="room-input" placeholder="Şifre" style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
+      <button class="toolbar-btn" id="btn-submit-login" style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">GİRİŞ</button>
+      <button onclick="document.getElementById('login-modal').style.display='none'" style="margin-top:0.7rem;width:100%;padding:0.6rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);cursor:pointer;">İPTAL</button>
+    </div>
+  </div>
+
+  <div id="register-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:4000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;width:320px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;text-align:center;">KAYIT OL</h2>
+      <input type="text" id="reg-username" class="room-input" placeholder="Kullanıcı Adı" style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
+      <input type="email" id="reg-email" class="room-input" placeholder="E-posta" style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
+      <input type="password" id="reg-pass" class="room-input" placeholder="Şifre" style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
+      <button class="toolbar-btn" id="btn-submit-register" style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">KAYIT OL</button>
+      <button onclick="document.getElementById('register-modal').style.display='none'" style="margin-top:0.7rem;width:100%;padding:0.6rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);cursor:pointer;">İPTAL</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD MODAL -->
+  <div id="dashboard-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3500;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:6px;width:600px;max-width:90vw;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;flex-direction:column;max-height:80vh;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="font-family:var(--font-hud);color:var(--text-bright);font-size:1.2rem;margin:0;">KULLANICI PANELİ</h2>
+        <button onclick="document.getElementById('dashboard-modal').style.display='none'" style="background:transparent;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">&times;</button>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+        <div style="flex:1;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;text-align:center;">
+          <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">CÜZDAN BAKİYESİ</div>
+          <div style="font-family:var(--font-ui);font-size:1.8rem;color:var(--cs-yellow);font-weight:bold;"><span id="dash-wallet">0</span> <span style="font-size:1rem;">₺</span></div>
+          <button id="btn-add-balance" class="toolbar-btn" style="margin-top:0.8rem;font-size:0.7rem;padding:0.3rem 0.6rem;">+ BAKİYE YÜKLE</button>
+        </div>
+        <div style="flex:1;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+          <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">SUNUCU KİRALAMA</div>
+          <div style="font-family:var(--font-ui);font-size:0.8rem;color:var(--text-dim);text-align:center;margin-bottom:0.8rem;">Aylık 50 ₺ karşılığında kendi 7/24 açık sunucunuzu başlatın.</div>
+          <button id="btn-buy-server" class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);">50 ₺ - SATIN AL</button>
+        </div>
+      </div>
+
+      <h3 style="font-family:var(--font-hud);color:var(--text-bright);font-size:0.9rem;margin-bottom:0.8rem;">SATIN ALINAN SUNUCULARIM</h3>
+      <div id="my-servers-list" style="flex:1;overflow-y:auto;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:0.5rem;display:flex;flex-direction:column;gap:0.5rem;">
+        <!-- JS will populate this -->
+        <div style="text-align:center;padding:1rem;color:var(--text-dim);font-family:var(--font-ui);font-size:0.8rem;">Henüz satın aldığınız bir sunucu bulunmuyor.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVER MANAGEMENT MODAL -->
+  <div id="server-manage-modal" class="auth-modal-overlay">
+    <div class="auth-modal">
+      <div class="auth-modal-header">
+        <h2 class="auth-modal-title">Sunucu Yönetimi</h2>
+        <button class="auth-close-btn" id="close-manage-btn">✖</button>
+      </div>
+      <div class="auth-modal-body" style="display:flex;flex-direction:column;gap:1.5rem;">
+        <input type="hidden" id="manage-server-id">
+        
+        <!-- RCON Panel -->
+        <div style="background:var(--bg-deep); padding:1rem; border-radius:6px; border:1px solid var(--border);">
+          <h3 style="color:var(--cs-yellow); font-family:var(--font-title); margin-bottom:0.5rem; margin-top:0;">RCON Şifresi Ayarla</h3>
+          <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.5rem; margin-top:0;">Sunucu komutlarını oyun içinden kullanmak için RCON şifresi belirleyin.</p>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="rcon-password-input" class="auth-input" placeholder="Yeni RCON Şifresi" style="margin-bottom:0;">
+            <button id="btn-save-rcon" class="auth-submit-btn" style="width:auto; padding:0 1.5rem; margin-top:0;">Kaydet</button>
+          </div>
+        </div>
+
+        <!-- AMX Admin Panel -->
+        <div style="background:var(--bg-deep); padding:1rem; border-radius:6px; border:1px solid var(--border);">
+          <h3 style="color:#4caf50; font-family:var(--font-title); margin-bottom:0.5rem; margin-top:0;">AMX Mod Admin Ekle</h3>
+          <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.5rem; margin-top:0;">Oyuncu nickinizi ve bir admin şifresi girerek tam yetkili admin ekleyin.</p>
+          <input type="text" id="admin-name-input" class="auth-input" placeholder="Oyuncu Adı (örn: Player)">
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="admin-password-input" class="auth-input" placeholder="Admin Şifresi" style="margin-bottom:0;">
+            <button id="btn-save-admin" class="auth-submit-btn" style="width:auto; padding:0 1.5rem; margin-top:0;">Ekle</button>
+          </div>
+          <p style="font-size:0.75rem; color:#aaa; margin-top:0.5rem; margin-bottom:0;">Bilgi: Oyuna girmeden önce konsola <code style="color:#fff">setinfo _pw "Şifreniz"</code> yazmanız gerekir.</p>
+        </div>
+
+        <!-- Restart Panel -->
+        <div style="background:var(--bg-deep); padding:1rem; border-radius:6px; border:1px solid var(--border); text-align:center;">
+          <h3 style="color:#ff4444; font-family:var(--font-title); margin-bottom:0.5rem; margin-top:0;">Sunucu İşlemleri</h3>
+          <button id="btn-restart-server" class="auth-submit-btn" style="background: linear-gradient(135deg, #cc0000 0%, #ff4444 100%); margin-top:0.5rem;">Sunucuyu Yeniden Başlat</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

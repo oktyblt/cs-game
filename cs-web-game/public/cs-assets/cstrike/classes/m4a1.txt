@@ -1,0 +1,17 @@
+____________________________________________________________________________________________________________________________
+
+Fiyati			: 3100$
+Yapildigi Ü lke	: Amerika Birlesik Devletleri
+Kalibre		: 5.56mm NATO
+Sarjör Kapasitesi(CS)	: 30 mermi
+Atesleme Hizi(CS)	: 685 rpm
+Agirlik(Bos iken)	: 3.22 kg
+
+Ç ekirdek Agirligi	: 4 gram
+Ç ikis Hizi	: 884 metre/saniye
+Ç ikis Enerjisi	: 1570 joule
+
+
+
+
+
