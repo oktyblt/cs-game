@@ -1128,9 +1128,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v9.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v9.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v9.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v10.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v10.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v10.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
@@ -1294,9 +1294,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         },
 
       libraries: {
-        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v9.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v9.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32_v9.wasm',
+        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v10.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v10.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v10.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1304,10 +1304,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v9.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v9.wasm',
-        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v9.wasm',
-        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v9.wasm',
+        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v10.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v10.wasm',
+        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v10.wasm',
+        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v10.wasm',
       },
 
       module: {
