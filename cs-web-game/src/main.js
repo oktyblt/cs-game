@@ -429,71 +429,66 @@ class Xash3DWebSocket extends Xash3D {
     }
 
     async connectWs() {
-        return new Promise(resolve => {
+        return new Promise(async (resolve) => {
             if (!this.connectPort || this.connectPort === 'listen') {
                 resolve();
                 return;
             }
+            
             const role = this.isHost ? 'host' : 'client';
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            console.log(`[DEBUG] Connecting Xash3D Net WebRTC to port ${this.connectPort} (${role})`);
+            addConsoleLog(`[Ağ] WebRTC ile bağlanılıyor (${role.toUpperCase()}): port ${this.connectPort}`, 'warn');
             
-            let url;
-            if (!isNaN(this.connectPort)) {
-                url = `wss://backend.browsercs.com/ws/${this.connectPort}?role=${role}`;
-            } else {
-                // Durable Objects destekli standalone relay Worker
-                url = `wss://cs-relay.bymetal.workers.dev?room=${this.connectPort}&role=${role}`;
-            }
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            this.pc = pc;
 
-            console.log('[DEBUG] Connecting Xash3D Net WebSocket to', url);
-            addConsoleLog(`[Ağ] WebSocket köprüsüne bağlanılıyor (${role.toUpperCase()}): ${url}`, 'warn');
-            this.ws = new WebSocket(url);
-            this.ws.binaryType = 'arraybuffer';
+            // Gerçek UDP deneyimi: unordered ve maxRetransmits=0
+            const dc = pc.createDataChannel('xash3d', {
+                ordered: false,
+                maxRetransmits: 0
+            });
+            this.dc = dc;
+            dc.binaryType = 'arraybuffer';
             
-            this.ws.onopen = () => {
-                console.log('[DEBUG] Net WebSocket connected!');
-                addConsoleLog('[Ağ] WebSocket bağlantısı başarılı!', 'ok');
+            dc.onopen = () => {
+                console.log('[DEBUG] Net WebRTC DataChannel connected!');
+                addConsoleLog('[Ağ] WebRTC UDP-Kanalı bağlantısı başarılı!', 'ok');
                 
-                // Keep-alive ping: Proxy'nin (Cloudflare/Nginx) idle timeout'a düşmesini engellemek için
-                // 15 saniyede bir A2S_PING (0xFFFFFFFF 0x69) gönderiyoruz. 
-                // Bu sayede 80-90 saniyelik indirme süresinde WebSocket kapanmıyor.
+                // Keep-alive ping
                 this._keepAliveInterval = setInterval(() => {
-                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                        this.ws.send(new Uint8Array([0xFF, 0xFF, 0xFF, 0xFF, 0x69]));
+                    if (this.dc && this.dc.readyState === 'open') {
+                        try { this.dc.send(new Uint8Array([0xFF, 0xFF, 0xFF, 0xFF, 0x69])); } catch(e){}
                     }
                 }, 15000);
                 
                 resolve();
             };
             
-            this.ws.onerror = (e) => {
-                console.error('[DEBUG] Net WebSocket error', e);
-                addConsoleLog('[Ağ] WebSocket bağlantı hatası!', 'err');
+            dc.onerror = (e) => {
+                console.error('[DEBUG] Net WebRTC DataChannel error', e);
+                addConsoleLog('[Ağ] WebRTC bağlantı hatası!', 'err');
                 resolve();
             };
             
-            this.ws.onclose = (e) => {
+            dc.onclose = () => {
                 if (this._keepAliveInterval) clearInterval(this._keepAliveInterval);
-                console.log('[DEBUG] Net WebSocket closed', e);
-                addConsoleLog(`[Ağ] WebSocket bağlantısı kapandı! Kod: ${e.code}`, 'err');
+                console.log('[DEBUG] Net WebRTC DataChannel closed');
+                addConsoleLog(`[Ağ] WebRTC bağlantısı kapandı!`, 'err');
             };
             
-            this.ws.onmessage = async (e) => {
+            dc.onmessage = async (e) => {
                 let buffer;
-                
                 try {
                     if (e.data instanceof ArrayBuffer) {
                         buffer = e.data;
                     } else if (e.data && typeof e.data.arrayBuffer === 'function') {
-                        // Works for Blobs even if instanceof Blob fails (cross-realm issues)
                         buffer = await e.data.arrayBuffer();
                     } else if (typeof e.data === 'string') {
-                        // Fallback for strings
-                        console.warn('[Ağ Log] Uyarı: WebSocket verisi string olarak geldi. Çevriliyor...');
                         const enc = new TextEncoder();
                         buffer = enc.encode(e.data).buffer;
                     } else {
-                        console.warn('[Ağ Log] Hata: Bilinmeyen WebSocket veri tipi!', e.data);
                         return;
                     }
                 } catch (err) {
@@ -505,13 +500,9 @@ class Xash3DWebSocket extends Xash3D {
                 
                 this.packetCountRecv++;
                 if (this.packetCountRecv <= 20) {
-                    console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı. Type: ${e.data.constructor.name}`);
-                    addConsoleLog(`[Ağ] Paket #${this.packetCountRecv} alındı: ${buffer.byteLength} byte`, 'ok');
+                    console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı.`);
                 }
 
-                // IP/Port Spoofing:
-                // Host tarafı gelen paketi kendisinin sanmamalı (loopback çakışması önlenir)
-                // Client tarafı ise paketin 10.0.0.1:27015 (Sanal Sunucu) adresinden geldiğini bilmeli
                 const srcIp = this.isHost ? [10, 0, 0, 2] : [10, 0, 0, 1];
                 const srcPort = this.isHost ? 27005 : 27015;
                 
@@ -521,13 +512,63 @@ class Xash3DWebSocket extends Xash3D {
                     data: new Int8Array(buffer)
                 };
 
-                // Push instantly to the engine queue without artificial rate limiting
                 try {
                     this.net.incoming.enqueue(packet);
                 } catch (err) {
                     console.error("[Ağ Log] Xash3D enqueue hatası:", err);
                 }
             };
+
+            pc.onicecandidate = async (e) => {
+                if (e.candidate && this.peerId) {
+                    fetch(`${API_URL}/webrtc/candidate/${this.peerId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ candidate: e.candidate.candidate, mid: e.candidate.sdpMid })
+                    }).catch(() => {});
+                }
+            };
+
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                const res = await fetch(`${API_URL}/webrtc/offer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gamePort: this.connectPort, sdp: pc.localDescription.sdp })
+                });
+                
+                if (!res.ok) throw new Error('Signaling server responded with ' + res.status);
+                
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                this.peerId = data.peerId;
+                await pc.setRemoteDescription(new RTCSessionDescription({ type: data.type, sdp: data.sdp }));
+
+                // Sunucudan gelen ICE adaylarını topla
+                this._candidateInterval = setInterval(async () => {
+                    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+                        clearInterval(this._candidateInterval);
+                        return;
+                    }
+                    try {
+                        const cRes = await fetch(`${API_URL}/webrtc/candidates/${this.peerId}`);
+                        if (cRes.ok) {
+                            const cands = await cRes.json();
+                            for (let c of cands) {
+                                await pc.addIceCandidate(new RTCIceCandidate({ candidate: c.candidate, sdpMid: c.mid })).catch(()=>{});
+                            }
+                        }
+                    } catch(err){}
+                }, 1000);
+
+            } catch (err) {
+                console.error('[WebRTC] Signaling Hatası:', err);
+                addConsoleLog('[Ağ] WebRTC Signaling Hatası: ' + err.message, 'err');
+                resolve();
+            }
         });
     }
 
@@ -535,26 +576,16 @@ class Xash3DWebSocket extends Xash3D {
         if (packet.ip) this.lastTargetIp = packet.ip;
         if (packet.port) this.lastTargetPort = packet.port;
 
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        if (!this.dc || this.dc.readyState !== 'open') return;
 
         const ip = packet.ip;
 
         if (this.isHost) {
-            // HOST (Listen Server) mode:
-            // The engine runs BOTH an in-process server AND in-process client.
-            // Loopback traffic (server↔internal-client) must NOT be relayed to external players.
-            // We only relay packets destined for external clients (NOT 127.x.x.x loopback).
-            if (!ip || ip[0] === 127) {
-                // Loopback packet — skip relay
-                return;
-            }
+            // HOST (Listen Server) mode
+            if (!ip || ip[0] === 127) return;
         } else {
-            // CLIENT mode:
-            // Only relay packets heading TO the server address (10.0.0.1:27015).
-            // Any other destination (broadcast, etc.) should be dropped.
-            if (!ip || ip[0] !== 10) {
-                return;
-            }
+            // CLIENT mode
+            if (!ip || ip[0] !== 10) return;
         }
 
         this.packetCountSend++;
@@ -564,9 +595,10 @@ class Xash3DWebSocket extends Xash3D {
             addConsoleLog(`[Ağ] Paket #${this.packetCountSend} gönderiliyor: ${packet.data.byteLength} byte`, 'ok');
         }
 
-        // Force clean ArrayBuffer for binary WebSocket transmission
         const cleanBuffer = new Uint8Array(packet.data).buffer;
-        this.ws.send(cleanBuffer);
+        try {
+            this.dc.send(cleanBuffer);
+        } catch(e) {}
     }
 
 }
