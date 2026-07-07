@@ -379,15 +379,21 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
       return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
     }
     
-    // UUID (id parametresi) üzerinden Supabase purchased_servers satırını bul
+    const portBindings = info.HostConfig.PortBindings['27015/udp'];
+    const portStr = portBindings ? portBindings[0].HostPort : null;
+    if (!portStr) {
+      return res.status(404).json({ success: false, error: 'Sunucu port bilgisi bulunamadı.' });
+    }
+
+    // Port üzerinden Supabase purchased_servers satırını bul (id container_id olduğu için)
     const { data: dbServer, error: fetchErr } = await supabase
       .from('purchased_servers')
       .select('*')
-      .eq('id', id)
+      .eq('port', parseInt(portStr))
       .single();
 
     if (fetchErr || !dbServer) {
-      return res.status(404).json({ success: false, error: 'Sunucu veritabanında bulunamadı.' });
+      return res.status(404).json({ success: false, error: 'Sunucu veritabanında bulunamadı (port: ' + portStr + ').' });
     }
 
     // Update payload oluştur
@@ -408,14 +414,14 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
     const userSupabase = createClient(
       'https://nobzqygwzuqdlipnuchi.supabase.co',
       'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-',
-      { global: { headers: { Authorization: \`Bearer \${token}\` } } }
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
     if (Object.keys(updates).length > 0) {
       const { error: updateErr } = await userSupabase
         .from('purchased_servers')
         .update(updates)
-        .eq('id', id);
+        .eq('id', dbServer.id);
         
       if (updateErr) {
         return res.status(500).json({ success: false, error: 'Ayarlar veritabanına kaydedilemedi: ' + updateErr.message });
@@ -424,7 +430,7 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
 
     // Ayarları dosyaya tekrar yaz
     const port = dbServer.port;
-    const configDir = \`/home/ubuntu/server_configs/\${port}\`;
+    const configDir = `/home/ubuntu/server_configs/${port}`;
     fs.mkdirSync(configDir, { recursive: true });
 
     // Mevcut değerleri al
@@ -435,21 +441,21 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
     const s_admin = updates.admin_name !== undefined ? updates.admin_name : (dbServer.admin_name || '');
     const s_pass = updates.admin_password !== undefined ? updates.admin_password : (dbServer.admin_password || '');
 
-    const serverCfgContent = \`
-hostname "\${dbServer.name}"
-rcon_password "\${s_rcon}"
-mp_startmoney \${s_money}
-sv_gravity \${s_grav}
-mp_roundtime \${s_round}
+    const serverCfgContent = `
+hostname "${dbServer.name}"
+rcon_password "${s_rcon}"
+mp_startmoney ${s_money}
+sv_gravity ${s_grav}
+mp_roundtime ${s_round}
 mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
-\`;
+`;
     fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent.trim());
 
-    let usersIniContent = \`\`;
+    let usersIniContent = ``;
     if (s_admin) {
-      usersIniContent = \`"\${s_admin}" "\${s_pass || ''}" "abcdefghijklmnopqrstu" "a"\\n\`;
+      usersIniContent = `"${s_admin}" "${s_pass || ''}" "abcdefghijklmnopqrstu" "a"\n`;
     }
     fs.writeFileSync(path.join(configDir, 'users.ini'), usersIniContent);
 
