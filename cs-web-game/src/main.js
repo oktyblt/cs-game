@@ -733,11 +733,41 @@ const consoleInput    = $('console-input');
 const btnConsole      = $('btn-console');
 const btnCopyConsole  = $('btn-copy-console');
 const btnDownloadQConsole = $('btn-download-qconsole');
-const notifContainer  = $('notifications');
+const notifContainer  = $('notifications')
 const mapCountInfo    = $('map-count-info');
 const tabMaps         = $('tab-maps');
 const tabServers      = $('tab-servers');
 const tabAdmin        = $('tab-admin');
+
+// === AWP Scope CSS Overlay ===
+const scopeOverlay = document.createElement('div');
+scopeOverlay.id = 'scope-overlay';
+scopeOverlay.style.cssText = [
+  'position:fixed',
+  'inset:0',
+  'z-index:9999',
+  'pointer-events:none',
+  'display:none',
+  // Siyah maske + yuvarlak şeffaf delik — CS 1.6 ölçeği (ekran yüksekliğinin %72'si)
+  'background:radial-gradient(circle closest-side at 50% 50%, transparent 72%, rgba(0,0,0,0.97) 73%)',
+].join(';');
+// Crosshair çizgiler için overlay içi SVG
+scopeOverlay.innerHTML = `
+<svg style="position:absolute;inset:0;width:100%;height:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">
+  <!-- Yatay çizgi -->
+  <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="black" stroke-width="1" opacity="0.9"/>
+  <!-- Dikey çizgi -->
+  <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="black" stroke-width="1" opacity="0.9"/>
+  <!-- Merkez kırmızı nokta -->
+  <circle cx="50%" cy="50%" r="2" fill="red"/>
+</svg>`;
+document.body.appendChild(scopeOverlay);
+
+// WASM scope sinyali — sniperscope.cpp'den EM_ASM ile çağrılır
+window._setScopeVisible = function(visible) {
+  scopeOverlay.style.display = visible ? 'block' : 'none';
+};
+
 const serverList      = $('server-list');
 const btnCreateServer = $('btn-create-server');
 const adminPanel      = $('admin-panel');
@@ -1128,9 +1158,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v10.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v10.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v10.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v16.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v16.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v16.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
@@ -1294,9 +1324,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         },
 
       libraries: {
-        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v10.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v10.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32_v10.wasm',
+        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v16.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v16.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v16.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1304,10 +1334,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v10.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v10.wasm',
-        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v10.wasm',
-        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v10.wasm',
+        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v16.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v16.wasm',
+        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v16.wasm',
+        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v16.wasm',
       },
 
       module: {
@@ -1422,6 +1452,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                 '/wasm/cstrike_sound.pk3',
                 '/wasm/cstrike_sprites.pk3',
                 '/wasm/cstrike_essential.pk3',
+                '/wasm/buy_menus.pk3?nocache=1',
                 '/wasm/valve_models.pk3',
                 '/wasm/valve_sound.pk3',
                 '/wasm/valve_sprites.pk3',
@@ -1430,27 +1461,59 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                 '/wasm/cstrike_wads.pk3'
              ];
              
-             let loadedCount = 0;
-             for (const file of pk3Files) {
-                try {
-                   addLoadingLog(`İndiriliyor: ${file.split('/').pop()}...`);
-                   const res = await cachedFetch(file);
-                   if (res.ok) {
-                       const buf = new Uint8Array(await res.arrayBuffer());
-                       const filename = file.split('/').pop();
-                       const targetPath = file.includes('valve_') ? `/valve/${filename}` : `/cstrike/${filename}`;
-                       em.FS.writeFile(targetPath, buf);
-                       loadedCount++;
-                       setProgress(20 + Math.floor((loadedCount / pk3Files.length) * 60), `İndirildi: ${filename}`);
-                   }
-                } catch (e) {
-                   console.error(`[Assets] Dosya indirilemedi: ${file}`, e);
-                }
-             }
+              let loadedCount = 0;
+              for (const file of pk3Files) {
+                 try {
+                    const rawFile = file.split('?')[0];
+                    const filename = rawFile.split('/').pop();
+                    const targetPath = rawFile.includes('valve_') ? `/valve/${filename}` : `/cstrike/${filename}`;
+                    addLoadingLog(`İndiriliyor: ${filename}...`);
+                    // buy_menus.pk3 için cache bypass
+                    const isBuyMenus = rawFile.includes('buy_menus');
+                    const res = isBuyMenus
+                       ? await fetch(rawFile, { cache: 'no-store' })
+                       : await cachedFetch(file);
+                    if (res && res.ok) {
+                        const buf = new Uint8Array(await res.arrayBuffer());
+                        em.FS.writeFile(targetPath, buf);
+                        loadedCount++;
+                        setProgress(20 + Math.floor((loadedCount / pk3Files.length) * 60), `İndirildi: ${filename}`);
+                    }
+                 } catch (e) {
+                    console.error(`[Assets] Dosya indirilemedi: ${file}`, e);
+                 }
+              }
              addLoadingLog(`📦 ${loadedCount} adet oyun paketi (.pk3) başarıyla sisteme yazıldı.`, 'ok');
              console.log("[DEBUG VFS] /cstrike/ contents:", em.FS.readdir('/cstrike'));
              console.log("[DEBUG VFS] /valve/ contents:", em.FS.readdir('/valve'));
              
+              // CS 1.5 buy CFG'leri - cstrike/custom/touch/ = Xash3D en yüksek öncelikli dizin
+              const buyMenuCFGs = ['buy_pistol_t','buy_pistol_ct','buy_rifle_t','buy_rifle_ct',
+                                   'buy_submachinegun_t','buy_submachinegun_ct',
+                                   'buy_machinegun_t','buy_machinegun_ct',
+                                   'buy_shotgun_t','buy_shotgun_ct'];
+              try { em.FS.mkdir('/cstrike/custom'); } catch(e) {}
+              try { em.FS.mkdir('/cstrike/custom/touch'); } catch(e) {}
+              try { em.FS.mkdir('/cstrike/touch'); } catch(e) {}
+              let cfgWritten = 0;
+              for (const cfgName of buyMenuCFGs) {
+                 try {
+                    const r = await fetch(`/wasm/touch/${cfgName}.cfg`, { cache: 'no-store' });
+                    if (r.ok) {
+                       const buf = new Uint8Array(await r.arrayBuffer());
+                       // #1 oncelik: cstrike/custom/touch/ (Xash3D en yuksek oncelik)
+                       em.FS.writeFile(`/cstrike/custom/touch/${cfgName}.cfg`, buf);
+                       // #2 fallback: cstrike/touch/
+                       em.FS.writeFile(`/cstrike/touch/${cfgName}.cfg`, buf);
+                       cfgWritten++;
+                       console.log(`[BuyMenu] Yazildi: ${cfgName}.cfg (${buf.length}B)`);
+                    } else {
+                       console.error(`[BuyMenu] HATA: ${cfgName}.cfg HTTP ${r.status}`);
+                    }
+                 } catch(e) { console.error(`[BuyMenu] Exception: ${cfgName}`, e); }
+              }
+              addLoadingLog(`CS 1.5 buy CFGleri yazildi: ${cfgWritten}/${buyMenuCFGs.length}`, 'ok');
+              console.log('[BuyMenu] custom/touch VFS:', em.FS.readdir('/cstrike/custom/touch'));
              // Fetch custom localized files to override pk3 defaults
              const customTexts = [
                 '/cs-assets/cstrike/motd.txt',
@@ -1542,19 +1605,15 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           ];
           missingSprites.forEach(path => em.FS.writeFile(path, dummySprBuffer));
 
-          // CS 1.6 Sniper Scope dummy TGA files (CS 1.5 assets lack these, causing client.dll to crash)
-          const tgaWidth = 16, tgaHeight = 16;
-          const tgaHeader = new Uint8Array([0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, tgaWidth & 0xFF, (tgaWidth >> 8) & 0xFF, tgaHeight & 0xFF, (tgaHeight >> 8) & 0xFF, 32, 8]);
-          const tgaData = new Uint8Array(tgaWidth * tgaHeight * 4);
-          const dummyTga = new Uint8Array(tgaHeader.length + tgaData.length);
-          dummyTga.set(tgaHeader);
-          dummyTga.set(tgaData, tgaHeader.length);
-          
-          em.FS.writeFile('/cstrike/sprites/scope_arc_nw.tga', dummyTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_ne.tga', dummyTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_sw.tga', dummyTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_se.tga', dummyTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc.tga', dummyTga);
+          // Scope arc TGA stubs (sniperscope.cpp uses scanline rendering now, not TGA textures)
+          // Write minimal valid 1x1 transparent TGA files to avoid file-not-found crashes
+          const stubTga = new Uint8Array([0,0,2,0,0,0,0,0,0,0,0,0, 1,0, 1,0, 32,8,  0,0,0,0]);
+          em.FS.writeFile('/cstrike/sprites/scope_arc_nw.tga', stubTga);
+          em.FS.writeFile('/cstrike/sprites/scope_arc_ne.tga', stubTga);
+          em.FS.writeFile('/cstrike/sprites/scope_arc_se.tga', stubTga);
+          em.FS.writeFile('/cstrike/sprites/scope_arc_sw.tga', stubTga);
+          em.FS.writeFile('/cstrike/sprites/scope_arc.tga',    stubTga);
+
 
           // DLL dosyaları
           em.FS.writeFile('/cstrike/dlls/cs_emscripten_wasm32.wasm', csServerBuffer);
@@ -1616,6 +1675,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           if (log.includes('Could not get TCP/IPv6 address')) return;
           if (log.includes('File exists from loopback')) return;
           if (log.includes('ScriptProcessorNode')) return;
+          // BUY DEBUG: silah satın alma logları
+          if (log.includes('[BUY_DEBUG]')) {
+            console.warn('%c' + log, 'color: #ff0; background: #000; font-weight: bold; font-size: 13px;');
+            addConsoleLog('🛒 ' + log, 'warn');
+            return;
+          }
           // İZLEM: Disconnect/kick sebebini bul
           if (log.includes('Disconnect') || log.includes('disconnect') ||
               log.includes('CRC') || log.includes('differ') ||
@@ -2667,8 +2732,11 @@ async function runSplash() {
     setTimeout(() => {
       splashEl.style.opacity = '0';
       setTimeout(() => splashEl.remove(), 500);
-      // boot(); // We will call renderMaps instead if boot doesn't exist
       renderMapList();
+      // Site açılınca sunucu menüsünü otomatik göster
+      setTimeout(() => {
+        if (tabServers) tabServers.click();
+      }, 600);
     }, 800);
   } else {
     splashStatus.innerHTML = '<span style="color:var(--cs-red);">Hata: Eksik dosyalar veya bağlantı sorunu var!</span>';

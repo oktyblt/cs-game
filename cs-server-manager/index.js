@@ -3,6 +3,16 @@ const cors = require('cors');
 const Docker = require('dockerode');
 const nodeDataChannel = require('node-datachannel');
 require('dotenv').config();
+const dgram = require('dgram');
+
+// Node.js < 22 için global WebSocket polyfill
+global.WebSocket = require('ws');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  'https://nobzqygwzuqdlipnuchi.supabase.co',
+  'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-'
+);
 
 const app = express();
 app.use(cors());
@@ -15,14 +25,24 @@ const DOCKER_IMAGE = process.env.DOCKER_IMAGE || 'xash3d-cs15-server:latest';
 
 // Utility to create a server
 async function createServerContainer(options) {
-  const { map, maxplayers, name, port, isOfficial } = options;
+  const { map, maxplayers, name, port, isOfficial, owner_id } = options;
 
   // We map the container's 27015 UDP port to the host's `port`
   const container = await docker.createContainer({
     Image: DOCKER_IMAGE,
     name: `cs15-${port}`,
     Tty: true,
+    Cmd: [
+      'sh', '-c',
+      `cd /opt/xashds && exec ./xash -dedicated -game cstrike +map "${map}" +maxplayers "${maxplayers}" +hostname "${name}" +sv_lan 1 +port 27015 +mp_consistency 0 +sv_consistency 0 +sv_fileconsistency 0`
+    ],
     HostConfig: {
+      Binds: [
+        '/home/ubuntu/xashds/xashds-linux-i386/xash:/opt/xashds/xash',
+        '/home/ubuntu/xashds/xashds-linux-i386/filesystem_stdio.so:/opt/xashds/filesystem_stdio.so',
+        '/home/ubuntu/valve:/opt/xashds/valve',
+        '/home/ubuntu/cstrike:/opt/xashds/cstrike'
+      ],
       PortBindings: {
         '27015/udp': [{ HostPort: port.toString() }],
         '27015/tcp': [{ HostPort: port.toString() }]
@@ -40,7 +60,8 @@ async function createServerContainer(options) {
       'isOfficial': isOfficial ? 'true' : 'false',
       'serverName': name,
       'mapName': map,
-      'maxPlayers': maxplayers.toString()
+      'maxPlayers': maxplayers.toString(),
+      'owner_id': owner_id || ''
     }
   });
 
@@ -48,7 +69,7 @@ async function createServerContainer(options) {
   
   try {
     const exec = await container.exec({
-      Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nmp_timelimit 30\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\nrcon_password "browsercs"\n\' >> cstrike/server.cfg'],
+      Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\nrcon_password "browsercs"\n\' >> cstrike/server.cfg'],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
@@ -59,7 +80,21 @@ async function createServerContainer(options) {
   return container;
 }
 
-app.post('/api/start-server', async (req, res) => {
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: 'Oturum açmanız gerekiyor' });
+  }
+  const token = authHeader.split(' ')[1];
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return res.status(401).json({ success: false, error: 'Geçersiz veya süresi dolmuş oturum' });
+  }
+  req.user = user;
+  next();
+}
+
+app.post('/api/start-server', requireAuth, async (req, res) => {
   try {
     const { map, maxplayers, name, host } = req.body;
     
@@ -71,7 +106,8 @@ app.post('/api/start-server', async (req, res) => {
       maxplayers: maxplayers || 16,
       name: name || `${host}'s Server`,
       port: port,
-      isOfficial: false
+      isOfficial: false,
+      owner_id: req.user.id
     });
 
     res.json({ success: true, containerId: container.id, port });
@@ -81,7 +117,7 @@ app.post('/api/start-server', async (req, res) => {
   }
 });
 
-const dgram = require('dgram');
+// removed duplicate dgram
 
 function queryA2S(ip, port) {
   return new Promise((resolve) => {
@@ -207,6 +243,7 @@ app.get('/api/servers', async (req, res) => {
         maxplayers: maxPlayers,
         port: port,
         isOfficial: isOfficial,
+        owner_id: c.Labels.owner_id || null,
         state: c.State
       };
     }));
@@ -250,12 +287,15 @@ app.delete('/api/admin/servers/:id', requireAdmin, async (req, res) => {
 });
 
 // Server Yönetim Endpoint'leri (YENİ SİSTEM)
-app.post('/api/servers/:id/command', async (req, res) => {
+app.post('/api/servers/:id/command', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { rconPassword, command } = req.body;
     const container = docker.getContainer(id);
     const info = await container.inspect();
+    if (info.Config.Labels.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+    }
     const portBind = info.NetworkSettings.Ports['27015/udp'];
     if (!portBind) throw new Error('Sunucu kapalı');
     const port = parseInt(portBind[0].HostPort);
@@ -267,11 +307,15 @@ app.post('/api/servers/:id/command', async (req, res) => {
   }
 });
 
-app.post('/api/servers/:id/settings', async (req, res) => {
+app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { rconPassword, startMoney, gravity, roundTime, c4Timer, adminName, adminPassword } = req.body;
     const container = docker.getContainer(id);
+    const info = await container.inspect();
+    if (info.Config.Labels.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+    }
     
     let cfgCmds = [];
     if (rconPassword) cfgCmds.push(`rcon_password "${rconPassword}"`);
@@ -305,15 +349,19 @@ app.post('/api/servers/:id/settings', async (req, res) => {
 });
 
 // Eski / Eski kalıntıları silmeye gerek yok, geriye dönük uyumluluk kalsın
-app.post('/api/servers/:id/restart', async (req, res) => {
+app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const container = docker.getContainer(id);
+    const info = await container.inspect();
+    if (info.Config.Labels.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+    }
     
     // Güvenlik ve timeout fix'i için restart anında da config basıyoruz
     try {
       const exec = await container.exec({
-        Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nmp_timelimit 30\nmp_consistency 0\nsv_consistency 0\n\' >> cstrike/server.cfg'],
+        Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_consistency 0\nsv_consistency 0\n\' >> cstrike/server.cfg'],
         AttachStdout: true, AttachStderr: true
       });
       await exec.start();
@@ -328,7 +376,7 @@ app.post('/api/servers/:id/restart', async (req, res) => {
 
 // Start official servers on startup
 async function startOfficialServers() {
-  const officialMaps = ['de_dust2', 'de_dust', 'de_inferno', 'de_aztec'];
+  const officialMaps = ['de_dust2', 'de_dust', 'de_inferno', 'de_aztec', 'fy_iceworld'];
   let startingPort = 27015;
 
   try {
@@ -370,7 +418,21 @@ async function startOfficialServers() {
 }
 // --- WEBRTC SIGNALING & RELAY ---
 const peers = new Map();
-const rtcConfig = { iceServers: ['stun:stun.l.google.com:19302'] };
+// STUN/TURN sunucuları - 5 STUN + 3 TURN ile NAT traversal güvenilirliği artırıldı
+const rtcConfig = {
+  iceServers: [
+    'stun:stun.l.google.com:19302',
+    'stun:stun1.l.google.com:19302',
+    'stun:stun2.l.google.com:19302',
+    'stun:stun3.l.google.com:19302',
+    'stun:stun.cloudflare.com:3478',
+    'stun:relay.metered.ca:80',
+    'turn:relay.metered.ca:80?transport=udp&username=openrelayproject&credential=openrelayproject',
+    'turn:relay.metered.ca:443?transport=tcp&username=openrelayproject&credential=openrelayproject',
+    'turns:relay.metered.ca:443?transport=tcp&username=openrelayproject&credential=openrelayproject'
+  ],
+  iceTransportPolicy: 'all'
+};
 
 app.post('/webrtc/offer', (req, res) => {
   const { gamePort, sdp } = req.body;
@@ -388,7 +450,11 @@ app.post('/webrtc/offer', (req, res) => {
       udpSocket.send(buf, gamePort, '127.0.0.1');
     });
     dataChannel.onClosed(() => {
-      try { udpSocket.close(); } catch(e) {}
+      console.log(`[WebRTC] DataChannel kapandı - peer ${peerId} disconnect`);
+      // Xash3D disconnect paketi gönder (0xff 0xff 0xff 0xff + "disconnect\n")
+      const disc = Buffer.from([0xff, 0xff, 0xff, 0xff, ...Buffer.from('disconnect\n')]);
+      try { udpSocket.send(disc, gamePort, '127.0.0.1'); } catch(e) {}
+      setTimeout(() => { try { udpSocket.close(); } catch(e) {} }, 500);
     });
   });
 
@@ -413,10 +479,16 @@ app.post('/webrtc/offer', (req, res) => {
 
   peer.onStateChange((state) => {
     console.log(`[WebRTC] Peer ${peerId} state: ${state}`);
-    if (state === 'failed' || state === 'closed') {
-      try { udpSocket.close(); } catch(e) {}
-      peers.delete(peerId);
-      peer.close();
+    if (state === 'failed' || state === 'closed' || state === 'disconnected') {
+      // Disconnect sinyali gönder
+      const disc = Buffer.from([0xff, 0xff, 0xff, 0xff, ...Buffer.from('disconnect\n')]);
+      try { udpSocket.send(disc, gamePort, '127.0.0.1'); } catch(e) {}
+      // Cleanup'ı geciktir: client hala candidates polling yapıyor olabilir
+      setTimeout(() => {
+        try { udpSocket.close(); } catch(e) {}
+        peers.delete(peerId);
+        try { peer.close(); } catch(e) {}
+      }, 5000);
     }
   });
 
@@ -431,7 +503,8 @@ app.post('/webrtc/offer', (req, res) => {
 
 app.get('/webrtc/candidates/:peerId', (req, res) => {
   const p = peers.get(req.params.peerId);
-  if (!p) return res.status(404).json({ error: 'Not found' });
+  // 404 yerine boş array dön - client retry yapabilsin
+  if (!p) return res.json([]);
   const toSend = [...p.candidates];
   p.candidates = [];
   res.json(toSend);

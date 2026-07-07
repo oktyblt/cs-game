@@ -174,6 +174,8 @@ T_BuyItem
 \w4. El Bombasi\y\R300
 \w5. Sis Bombasi\y\R300
 \w6. Gecegorus Gozlukleri\y\R1250
+\d7. -
+\d8. -
 
 \w0. Kapat
 }
@@ -253,9 +255,12 @@ T_BuyRifle
 
 \w1. AK-47\y\R2500
 \w2. Sig SG-552 Commando\y\R3500
+\d3. -
+\d4. -
 \w5. Steyr Scout\y\R2750
 \w6. AI Arctic Warfare/Magnum\y\R4750
 \w7. H&K G3/SG-1 Sniper Rifle\y\R5000
+\d8. -
 
 \w0. Kapat
 }
@@ -264,10 +269,13 @@ CT_BuyRifle
 {
 \yCatisma Tufekleri (Ana Silah)\R$   Fiyat
 
+\d1. -
+\d2. -
 \w3. Colt M4A1 Carbine\y\R3100
 \w4. Steyr Aug\y\R3500
 \w5. Steyr Scout\y\R2750
 \w6. AI Arctic Warfare/Magnum\y\R4750
+\d7. -
 \w8. Sig SG-550 Sniper\y\R4200
 
 \w0. Kapat

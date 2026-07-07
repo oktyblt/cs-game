@@ -53,24 +53,46 @@ export async function initAuth() {
 
   // Login
   document.getElementById('btn-submit-login').onclick = async () => {
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-pass').value;
-    const { error } = await signIn(email, pass);
-    if (error) alert('Hata: ' + error.message);
-    else loginModal.style.display = 'none';
+    const btn = document.getElementById('btn-submit-login');
+    const originalText = btn.textContent;
+    btn.textContent = 'Giriş Yapılıyor...';
+    btn.disabled = true;
+    try {
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-pass').value;
+      const { error } = await signIn(email, pass);
+      if (error) alert('Hata: ' + error.message);
+      else loginModal.style.display = 'none';
+    } catch(err) {
+      alert('Beklenmeyen bir hata oluştu: ' + err.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
   };
 
   // Register
   document.getElementById('btn-submit-register').onclick = async () => {
-    const user = document.getElementById('reg-username').value;
-    const email = document.getElementById('reg-email').value;
-    const pass = document.getElementById('reg-pass').value;
-    const { error } = await signUp(email, pass, user);
-    if (error) alert('Hata: ' + error.message);
-    else {
-      alert('Kayıt başarılı! Giriş yapabilirsiniz.');
-      registerModal.style.display = 'none';
-      loginModal.style.display = 'flex';
+    const btn = document.getElementById('btn-submit-register');
+    const originalText = btn.textContent;
+    btn.textContent = 'Kayıt Olunuyor...';
+    btn.disabled = true;
+    try {
+      const user = document.getElementById('reg-username').value;
+      const email = document.getElementById('reg-email').value;
+      const pass = document.getElementById('reg-pass').value;
+      const { error } = await signUp(email, pass, user);
+      if (error) alert('Hata: ' + error.message);
+      else {
+        alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+        registerModal.style.display = 'none';
+        loginModal.style.display = 'flex';
+      }
+    } catch(err) {
+      alert('Beklenmeyen bir hata oluştu: ' + err.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
   };
 
@@ -259,4 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 export function getCurrentUsername() {
   return currentProfile ? currentProfile.username : null;
+}
+
+export function getCurrentUser() {
+  return currentUser;
+}
+
+export async function getSessionToken() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || null;
 }
