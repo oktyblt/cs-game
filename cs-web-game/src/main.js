@@ -739,9 +739,33 @@ const tabMaps         = $('tab-maps');
 const tabServers      = $('tab-servers');
 const tabAdmin        = $('tab-admin');
 
-// === AWP Scope CSS Overlay Disabled for CS 1.5 ===
+// === AWP Scope CSS Overlay ===
+const scopeOverlay = document.createElement('div');
+scopeOverlay.id = 'scope-overlay';
+scopeOverlay.style.cssText = [
+  'position:fixed',
+  'inset:0',
+  'z-index:9999',
+  'pointer-events:none',
+  'display:none',
+  // Siyah maske + yuvarlak şeffaf delik — CS 1.6 ölçeği (ekran yüksekliğinin %72'si)
+  'background:radial-gradient(circle closest-side at 50% 50%, transparent 72%, rgba(0,0,0,0.97) 73%)',
+].join(';');
+// Crosshair çizgiler için overlay içi SVG
+scopeOverlay.innerHTML = `
+<svg style="position:absolute;inset:0;width:100%;height:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">
+  <!-- Yatay çizgi -->
+  <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="black" stroke-width="1" opacity="0.9"/>
+  <!-- Dikey çizgi -->
+  <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="black" stroke-width="1" opacity="0.9"/>
+  <!-- Merkez kırmızı nokta -->
+  <circle cx="50%" cy="50%" r="2" fill="red"/>
+</svg>`;
+document.body.appendChild(scopeOverlay);
+
+// WASM scope sinyali — sniperscope.cpp'den EM_ASM ile çağrılır
 window._setScopeVisible = function(visible) {
-  // Ignored. Scope rendering is handled natively in C++ now.
+  scopeOverlay.style.display = visible ? 'block' : 'none';
 };
 
 const serverList      = $('server-list');
