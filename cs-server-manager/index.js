@@ -413,10 +413,10 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
 
     // Update payload oluştur
     const updates = {};
-    if (rconPassword !== undefined) updates.rcon_password = rconPassword;
-    if (startMoney !== undefined) updates.start_money = startMoney;
-    if (gravity !== undefined) updates.gravity = gravity;
-    if (roundTime !== undefined) updates.round_time = roundTime;
+    if (rconPassword !== undefined && rconPassword !== '') updates.rcon_password = rconPassword;
+    if (startMoney !== undefined && startMoney !== '') updates.start_money = parseInt(startMoney);
+    if (gravity !== undefined && gravity !== '') updates.gravity = parseInt(gravity);
+    if (roundTime !== undefined && roundTime !== '') updates.round_time = parseInt(roundTime);
     if (adminName !== undefined) updates.admin_name = adminName;
     if (adminPassword !== undefined) updates.admin_password = adminPassword;
 
