@@ -385,15 +385,22 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Sunucu port bilgisi bulunamadı.' });
     }
 
-    // Port üzerinden Supabase purchased_servers satırını bul (id container_id olduğu için)
-    const { data: dbServer, error: fetchErr } = await supabase
+    const { createClient } = require('@supabase/supabase-js');
+    const userSupabase = createClient(
+      'https://nobzqygwzuqdlipnuchi.supabase.co',
+      'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-',
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    );
+
+    // Port üzerinden Supabase purchased_servers satırını bul (kullanıcının kendi tokeni ile)
+    const { data: dbServer, error: fetchErr } = await userSupabase
       .from('purchased_servers')
       .select('*')
       .eq('port', parseInt(portStr))
       .single();
 
     if (fetchErr || !dbServer) {
-      return res.status(404).json({ success: false, error: 'Sunucu veritabanında bulunamadı (port: ' + portStr + ').' });
+      return res.status(404).json({ success: false, error: 'Sunucu veritabanında bulunamadı veya erişim yetkiniz yok (port: ' + portStr + ').' });
     }
 
     // Update payload oluştur
@@ -404,18 +411,6 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
     if (roundTime !== undefined) updates.round_time = roundTime;
     if (adminName !== undefined) updates.admin_name = adminName;
     if (adminPassword !== undefined) updates.admin_password = adminPassword;
-
-    // Kullanıcının yetkisiyle (token ile) Supabase'i güncelle
-    // Kendi sunucusu olduğu için RLS izin vermelidir. 
-    // Ancak backend üzerinden public key ile update edemeyebiliriz eğer RLS kısıtlaması UUID uymuyorsa vs.
-    // Garanti olsun diye service_role kullanmak en iyisi, ama elimizde sadece public anon key var.
-    // Şimdilik gelen token ile client yaratarak yapalım:
-    const { createClient } = require('@supabase/supabase-js');
-    const userSupabase = createClient(
-      'https://nobzqygwzuqdlipnuchi.supabase.co',
-      'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-',
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
-    );
 
     if (Object.keys(updates).length > 0) {
       const { error: updateErr } = await userSupabase
