@@ -17,6 +17,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "gamedig": "^5.3.3",
+    "mkdirp": "^3.0.1",
     "node-datachannel": "^0.32.3"
   }
 }

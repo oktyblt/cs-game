@@ -4,6 +4,8 @@ const Docker = require('dockerode');
 const nodeDataChannel = require('node-datachannel');
 require('dotenv').config();
 const dgram = require('dgram');
+const fs = require('fs');
+const path = require('path');
 
 // Node.js < 22 için global WebSocket polyfill
 global.WebSocket = require('ws');
@@ -27,21 +29,73 @@ const DOCKER_IMAGE = process.env.DOCKER_IMAGE || 'xash3d-cs15-server:latest';
 async function createServerContainer(options) {
   const { map, maxplayers, name, port, isOfficial, owner_id } = options;
 
-  // We map the container's 27015 UDP port to the host's `port`
+  // Supabase'den ayarları çekelim
+  let serverSettings = {
+    rcon_password: 'admin',
+    start_money: 16000,
+    gravity: 800,
+    round_time: 5,
+    admin_name: '',
+    admin_password: ''
+  };
+
+  try {
+    const { data: dbServer } = await supabase
+      .from('purchased_servers')
+      .select('rcon_password, start_money, gravity, round_time, admin_name, admin_password')
+      .eq('owner_id', owner_id)
+      .eq('port', port)
+      .single();
+      
+    if (dbServer) {
+      if (dbServer.rcon_password !== null) serverSettings.rcon_password = dbServer.rcon_password;
+      if (dbServer.start_money !== null) serverSettings.start_money = dbServer.start_money;
+      if (dbServer.gravity !== null) serverSettings.gravity = dbServer.gravity;
+      if (dbServer.round_time !== null) serverSettings.round_time = dbServer.round_time;
+      if (dbServer.admin_name !== null) serverSettings.admin_name = dbServer.admin_name;
+      if (dbServer.admin_password !== null) serverSettings.admin_password = dbServer.admin_password;
+    }
+  } catch (e) { console.error("Supabase settings fetch error", e); }
+
+  // Yalıtılmış konfigürasyon dizini oluştur
+  const configDir = `/home/ubuntu/server_configs/${port}`;
+  fs.mkdirSync(configDir, { recursive: true });
+
+  const serverCfgContent = `
+hostname "${name}"
+rcon_password "${serverSettings.rcon_password}"
+mp_startmoney ${serverSettings.start_money}
+sv_gravity ${serverSettings.gravity}
+mp_roundtime ${serverSettings.round_time}
+mp_consistency 0
+sv_consistency 0
+sv_fileconsistency 0
+`;
+  fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent.trim());
+
+  let usersIniContent = ``;
+  if (serverSettings.admin_name) {
+    usersIniContent = `"${serverSettings.admin_name}" "${serverSettings.admin_password || ''}" "abcdefghijklmnopqrstu" "a"\n`;
+  }
+  fs.writeFileSync(path.join(configDir, 'users.ini'), usersIniContent);
+
+  // We map the container's 27015 UDP port to the host's \`port\`
   const container = await docker.createContainer({
     Image: DOCKER_IMAGE,
     name: `cs15-${port}`,
     Tty: true,
     Cmd: [
       'sh', '-c',
-      `cd /opt/xashds && exec ./xash -dedicated -game cstrike +map "${map}" +maxplayers "${maxplayers}" +hostname "${name}" +sv_lan 1 +port 27015 +mp_consistency 0 +sv_consistency 0 +sv_fileconsistency 0`
+      `cd /opt/xashds && exec ./xash -dedicated -game cstrike +map "${map}" +maxplayers "${maxplayers}" +hostname "${name}" +sv_lan 1 +port 27015 +servercfgfile server.cfg`
     ],
     HostConfig: {
       Binds: [
         '/home/ubuntu/xashds/xashds-linux-i386/xash:/opt/xashds/xash',
         '/home/ubuntu/xashds/xashds-linux-i386/filesystem_stdio.so:/opt/xashds/filesystem_stdio.so',
         '/home/ubuntu/valve:/opt/xashds/valve',
-        '/home/ubuntu/cstrike:/opt/xashds/cstrike'
+        '/home/ubuntu/cstrike:/opt/xashds/cstrike',
+        `${configDir}/server.cfg:/opt/xashds/cstrike/server.cfg`,
+        `${configDir}/users.ini:/opt/xashds/cstrike/addons/amxmodx/configs/users.ini`
       ],
       PortBindings: {
         '27015/udp': [{ HostPort: port.toString() }],
@@ -311,36 +365,95 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { rconPassword, startMoney, gravity, roundTime, c4Timer, adminName, adminPassword } = req.body;
+    
+    // Auth object var mı kontrol et
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ success: false, error: 'Authorization header eksik.' });
+    }
+    const token = authHeader.split(' ')[1];
+
     const container = docker.getContainer(id);
     const info = await container.inspect();
     if (info.Config.Labels.owner_id !== req.user.id) {
       return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
     }
     
-    let cfgCmds = [];
-    if (rconPassword) cfgCmds.push(`rcon_password "${rconPassword}"`);
-    if (startMoney) cfgCmds.push(`mp_startmoney ${startMoney}`);
-    if (gravity) cfgCmds.push(`sv_gravity ${gravity}`);
-    if (roundTime) cfgCmds.push(`mp_roundtime ${roundTime}`);
-    if (c4Timer) cfgCmds.push(`mp_c4timer ${c4Timer}`);
-    
-    if (cfgCmds.length > 0) {
-      const cfgString = cfgCmds.join('\\n');
-      const exec = await container.exec({
-        Cmd: ['sh', '-c', `echo '${cfgString}' >> cstrike/server.cfg`],
-        AttachStdout: true, AttachStderr: true
-      });
-      await exec.start();
+    // UUID (id parametresi) üzerinden Supabase purchased_servers satırını bul
+    const { data: dbServer, error: fetchErr } = await supabase
+      .from('purchased_servers')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchErr || !dbServer) {
+      return res.status(404).json({ success: false, error: 'Sunucu veritabanında bulunamadı.' });
     }
-    
-    if (adminName) {
-      const execAdmin = await container.exec({
-        Cmd: ['sh', '-c', `echo '"${adminName}" "${adminPassword || ''}" "abcdefghijklmnopqrstu" "a"' >> cstrike/addons/amxmodx/configs/users.ini`],
-        AttachStdout: true, AttachStderr: true
-      });
-      await execAdmin.start();
+
+    // Update payload oluştur
+    const updates = {};
+    if (rconPassword !== undefined) updates.rcon_password = rconPassword;
+    if (startMoney !== undefined) updates.start_money = startMoney;
+    if (gravity !== undefined) updates.gravity = gravity;
+    if (roundTime !== undefined) updates.round_time = roundTime;
+    if (adminName !== undefined) updates.admin_name = adminName;
+    if (adminPassword !== undefined) updates.admin_password = adminPassword;
+
+    // Kullanıcının yetkisiyle (token ile) Supabase'i güncelle
+    // Kendi sunucusu olduğu için RLS izin vermelidir. 
+    // Ancak backend üzerinden public key ile update edemeyebiliriz eğer RLS kısıtlaması UUID uymuyorsa vs.
+    // Garanti olsun diye service_role kullanmak en iyisi, ama elimizde sadece public anon key var.
+    // Şimdilik gelen token ile client yaratarak yapalım:
+    const { createClient } = require('@supabase/supabase-js');
+    const userSupabase = createClient(
+      'https://nobzqygwzuqdlipnuchi.supabase.co',
+      'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-',
+      { global: { headers: { Authorization: \`Bearer \${token}\` } } }
+    );
+
+    if (Object.keys(updates).length > 0) {
+      const { error: updateErr } = await userSupabase
+        .from('purchased_servers')
+        .update(updates)
+        .eq('id', id);
+        
+      if (updateErr) {
+        return res.status(500).json({ success: false, error: 'Ayarlar veritabanına kaydedilemedi: ' + updateErr.message });
+      }
     }
-    
+
+    // Ayarları dosyaya tekrar yaz
+    const port = dbServer.port;
+    const configDir = \`/home/ubuntu/server_configs/\${port}\`;
+    fs.mkdirSync(configDir, { recursive: true });
+
+    // Mevcut değerleri al
+    const s_rcon = updates.rcon_password !== undefined ? updates.rcon_password : (dbServer.rcon_password || 'admin');
+    const s_money = updates.start_money !== undefined ? updates.start_money : (dbServer.start_money || 16000);
+    const s_grav = updates.gravity !== undefined ? updates.gravity : (dbServer.gravity || 800);
+    const s_round = updates.round_time !== undefined ? updates.round_time : (dbServer.round_time || 5);
+    const s_admin = updates.admin_name !== undefined ? updates.admin_name : (dbServer.admin_name || '');
+    const s_pass = updates.admin_password !== undefined ? updates.admin_password : (dbServer.admin_password || '');
+
+    const serverCfgContent = \`
+hostname "\${dbServer.name}"
+rcon_password "\${s_rcon}"
+mp_startmoney \${s_money}
+sv_gravity \${s_grav}
+mp_roundtime \${s_round}
+mp_consistency 0
+sv_consistency 0
+sv_fileconsistency 0
+\`;
+    fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent.trim());
+
+    let usersIniContent = \`\`;
+    if (s_admin) {
+      usersIniContent = \`"\${s_admin}" "\${s_pass || ''}" "abcdefghijklmnopqrstu" "a"\\n\`;
+    }
+    fs.writeFileSync(path.join(configDir, 'users.ini'), usersIniContent);
+
+    // Restart the container to apply changes
     await container.restart();
     res.json({ success: true });
   } catch (err) {
