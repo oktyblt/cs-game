@@ -76,6 +76,43 @@ export default {
       }
     }
 
+    if (path === '/api/create-checkout-session' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const stripeKey = env.STRIPE_SECRET_KEY;
+        
+        if (!stripeKey) {
+           // Admin panelinden henüz ayarlanmamışsa, test modunda devam et ve sahte URL dön
+           return json({ url: 'https://checkout.stripe.com/pay/cs_test_mock_url_lutfen_admin_panelinden_key_girin' });
+        }
+
+        const formData = new URLSearchParams();
+        formData.append('payment_method_types[0]', 'card');
+        formData.append('line_items[0][price_data][currency]', 'try');
+        formData.append('line_items[0][price_data][product_data][name]', 'CS 1.5 Sunucu (1 Aylık)');
+        formData.append('line_items[0][price_data][unit_amount]', '35000'); // 350.00 TL
+        formData.append('line_items[0][quantity]', '1');
+        formData.append('mode', 'payment');
+        formData.append('success_url', `${url.origin}/?payment=success`);
+        formData.append('cancel_url', `${url.origin}/?payment=cancel`);
+        formData.append('client_reference_id', body.userId);
+
+        const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${stripeKey}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: formData.toString()
+        });
+        
+        const data = await res.json();
+        return json({ url: data.url });
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
     if (path === '/relay') {
       const upgrade = request.headers.get('Upgrade');
       if (!upgrade || upgrade.toLowerCase() !== 'websocket') return new Response('Expected WebSocket', { status: 426 });
@@ -98,6 +135,10 @@ export default {
       return new Response(null, { status: 101, webSocket: client });
     }
 
+    // Fallback to static assets
+    if (env.ASSETS) {
+      return await env.ASSETS.fetch(request);
+    }
     return new Response('Not Found', { status: 404, headers: CORS });
   }
 };

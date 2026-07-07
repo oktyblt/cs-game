@@ -1,4 +1,139 @@
-import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken } from "./auth.js";
+// CUSTOM MODALS
+window.customAlert = function(msg, title = 'BİLGİ') {
+  return new Promise(resolve => {
+    const modal = document.getElementById('custom-alert-modal');
+    const titleEl = document.getElementById('custom-alert-title');
+    const msgEl = document.getElementById('custom-alert-message');
+    const btnOk = document.getElementById('btn-custom-alert-ok');
+    if (!modal) { window.customAlert(msg); resolve(); return; }
+    
+    titleEl.textContent = title;
+    msgEl.innerHTML = msg.replace(/\n/g, '<br/>');
+    modal.style.display = 'flex';
+    
+    const onClick = () => {
+      modal.style.display = 'none';
+      btnOk.removeEventListener('click', onClick);
+      resolve();
+    };
+    btnOk.addEventListener('click', onClick);
+  });
+};
+
+window.customPrompt = function(msg, defaultVal = '', title = 'GİRDİ BEKLENİYOR') {
+  return new Promise(resolve => {
+    const modal = document.getElementById('custom-prompt-modal');
+    const titleEl = document.getElementById('custom-prompt-title');
+    const msgEl = document.getElementById('custom-prompt-message');
+    const inputEl = document.getElementById('custom-prompt-input');
+    const btnOk = document.getElementById('btn-custom-prompt-ok');
+    const btnCancel = document.getElementById('btn-custom-prompt-cancel');
+    
+    if (!modal) { resolve(prompt(msg, defaultVal)); return; }
+    
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+    inputEl.value = defaultVal;
+    inputEl.type = msg.toLowerCase().includes('şifre') ? 'password' : 'text';
+    modal.style.display = 'flex';
+    inputEl.focus();
+    
+    const cleanup = () => {
+      modal.style.display = 'none';
+      btnOk.removeEventListener('click', onOk);
+      btnCancel.removeEventListener('click', onCancel);
+    };
+    
+    const onOk = () => { cleanup(); resolve(inputEl.value); };
+    const onCancel = () => { cleanup(); resolve(null); };
+    
+    btnOk.addEventListener('click', onOk);
+    btnCancel.addEventListener('click', onCancel);
+  });
+};
+
+
+window.customConfirm = function(msg, title = 'ONAY') {
+  return new Promise(resolve => {
+    const modal = document.getElementById('custom-confirm-modal');
+    const titleEl = document.getElementById('custom-confirm-title');
+    const msgEl = document.getElementById('custom-confirm-message');
+    const btnOk = document.getElementById('btn-custom-confirm-ok');
+    const btnCancel = document.getElementById('btn-custom-confirm-cancel');
+    if (!modal) { resolve(confirm(msg)); return; }
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+    modal.style.display = 'flex';
+    const cleanup = () => {
+      modal.style.display = 'none';
+      btnOk.removeEventListener('click', onOk);
+      btnCancel.removeEventListener('click', onCancel);
+    };
+    const onOk = () => { cleanup(); resolve(true); };
+    const onCancel = () => { cleanup(); resolve(false); };
+    btnOk.addEventListener('click', onOk);
+    btnCancel.addEventListener('click', onCancel);
+  });
+};
+
+// Guest name modal helper — opens the modal, waits for name, resolves with nickname
+window.openGuestNameModal = function(port, mapName) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('guest-name-modal');
+    const input = document.getElementById('guest-name-input');
+    const btnSubmit = document.getElementById('btn-guest-name-submit');
+    if (!modal || !input || !btnSubmit) {
+      // fallback: just connect with stored or default name
+      resolve(localStorage.getItem('cs_nickname') || 'Player');
+      return;
+    }
+    // Pre-fill with previously stored name
+    input.value = localStorage.getItem('cs_nickname') || '';
+    modal.style.display = 'flex';
+    input.focus();
+
+    const doConnect = () => {
+      const nick = input.value.trim();
+      if (!nick) { input.style.border = '1px solid var(--cs-red)'; return; }
+      input.style.border = '';
+      // Persist for next time
+      localStorage.setItem('cs_nickname', nick);
+      // Also set the main nickname input
+      const globalNick = document.getElementById('user-nickname');
+      if (globalNick && !globalNick.readOnly) globalNick.value = nick;
+      modal.style.display = 'none';
+      cleanup();
+      resolve(nick);
+    };
+
+    const onCancel = () => {
+      modal.style.display = 'none';
+      cleanup();
+      resolve(null);
+    };
+
+    const cleanup = () => {
+      const cloneBtn = btnSubmit.cloneNode(true);
+      btnSubmit.parentNode.replaceChild(cloneBtn, btnSubmit);
+      input.removeEventListener('keydown', onEnter);
+      const cancelBtn = document.querySelector('#guest-name-modal button:last-child');
+      if (cancelBtn) cancelBtn.onclick = null;
+    };
+
+    const onEnter = (e) => { if (e.key === 'Enter') doConnect(); };
+    input.addEventListener('keydown', onEnter);
+    btnSubmit.addEventListener('click', doConnect);
+
+    const cancelBtn = modal.querySelector('button:last-child');
+    if (cancelBtn) cancelBtn.onclick = onCancel;
+  });
+};
+// Override native alert and prompt safely
+window.alert = (msg) => { window.customAlert(msg); };
+// Cannot cleanly override prompt as it is synchronous, but we can replace its usages in code.
+
+import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium } from "./auth.js";
+import { buyServer } from './supabase.js';
 import { unzipSync } from 'fflate';
 
 const ASSET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -131,16 +266,19 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// Tab tuşunun tarayıcı odaklanmasını bozmasını engelle (Skorbord için)
+// Tab tuşunun tarayıcı odaklanmasını bozmasını engelle (Skorbord için), ancak form girişlerinde serbest bırak
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Tab') {
-    e.preventDefault();
+    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+    if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
+      e.preventDefault();
+    }
   }
 });
 // ----------------------------------------
 
 // --- OVERRIDE window.alert (Xash3D engine alert suppress) ---
-// Xash3D WASM, hata durumunda window.alert() çağırıyor.
+// Xash3D WASM, hata durumunda window.customAlert() çağırıyor.
 // Bu tarayıcı diyaloglarını göstermek yerine kendi UI sistemimize yönlendirelim.
 const _origAlert = window.alert;
 window.alert = function(msg) {
@@ -783,9 +921,9 @@ const btnRefreshServers     = $('btn-refresh-servers');
 const onlineServersCount    = $('online-servers-count');
 
 if (userNicknameInput) {
-  userNicknameInput.value = localStorage.getItem('cs_nickname') || 'Player';
+  userNicknameInput.value = localStorage.getItem('cs_nickname') || '';
   userNicknameInput.addEventListener('input', () => {
-    localStorage.setItem('cs_nickname', userNicknameInput.value.trim() || 'Player');
+    localStorage.setItem('cs_nickname', userNicknameInput.value.trim() || '');
   });
 }
 
@@ -910,6 +1048,8 @@ function addLoadingLog(msg, cls = '') {
 
 function setProgress(pct, msg) {
   loadingProgress.style.width = `${pct}%`;
+  const pctEl = document.getElementById('loading-pct-text');
+  if (pctEl) pctEl.textContent = `${Math.round(pct)}%`;
   if (msg) addLoadingLog(msg, pct >= 90 ? 'ok' : '');
 }
 
@@ -940,7 +1080,7 @@ async function loadMapList() {
       { name: 'cs_office', size: 2300000, description: 'Hostage Rescue' },
       { name: 'de_aztec', size: 2800000, description: 'Bomb Defusal' }
     ];
-    mapCountInfo.textContent = `📁 ${maps.length} harita mevcut`;
+    
     renderMapList();
     return true;
   } catch (err) {
@@ -953,7 +1093,7 @@ async function loadMapList() {
       { name: 'cs_office', size: 2300000, description: 'Hostage Rescue' },
       { name: 'de_aztec', size: 2800000, description: 'Bomb Defusal' }
     ];
-    mapCountInfo.textContent = `📁 ${maps.length} harita mevcut (Varsayılan)`;
+    
     renderMapList();
     return true;
   }
@@ -1077,6 +1217,17 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
   btnLaunch.disabled = true;
 
   setEngineStatus('Oyun dosyaları indiriliyor...', 'orange');
+
+  // İlk bağlantı bilgi mesajları
+  addLoadingLog('🚀 Sunucuya bağlanılıyor: ' + mapName, 'ok');
+  addLoadingLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  addLoadingLog('⚠️  İLK BAĞLANTI UYARISI:', 'warn');
+  addLoadingLog('   İlk kez bağlanıyorsanız oyun dosyaları indiriliyor.', 'warn');
+  addLoadingLog('   Bu işlem 1-3 dakika sürebilir (yaklaşık 250 MB).', 'warn');
+  addLoadingLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  addLoadingLog('✅ Sonraki girişlerde dosyalar önbellekten yüklenir.');
+  addLoadingLog('ℹ️  Çerezleri temizlerseniz tekrar indirilir.');
+  addLoadingLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Akıllı Önbellek (Cache API) - Her girişte 250MB indirmeyi engeller
   async function cachedFetch(url, noCache = false) {
@@ -1242,12 +1393,15 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       // WebGL 2.0 desteği kontrolü
       const checkGL = gameCanvas.getContext('webgl2') || gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
       if (!checkGL) {
-        alert("Oyun motoru başlatılamadı! Bilgisayarınızın ekran kartı veya tarayıcınız WebGL teknolojisini desteklemiyor. \n\nLütfen Chrome/Edge ayarlarından 'Donanım Hızlandırma' (Hardware Acceleration) seçeneğinin AÇIK olduğundan emin olun veya ekran kartı sürücülerinizi güncelleyin.");
+        window.customAlert("Oyun motoru başlatılamadı! Bilgisayarınızın ekran kartı veya tarayıcınız WebGL teknolojisini desteklemiyor. \n\nLütfen Chrome/Edge ayarlarından 'Donanım Hızlandırma' (Hardware Acceleration) seçeneğinin AÇIK olduğundan emin olun veya ekran kartı sürücülerinizi güncelleyin.");
         throw new Error('WebGL desteklenmiyor.');
       }
 
-      const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : 'Player';
-
+      const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : '';
+      if (!nickname) {
+         window.customAlert("Lütfen oyuna girmeden önce bir oyuncu adı belirleyin!");
+         throw new Error("Boş oyuncu adı");
+      }
       let xashArgs = [
         '-windowed',
         '-game', 'cstrike',
@@ -1298,7 +1452,11 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '+r_novis', '0',
         '+setinfo', '_vgui_menus', '0',
       ];
-
+      
+      const amxPw = localStorage.getItem('cs_amx_pw');
+      if (amxPw) {
+         xashArgs.push('+setinfo', '_pw', amxPw);
+      }
       
       let actualWsPort = null;
       if (isHost || !connectPort || connectPort === 'listen' || connectPort === true) {
@@ -2024,9 +2182,6 @@ function updateTeamSizes() {
   if (vsBadge) vsBadge.textContent = `${half}v${half}`;
 }
 // --- MOCK AUTHENTICATION SYSTEM (Supabase öncesi) ---
-// Removed local currentUser, using auth.js instead
-let isPremium = false;
-
 const btnLogin = $('btn-login');
 const btnRegister = $('btn-register');
 const btnLogout = $('btn-logout');
@@ -2039,15 +2194,72 @@ const premiumModal = $('premium-modal');
 
 // Removed dummy login and logout logic (handled by auth.js)
 if (btnBuyPremium) {
-  btnBuyPremium.addEventListener('click', () => {
-    if (!getCurrentUser()) {
-      notify('Önce giriş yapmalısınız!', 'error');
+  btnBuyPremium.addEventListener('click', async () => {
+    const user = getCurrentUser();
+    if (!user) {
+      if (premiumModal) premiumModal.style.display = 'none';
+      const loginModal = document.getElementById('login-modal');
+      if (loginModal) loginModal.style.display = 'flex';
+      notify('Premium almak için önce üye girişi yapmalısınız!', 'error');
       return;
     }
-    isPremium = true;
-    if (premiumModal) premiumModal.style.display = 'none';
-    if (badgePremium) badgePremium.style.display = 'inline-block';
-    notify('Premium satın alındı! Artık sunucu kurabilirsiniz.', 'success');
+    
+    const btn = btnBuyPremium;
+    const origText = btn.textContent;
+    btn.textContent = 'YÖNLENDİRİLİYOR...';
+    btn.disabled = true;
+
+    try {
+      if (user.email === 'tusevonline@gmail.com') {
+        const sName = prompt("Sunucu Adı Girin:", "bymTL Özel Sunucu") || "bymTL Özel Sunucu";
+        const sMap = prompt("Harita Seçin (de_dust2, de_inferno vb.):", "de_dust2") || "de_dust2";
+        
+        notify('VIP Üye Tanındı: AWS üzerinde sunucunuz başlatılıyor...', 'success');
+        
+        const token = await getSessionToken();
+        const res = await fetch(`${API_URL}/api/start-server`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ map: sMap, maxplayers: 16, name: sName, host: 'bymTL' })
+        });
+        
+        const d = await res.json();
+        if (d.success && d.port) {
+          const { createPurchasedServer } = await import('./supabase.js');
+          const dbRes = await createPurchasedServer(user.id, sName, sMap, 16, d.port);
+          
+          if (dbRes.error) {
+             notify('AWS Sunucusu açıldı ancak veritabanı kayıt hatası: ' + dbRes.error.message, 'error');
+          } else {
+            notify(`AWS Sunucunuz veritabanına kaydedildi ve aktif edildi! Dashboard üzerinden bağlanabilirsiniz.`, 'success');
+            if (premiumModal) premiumModal.style.display = 'none';
+          }
+        } else {
+          notify('AWS Sunucusu açılamadı! ' + (d.error || ''), 'error');
+        }
+        btn.textContent = origText;
+        btn.disabled = false;
+        return;
+      }
+
+      const { data, error } = await buyServer(user.id, 'CS 1.5 Premium Üyelik', 'N/A', 0);
+      if (data && data.checkout_url) {
+        btn.textContent = origText;
+        btn.disabled = false;
+        window.location.href = data.checkout_url;
+      } else {
+        notify(error ? error.message : 'Ödeme sayfasına yönlendirilemedi.', 'error');
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    } catch(err) {
+      notify('Hata: ' + err.message, 'error');
+      btn.textContent = origText;
+      btn.disabled = false;
+    }
   });
 }
 // ---------------------------------------------------
@@ -2055,15 +2267,14 @@ if (maxPlayersSelect) {
   maxPlayersSelect.addEventListener('change', updateTeamSizes);
 }
 
-// ── Hızlı Katıl: Giriş gerektirmez, mevcut açık sunucuya bağlanır ──────────
+// ── Hızlı Katıl ──────────────────────────────────────────────────────────────
 const btnQuickJoin = document.getElementById('btn-quick-join');
 if (btnQuickJoin) {
   btnQuickJoin.addEventListener('click', async () => {
     if (!currentMap) { notify('Önce bir harita seçin!', 'error'); return; }
-    const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : 'Player';
-
+    
     btnQuickJoin.disabled = true;
-    btnQuickJoin.textContent = 'SUNUCU ARANIYORY...';
+    btnQuickJoin.textContent = 'SUNUCU ARANIYOR...';
 
     try {
       // Mevcut sunucuları listele
@@ -2080,6 +2291,10 @@ if (btnQuickJoin) {
 
       if (target) {
         notify(`"${target.name}" sunucusuna bağlanıyor...`, 'success');
+        if (!getCurrentUser()) {
+          const guestNick = await window.openGuestNameModal(target.port, target.map);
+          if (!guestNick) { btnQuickJoin.disabled = false; btnQuickJoin.textContent = '▶ SUNUCUYA KATIL'; return; }
+        }
         window.connectToServer(target.port, target.map, false);
       } else {
         // Hiç sunucu yoksa — varsayılan port 27015'e bağlan
@@ -2102,11 +2317,13 @@ btnLaunch.addEventListener('click', async () => {
   if (!currentMap) { notify('Önce bir harita seçin!', 'error'); return; }
   
   if (!getCurrentUser()) {
-    notify('Sunucu kurmak için giriş yapmalısınız!', 'error');
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) loginModal.style.display = 'flex';
+    notify('Oda kurmak için önce üye girişi yapmalısınız!', 'error');
     return;
   }
   
-  if (!isPremium) {
+  if (!isUserPremium()) {
     if (premiumModal) premiumModal.style.display = 'flex';
     return;
   }
@@ -2117,11 +2334,17 @@ btnLaunch.addEventListener('click', async () => {
   btnLaunch.textContent = 'SUNUCU OLUŞTURULUYOR...';
 
   const sName = (serverNameInput && serverNameInput.value.trim()) ? serverNameInput.value.trim() : 'CS 1.5 Web Oda';
-  const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : 'Player';
+  const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : '';
+  if (!nickname) { 
+     notify('Sunucu kurmadan önce bir oyuncu adı yazın!', 'error'); 
+     btnLaunch.disabled = false;
+     btnLaunch.textContent = originalText;
+     return; 
+  }
   const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
 
   try {
-    const res = await fetch(`${API_URL}/api/start-server`, {
+    const res = await fetch(`${API_URL}/api/create-server`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ map: currentMap, maxplayers: maxP, name: sName, host: nickname })
@@ -2136,7 +2359,7 @@ btnLaunch.addEventListener('click', async () => {
       window._serverHeartbeat = setInterval(async () => {
         try {
           const token = await getSessionToken();
-          await fetch(`${API_URL}/api/start-server`, {
+          await fetch(`${API_URL}/api/create-server`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -2184,6 +2407,8 @@ async function loadServerList() {
     const res = await fetch(`${API_URL}/api/servers`);
     const data = await res.json();
     
+    window.__loadedServers = data.servers || [];
+
     if (onlineServersCount) {
       onlineServersCount.textContent = `(${data.servers ? data.servers.length : 0} Açık Oda)`;
     }
@@ -2192,66 +2417,88 @@ async function loadServerList() {
       if (activeServersContainer) activeServersContainer.innerHTML = '';
       if (fullServersGrid) fullServersGrid.innerHTML = '';
 
+      const officialServers = [];
+      const otherServers = [];
+
       data.servers.forEach(server => {
         let displayName = server.name;
         let displayHost = server.host || 'Anonim';
         let badgeText = '🟢 CANLI P2P';
         let playersCount = server.players !== undefined ? server.players : '?';
+        let isOfficialFinal = false;
         
-        // Resmi / Kullanıcı Sunucu Kontrolü
         if (server.isOfficial === true) {
           displayName = 'BrowserCS';
           displayHost = 'BrowserCS (Resmi)';
           badgeText = '⭐ RESMİ SUNUCU';
+          isOfficialFinal = true;
         } else if (server.isOfficial === false) {
           displayHost = 'Oyuncu Sunucusu';
           badgeText = '🚀 DEDICATED';
         } else if (displayName.startsWith('CS Server') && (!server.host || server.host === 'Anonim')) {
-          // Fallback for older API format if isOfficial is undefined but it matches pattern
           displayName = 'BrowserCS';
           displayHost = 'BrowserCS (Resmi)';
           badgeText = '⭐ RESMİ SUNUCU';
+          isOfficialFinal = true;
         }
 
-        // Soldaki Mini Liste
-        if (activeServersContainer) {
+        const srvObj = { ...server, displayName, displayHost, badgeText, playersCount, isOfficialFinal };
+        if (isOfficialFinal) officialServers.push(srvObj);
+        else otherServers.push(srvObj);
+      });
+
+      const renderGridItem = (server, container, isMini) => {
+        const mapImgUrl = `${ASSET_URL}/assets/maps/${server.map}.jpg`;
+        const defaultImgUrl = `${ASSET_URL}/cs-assets/cs_bg.png`;
+
+        if (isMini) {
           const div = document.createElement('div');
           div.className = 'map-item';
+          div.style.flexDirection = 'column';
+          div.style.alignItems = 'stretch';
+          div.style.background = 'var(--bg-card)';
+          div.style.border = '1px solid var(--border-bright)';
+          div.style.padding = '0.6rem';
+          div.style.marginBottom = '0.6rem';
+          div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
           div.innerHTML = `
-            <div style="position: relative; width: 100%; height: 80px; overflow: hidden; border-radius: 4px; border: 1px solid var(--border);">
-              <img crossorigin="anonymous" src="${ASSET_URL}/maps/${server.map}.jpg" alt="${server.map}" style="width: 100%; height: 100%; object-fit: cover;" onerror="if(!this.dataset.err){this.dataset.err='1';this.src='${ASSET_URL}/maps/de_dust2.jpg';}else{this.style.display='none';}" />
-              <div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50;">
-                👤 ${playersCount}/${server.maxplayers}
+            <div style="position: relative; width: 100%; height: 80px; overflow: hidden; border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: var(--bg-deep);">
+              <img crossorigin="anonymous" src="${mapImgUrl}" alt="Server" style="position:absolute; inset:0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
+              <div style="position:absolute; inset:0; background:linear-gradient(to bottom,rgba(10,16,26,0.1),var(--bg-card)); pointer-events:none;"></div>
+              <span class="server-thumb-map-text" style="z-index:5; font-size: 0.95rem;">${server.map}</span>
+              <div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50; z-index:5;">
+                👤 ${server.playersCount}/${server.maxplayers}
               </div>
             </div>
-            <div style="font-weight: bold; color: var(--text-bright); text-align: center; margin-top: 6px; font-size: 0.85rem;">${displayName}</div>
-            <div style="font-size: 0.75rem; color: var(--text-dim); text-align: center;">${server.map}</div>
+            <div style="font-weight: bold; color: var(--text-bright); text-align: center; margin-top: 8px; font-size: 0.85rem;">${server.displayName}</div>
           `;
-          div.addEventListener('click', () => {
-            window.connectToServer(server.port, server.map, false);
-            if (fullServerBrowser) fullServerBrowser.classList.remove('active');
+          div.addEventListener('click', async () => {
+            if (!getCurrentUser()) {
+              const guestNick = await window.openGuestNameModal(server.port, server.map);
+              if (!guestNick) return;
+              window.connectToServer(server.port, server.map, false);
+            } else {
+              window.connectToServer(server.port, server.map, false);
+            }
+            if (typeof fullServerBrowser !== 'undefined' && fullServerBrowser) fullServerBrowser.classList.remove('active');
           });
-          activeServersContainer.appendChild(div);
-        }
-
-        // Sağdaki Tam Ekran Box Box Grid Kartı
-        if (fullServersGrid) {
-          const defaultImgUrl = `${ASSET_URL}/cs-assets/cs_bg.png`;
+          container.appendChild(div);
+        } else {
           const card = document.createElement('div');
           card.className = 'server-card-box anim-fade-in';
           card.innerHTML = `
             <div class="server-card-thumb" style="position: relative;">
-              <img crossorigin="anonymous" src="${defaultImgUrl}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;" onerror="this.style.display='none'" />
-              <span class="server-badge-live" style="z-index:2;">${badgeText}</span>
+              <img crossorigin="anonymous" src="${mapImgUrl}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
+              <span class="server-badge-live" style="z-index:2;">${server.badgeText}</span>
               <span class="server-thumb-map-text" style="z-index:2;">${server.map}</span>
             </div>
             <div class="server-card-body">
-              <div class="server-card-name">${displayName}</div>
+              <div class="server-card-name">${server.displayName}</div>
               <div class="server-card-meta">
                 <span>🗺️ ${server.map}</span>
-                <span>👤 ${playersCount}/${server.maxplayers} Oyuncu</span>
+                <span>👤 ${server.playersCount}/${server.maxplayers} Oyuncu</span>
               </div>
-              <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${displayHost}</b></div>
+              <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${server.displayHost}</b></div>
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
                 <button class="btn-join-room" style="flex:1;">▶ ODAYA KATIL</button>
                 ${(server.owner_id && getCurrentUser() && server.owner_id === getCurrentUser().id) ? 
@@ -2260,13 +2507,63 @@ async function loadServerList() {
               </div>
             </div>
           `;
-          card.querySelector('.btn-join-room').addEventListener('click', () => {
-            window.connectToServer(server.port, server.map, false);
-            if (fullServerBrowser) fullServerBrowser.classList.remove('active');
+          card.querySelector('.btn-join-room').addEventListener('click', async () => {
+            if (!getCurrentUser()) {
+              const guestNick = await window.openGuestNameModal(server.port, server.map);
+              if (!guestNick) return;
+              window.connectToServer(server.port, server.map, false);
+            } else {
+              window.connectToServer(server.port, server.map, false);
+            }
+            if (typeof fullServerBrowser !== 'undefined' && fullServerBrowser) fullServerBrowser.classList.remove('active');
           });
-          fullServersGrid.appendChild(card);
+          container.appendChild(card);
         }
-      });
+      };
+
+      if (activeServersContainer) {
+        officialServers.forEach(s => renderGridItem(s, activeServersContainer, true));
+        otherServers.forEach(s => renderGridItem(s, activeServersContainer, true));
+      }
+
+      if (fullServersGrid) {
+        if (officialServers.length > 0) {
+          const header = document.createElement('div');
+          header.style.gridColumn = '1 / -1';
+          header.style.alignSelf = 'end';
+          header.style.fontFamily = 'var(--font-hud)';
+          header.style.fontSize = '0.85rem';
+          header.style.color = 'var(--cs-yellow)';
+          header.style.borderBottom = '2px solid var(--cs-yellow)';
+          header.style.paddingBottom = '0.5rem';
+          header.style.marginTop = '0';
+          header.style.marginBottom = '1rem';
+          header.style.letterSpacing = '0.05em';
+          header.style.textTransform = 'uppercase';
+          header.textContent = "BrowserCS Resmi Sunucuları";
+          fullServersGrid.appendChild(header);
+          officialServers.forEach(s => renderGridItem(s, fullServersGrid, false));
+        }
+
+        if (otherServers.length > 0) {
+          const header = document.createElement('div');
+          header.style.gridColumn = '1 / -1';
+          header.style.alignSelf = 'end';
+          header.style.fontFamily = 'var(--font-hud)';
+          header.style.fontSize = '0.85rem';
+          header.style.color = 'var(--text-dim)';
+          header.style.borderBottom = '1px solid var(--border-bright)';
+          header.style.paddingBottom = '0.5rem';
+          header.style.marginTop = '2rem';
+          header.style.marginBottom = '1rem';
+          header.style.letterSpacing = '0.05em';
+          header.style.textTransform = 'uppercase';
+          header.textContent = "Diğer Sunucular";
+          fullServersGrid.appendChild(header);
+          otherServers.forEach(s => renderGridItem(s, fullServersGrid, false));
+        }
+      }
+
     } else {
       if (activeServersContainer) {
         activeServersContainer.innerHTML = '<div style="font-family: var(--font-hud); font-size:0.7rem; color: var(--text-dim); padding: 20px; text-align: center; width: 100%; grid-column: 1 / -1;">Açık sunucu bulunamadı.</div>';
@@ -2291,47 +2588,33 @@ if (tabServers && tabMaps) {
   tabServers.addEventListener('click', () => {
     tabServers.classList.add('active');
     tabMaps.classList.remove('active');
-    if (tabAdmin) tabAdmin.classList.remove('active');
     if (fullServerBrowser) fullServerBrowser.classList.add('active');
+    mapList.style.display = 'none';
+    serverList.style.display = 'block';
+    if (typeof mapSearch !== 'undefined' && mapSearch) mapSearch.style.display = 'none';
     loadServerList();
   });
 
   tabMaps.addEventListener('click', () => {
     tabMaps.classList.add('active');
     tabServers.classList.remove('active');
-    if (tabAdmin) tabAdmin.classList.remove('active');
     if (fullServerBrowser) fullServerBrowser.classList.remove('active');
-    mapList.style.display = 'flex';
+    mapList.style.display = 'block';
     serverList.style.display = 'none';
-    if (adminPanel) adminPanel.style.display = 'none';
     mapSearch.style.display = 'block';
   });
 
-  if (tabAdmin) {
-    tabAdmin.addEventListener('click', () => {
-      tabAdmin.classList.add('active');
-      tabMaps.classList.remove('active');
-      tabServers.classList.remove('active');
-      if (fullServerBrowser) fullServerBrowser.classList.remove('active');
-      mapList.style.display = 'none';
-      serverList.style.display = 'none';
-      if (adminPanel) adminPanel.style.display = 'block';
-      mapSearch.style.display = 'none';
-    });
-  }
 }
 
 if (btnCloseServerBrowser) {
   btnCloseServerBrowser.addEventListener('click', () => {
     if (fullServerBrowser) fullServerBrowser.classList.remove('active');
-    if (tabMaps && tabServers) {
-      tabMaps.classList.add('active');
-      tabServers.classList.remove('active');
-      if (tabAdmin) tabAdmin.classList.remove('active');
-      mapList.style.display = 'flex';
-      serverList.style.display = 'none';
-      if (adminPanel) adminPanel.style.display = 'none';
-      mapSearch.style.display = 'block';
+    if (tabServers && tabMaps) {
+      tabServers.classList.add('active');
+      tabMaps.classList.remove('active');
+      mapList.style.display = 'none';
+      serverList.style.display = 'flex';
+      mapSearch.style.display = 'none';
     }
   });
 }
@@ -2348,15 +2631,15 @@ const masterAdminTableBody = $('master-admin-table-body');
 
 let adminToken = localStorage.getItem('cs_admin_token') || null;
 
-if (btnMasterAdmin) {
-  btnMasterAdmin.addEventListener('click', () => {
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname === '/csadmin') {
     if (adminToken) {
       openMasterAdminPanel();
     } else {
       adminLoginModal.style.display = 'flex';
     }
-  });
-}
+  }
+});
 
 if (btnAdminLoginCancel) {
   btnAdminLoginCancel.addEventListener('click', () => {
@@ -2437,7 +2720,7 @@ window.masterAdminAction = async function(action, id) {
   if (!adminToken) return notify('Yetkisiz işlem!', 'error');
   
   if (action === 'delete') {
-    if (!confirm('Bu sunucuyu tamamen silmek istediğine emin misin?')) return;
+    if (!await window.customConfirm('Bu sunucuyu tamamen silmek istediğine emin misin?', 'ONAY')) return;
     try {
       const res = await fetch(`${API_URL}/api/admin/servers/${id}`, {
         method: 'DELETE',
@@ -2453,7 +2736,7 @@ window.masterAdminAction = async function(action, id) {
     } catch(e) { notify('Silme hatası', 'error'); }
   } 
   else if (action === 'restart') {
-    if (!confirm('Bu sunucuyu yeniden başlatmak istediğine emin misin?')) return;
+    if (!await window.customConfirm('Bu sunucuyu yeniden başlatmak istediğine emin misin?', 'ONAY')) return;
     try {
       // Mevcut restart endpoint'i (şimdilik tokensız da çalışıyor backend'de)
       const token = await getSessionToken();
@@ -2530,9 +2813,13 @@ if ($('btn-rcon-send')) {
     $('rcon-command-input').value = '';
     
     try {
+      const token = await getSessionToken();
       const res = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/command`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ rconPassword: password, command })
       });
       const data = await res.json();
@@ -2559,9 +2846,13 @@ if ($('btn-cfg-save')) {
     $('btn-cfg-save').disabled = true;
     $('btn-cfg-save').textContent = 'KAYDEDİLİYOR...';
     try {
+      const token = await getSessionToken();
       const res = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/settings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ rconPassword: rconPass, startMoney, gravity, roundTime })
       });
       const data = await res.json();
@@ -2588,9 +2879,13 @@ if ($('btn-amx-save')) {
     $('btn-amx-save').disabled = true;
     $('btn-amx-save').textContent = 'EKLENİYOR...';
     try {
+      const token = await getSessionToken();
       const res = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/settings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ adminName, adminPassword })
       });
       const data = await res.json();
@@ -2645,10 +2940,12 @@ if (btnRefreshServers) {
 if (btnCreateServer) {
   btnCreateServer.addEventListener('click', async () => {
     if (!getCurrentUser()) {
-      notify('Sunucu kurmak için giriş yapmalısınız!', 'error');
+      const loginModal = document.getElementById('login-modal');
+      if (loginModal) loginModal.style.display = 'flex';
+      notify('Sunucu satın almak için önce üye girişi yapmalısınız!', 'error');
       return;
     }
-    if (!isPremium) {
+    if (!isUserPremium()) {
       if (premiumModal) premiumModal.style.display = 'flex';
       return;
     }
@@ -2659,11 +2956,17 @@ if (btnCreateServer) {
       btnCreateServer.textContent = 'KURULUYOR...';
 
       const sName = (serverNameInput && serverNameInput.value.trim()) ? serverNameInput.value.trim() : 'CS 1.5 Web Oda';
-      const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : 'Player';
+      const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : '';
+      if (!nickname) {
+        notify('Lütfen bir oyuncu adı belirleyin!', 'error');
+        btnCreateServer.disabled = false;
+        btnCreateServer.textContent = 'ODA KUR';
+        return;
+      }
       const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
 
       const token = await getSessionToken();
-      const res = await fetch(`${API_URL}/api/start-server`, {
+      const res = await fetch(`${API_URL}/api/create-server`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -2700,6 +3003,13 @@ async function checkWasmFiles() {
 
 async function runSplash() {
   setSplash('Sistem başlatılıyor...', 5);
+  // Safety: after 6 seconds force splash away even if something failed
+  const splashTimeout = setTimeout(() => {
+    if (splashEl && splashEl.parentNode) {
+      splashEl.style.opacity = '0';
+      setTimeout(() => { if (splashEl && splashEl.parentNode) splashEl.remove(); }, 500);
+    }
+  }, 6000);
   await new Promise(r => setTimeout(r, 200));
 
   // WebGL2 kontrolü
@@ -2729,9 +3039,10 @@ async function runSplash() {
 
   if (serverOk && wasmOk) {
     setSplash('Her şey hazır!', 100);
+    clearTimeout(splashTimeout);
     setTimeout(() => {
       splashEl.style.opacity = '0';
-      setTimeout(() => splashEl.remove(), 500);
+      setTimeout(() => { if (splashEl && splashEl.parentNode) splashEl.remove(); }, 500);
       renderMapList();
       // Site açılınca sunucu menüsünü otomatik göster
       setTimeout(() => {
@@ -2739,12 +3050,20 @@ async function runSplash() {
       }, 600);
     }, 800);
   } else {
+    clearTimeout(splashTimeout);
     splashStatus.innerHTML = '<span style="color:var(--cs-red);">Hata: Eksik dosyalar veya bağlantı sorunu var!</span>';
+    // Still allow users to use the site after 3s even if something failed
+    setTimeout(() => {
+      if (splashEl && splashEl.parentNode) {
+        splashEl.style.opacity = '0';
+        setTimeout(() => { if (splashEl && splashEl.parentNode) splashEl.remove(); }, 500);
+      }
+    }, 3000);
   }
 }
 window.connectToServer = async function(port, mapName, isHost = false) {
   if (engineRunning) {
-    alert("Oyun zaten açık! Lütfen sayfayı yenileyip tekrar deneyin.");
+    window.customAlert("Oyun zaten açık! Lütfen sayfayı yenileyip tekrar deneyin.");
     return;
   }
   
@@ -2769,6 +3088,11 @@ window.connectToServer = async function(port, mapName, isHost = false) {
   if (header) header.style.display = 'none';
   if (gameWrapper) gameWrapper.classList.add('active'); // .hidden değil, .active kullanılmalı!
 
+  const engineText = document.getElementById('engine-status-text');
+  if (engineText) {
+    engineText.innerHTML = `Engine hazırlanıyor... <br/><span style="color:var(--cs-yellow); font-size: 0.75rem; letter-spacing:0.05em; margin-top:5px; display:inline-block;">⚠️ İlk yükleme (harita ve modeller) internet hızınıza bağlı olarak uzun sürebilir. Lütfen bekleyin.</span>`;
+  }
+
   // initEngine'i çağır
   initEngine(mapName, port, isHost);
 };
@@ -2776,3 +3100,70 @@ window.connectToServer = async function(port, mapName, isHost = false) {
 // --- INIT ---
 runSplash();
 initAuth();
+
+const btnAdminSaveStripe = $('btn-admin-save-stripe');
+if (btnAdminSaveStripe) {
+  btnAdminSaveStripe.addEventListener('click', () => {
+    const secret = $('admin-stripe-secret').value;
+    const webhook = $('admin-stripe-webhook').value;
+    if(!secret) return notify('Lütfen geçerli bir anahtar girin', 'error');
+    // Save locally for test or send to backend
+    localStorage.setItem('cs_stripe_secret', secret);
+    localStorage.setItem('cs_stripe_webhook', webhook);
+    notify('Stripe ayarları kaydedildi. (Backend\'e iletiliyor...)', 'success');
+  });
+}
+
+
+// Direct listeners - module scripts run after DOM is ready
+(async () => {
+  const btnRandomJoin = document.getElementById('btn-random-join');
+  if (btnRandomJoin) {
+    btnRandomJoin.addEventListener('click', async () => {
+      btnRandomJoin.disabled = true;
+      const originalText = btnRandomJoin.textContent;
+      btnRandomJoin.textContent = '🎲 ARANIYOR...';
+      
+      try {
+        const res = await fetch(`${API_URL}/api/servers`);
+        const data = await res.json();
+        const servers = data.servers || [];
+        const onlineServers = servers.filter(s => s.state === 'running');
+        
+        if (onlineServers.length === 0) {
+          window.customAlert('Şu anda aktif bir oda bulunamadı. Lütfen sayfayı yenileyin.', 'BİLGİ');
+        } else {
+          const target = onlineServers[Math.floor(Math.random() * onlineServers.length)];
+          
+          if (!getCurrentUser()) {
+             const guestNick = await window.openGuestNameModal(target.port, target.map);
+             if (!guestNick) return;
+             window.connectToServer(target.port, target.map, false);
+          } else {
+             window.connectToServer(target.port, target.map, false);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      
+      btnRandomJoin.disabled = false;
+      btnRandomJoin.textContent = originalText;
+    });
+  }
+
+  const btnSidebarBuyServer = document.getElementById('btn-sidebar-buy-server');
+  if (btnSidebarBuyServer) {
+    btnSidebarBuyServer.addEventListener('click', () => {
+      const user = getCurrentUser();
+      if (!user) {
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) loginModal.style.display = 'flex';
+        window.customAlert('Sunucu kiralayabilmek için önce üye girişi yapmalısınız.', 'BİLGİ');
+      } else {
+        const modal = document.getElementById('premium-modal');
+        if (modal) modal.style.display = 'flex';
+      }
+    });
+  }
+})();

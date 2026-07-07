@@ -49,39 +49,43 @@ export async function getMyServers(userId) {
   return { data, error }
 }
 
-export async function buyServer(userId, name, map, max_players) {
-  // First get profile to check balance
-  const profile = await getProfile(userId)
-  if (profile.error) return { error: profile.error }
+export async function createPurchasedServer(userId, name, map, max_players, port) {
+  const expiresAt = new Date();
+  expiresAt.setFullYear(expiresAt.getFullYear() + 10); // 10 years VIP duration
   
-  if (profile.data.wallet_balance < 50) {
-    return { error: { message: 'Yetersiz bakiye. Lütfen cüzdanınıza kredi yükleyin.' } }
-  }
-
-  // Deduct balance
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ wallet_balance: profile.data.wallet_balance - 50 })
-    .eq('id', userId)
-    
-  if (updateError) return { error: updateError }
-
-  // Create server
-  const expires = new Date()
-  expires.setMonth(expires.getMonth() + 1) // 1 month
-
   const { data, error } = await supabase
     .from('purchased_servers')
-    .insert([
-      { 
-        owner_id: userId, 
-        name: name, 
-        map: map, 
-        max_players: max_players, 
-        expires_at: expires.toISOString(),
-        status: 'pending' // pending until AWS manager boots it up
-      }
-    ])
-    
+    .insert([{ 
+      owner_id: userId, 
+      name: name, 
+      map: map, 
+      max_players: max_players, 
+      status: 'running',
+      port: port,
+      expires_at: expiresAt.toISOString()
+    }])
+    .select()
   return { data, error }
+}
+
+export async function buyServer(userId, name, map, max_players) {
+  try {
+    // Kredi kartı ödeme altyapısı için worker'a istek atılır
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, name, map, max_players })
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) return { data: { checkout_url: data.url } };
+      return { error: new Error("Stripe checkout session URL could not be generated.") };
+    } else {
+      return { error: new Error(`API Error: ${res.statusText}`) };
+    }
+  } catch (e) {
+    console.warn("Stripe api hatası...", e);
+    return { error: e };
+  }
 }

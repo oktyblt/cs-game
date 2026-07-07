@@ -7,7 +7,7 @@
     "dev": "node server.js & vite",
     "server": "node server.js",
     "vite": "vite",
-    "build": "vite build",
+    "build": "vite build && npx esbuild worker-api/worker.js --bundle --format=esm --outfile=dist/_worker.js",
     "start": "node server.js & vite --host"
   },
   "dependencies": {
@@ -17,6 +17,7 @@
     "express": "^4.18.2",
     "fflate": "^0.8.3",
     "hlsdk-portable": "^0.1.3",
+    "puppeteer": "^25.3.0",
     "vite": "^5.0.0",
     "ws": "^8.16.0",
     "xash3d-fwgs": "^1.2.2"
