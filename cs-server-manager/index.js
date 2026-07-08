@@ -14,20 +14,36 @@ const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nobzqygwzuqdlipnuchi.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'browsercsadmin';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin_secret_token_777';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://browsercs.com';
 
+// Anon client — kullanıcı işlemleri (auth.getUser vb.)
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Service role client — RLS bypass, sadece backend içi DB işlemleri
+const supabaseAdmin = SUPABASE_SERVICE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+  : supabase; // Service key yoksa anon'a düş (test ortamları için)
 
 const app = express();
 
-// CORS: Sadece browsercs.com ve localhost (development)
-const allowedOrigins = [CORS_ORIGIN, 'http://localhost:3000', 'http://localhost:5173'];
+// CORS: browsercs.com, cs-web-game.pages.dev ve localhost (development)
+const allowedOrigins = [
+  CORS_ORIGIN,
+  'https://browsercs.com',
+  'https://www.browsercs.com',
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
 app.use(cors({
   origin: (origin, callback) => {
     // origin undefined = same-origin / curl testleri
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Cloudflare Pages preview URLs: *.cs-web-game.pages.dev
+    if (!origin || allowedOrigins.includes(origin) || /^https:\/\/[a-z0-9-]+\.cs-web-game\.pages\.dev$/.test(origin)) {
       callback(null, true);
     } else {
       callback(new Error('CORS policy: Bu origin izinli değil: ' + origin));
@@ -100,8 +116,20 @@ async function createServerContainer(options) {
   const configDir = `/home/ubuntu/server_configs/${port}`;
   fs.mkdirSync(configDir, { recursive: true });
 
+  // Sunucu adını normalize et (Türkçe karakterleri kaldır) ve BROWSERCS ekle
+  const formatHostname = (rawName) => {
+    const trMap = {
+      'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'I': 'I',
+      'i': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S',
+      'ü': 'u', 'Ü': 'U'
+    };
+    const cleanName = String(rawName || '').replace(/[çÇğĞıIİöÖşŞüÜ]/g, m => trMap[m]);
+    return `BROWSERCS | ${cleanName}`;
+  };
+  const finalHostname = formatHostname(name);
+
   const serverCfgContent = `
-hostname "${name}"
+hostname "${finalHostname}"
 rcon_password "${serverSettings.rcon_password}"
 mp_startmoney ${serverSettings.start_money}
 sv_gravity ${serverSettings.gravity}
@@ -125,7 +153,7 @@ sv_fileconsistency 0
     Tty: true,
     Cmd: [
       'sh', '-c',
-      `cd /opt/xashds && exec ./xash -dedicated -game cstrike +map "${map}" +maxplayers "${maxplayers}" +hostname "${name}" +sv_lan 1 +port 27015 +servercfgfile server.cfg`
+      `cd /opt/xashds && exec ./xash -dedicated -game cstrike +map "${map}" +maxplayers "${maxplayers}" +hostname "${finalHostname}" +sv_lan 1 +port 27015 +servercfgfile server.cfg`
     ],
     HostConfig: {
       Binds: [
@@ -162,7 +190,7 @@ sv_fileconsistency 0
   
   try {
     const exec = await container.exec({
-      Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\nrcon_password "browsercs"\n\' >> cstrike/server.cfg'],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\n' >> cstrike/server.cfg`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
@@ -190,6 +218,9 @@ async function requireAuth(req, res, next) {
 app.post('/api/start-server', loginLimiter, requireAuth, async (req, res) => {
   try {
     const { map, maxplayers, name, host } = req.body;
+    const serverName = name || `${host || 'CS'}'s Server`;
+    const serverMap  = map || 'de_dust2';
+    const serverSlots = parseInt(maxplayers) || 16;
     
     // Mevcut kullanıcı port aralığını kontrol ederek çakışmayan port bul
     const existingContainers = await docker.listContainers({ all: true });
@@ -205,15 +236,50 @@ app.post('/api/start-server', loginLimiter, requireAuth, async (req, res) => {
     }
     
     const container = await createServerContainer({
-      map: map || 'de_dust2',
-      maxplayers: maxplayers || 16,
-      name: name || `${host}'s Server`,
+      map: serverMap,
+      maxplayers: serverSlots,
+      name: serverName,
       port: port,
       isOfficial: false,
       owner_id: req.user.id
     });
 
-    res.json({ success: true, containerId: container.id, port });
+    // purchased_servers kaydını service role ile oluştur (RLS bypass)
+    let serverDbId = null;
+    try {
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 10);
+
+      // Önce eski kaydı temizle (farklı sahibe ait eski port kaydı varsa)
+      await supabaseAdmin.from('purchased_servers').delete().eq('port', port);
+
+      // Yeni kaydı ekle
+      const { data: insertData, error: insertErr } = await supabaseAdmin
+        .from('purchased_servers')
+        .insert([{
+          owner_id: req.user.id,
+          name: serverName,
+          map: serverMap,
+          max_players: serverSlots,
+          status: 'running',
+          port: port,
+          container_id: container.id,
+          expires_at: expiresAt.toISOString()
+        }])
+        .select('id')
+        .single();
+
+      if (insertErr) {
+        console.warn('[start-server] purchased_servers INSERT hatası:', insertErr.message);
+      } else {
+        serverDbId = insertData?.id || null;
+        console.log('[start-server] purchased_servers kaydı oluşturuldu, port:', port, 'id:', serverDbId);
+      }
+    } catch(dbErr) {
+      console.warn('[start-server] DB kayıt hatası (sunucu yine de çalışıyor):', dbErr.message);
+    }
+
+    res.json({ success: true, containerId: container.id, port, serverId: serverDbId });
   } catch (err) {
     console.error("Error starting server:", err);
     res.status(500).json({ success: false, error: err.message });
@@ -281,38 +347,47 @@ function queryA2S(ip, port) {
 function sendRcon(ip, port, password, command) {
   return new Promise((resolve, reject) => {
     const client = dgram.createSocket('udp4');
-    let challenge = '';
     let responseText = '';
-    
-    const timeout = setTimeout(() => {
+    let responseTimer = null;
+
+    const timeoutTimer = setTimeout(() => {
+      clearTimeout(responseTimer);
       client.close();
       reject(new Error('RCON Timeout - Şifre yanlış olabilir veya sunucu kapalı.'));
-    }, 2000);
+    }, 5000);
 
     client.on('message', (msg) => {
-      const response = msg.toString('binary');
-      if (response.includes('challenge rcon')) {
-        challenge = response.split(' ')[2].trim();
-        const rconCmd = Buffer.from(`\xFF\xFF\xFF\xFFrcon ${challenge} "${password}" ${command}\n`, 'binary');
-        client.send(rconCmd, 0, rconCmd.length, port, ip);
-      } else {
-        responseText += response.substring(4);
-        // Clean up text
-        responseText = responseText.replace(/\x00/g, '');
-        clearTimeout(timeout);
+      // Strip the 4-byte \xff\xff\xff\xff header from raw buffer, then decode as UTF-8
+      const payload = msg.slice(4).toString('utf8')
+        .replace(/\x00/g, '')           // null bytes
+        .replace(/ÿÿÿÿ/g, '')          // residual header mojibake
+        .replace(/^\s*print\s*/gm, '') // Xash3D "print" prefix
+        .trim();
+      if (payload) responseText += (responseText ? '\n' : '') + payload;
+
+      // Collect for 200ms (Xash3D may send multiple packets)
+      clearTimeout(responseTimer);
+      responseTimer = setTimeout(() => {
+        clearTimeout(timeoutTimer);
         client.close();
-        resolve(responseText);
-      }
+        resolve(responseText.trim());
+      }, 200);
     });
 
     client.on('error', (err) => {
-      clearTimeout(timeout);
-      client.close();
+      clearTimeout(timeoutTimer);
+      clearTimeout(responseTimer);
+      try { client.close(); } catch(e) {}
       reject(err);
     });
 
-    const challengeReq = Buffer.from('\xFF\xFF\xFF\xFFchallenge rcon\n', 'binary');
-    client.send(challengeReq, 0, challengeReq.length, port, ip);
+    // Xash3D RCON: direkt format, challenge yok
+    // Format: \xFF\xFF\xFF\xFF rcon "password" command \n
+    const pkt = Buffer.concat([
+      Buffer.from([0xff, 0xff, 0xff, 0xff]),
+      Buffer.from(`rcon "${password}" ${command}\n`, 'utf8')
+    ]);
+    client.send(pkt, 0, pkt.length, port, ip);
   });
 }
 
@@ -346,7 +421,7 @@ app.get('/api/servers', async (req, res) => {
         maxplayers: maxPlayers,
         port: port,
         isOfficial: isOfficial,
-        // owner_id ve container details güvenlik için response'dan çıkarıldı
+        owner_id: c.Labels.owner_id || null,   // Sunucu sahibini frontend'e bildir (Yönet butonu için)
         state: c.State
       };
     }));
@@ -386,19 +461,57 @@ app.delete('/api/admin/servers/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// Server Yönetim Endpoint'leri (YENİ SİSTEM)
+// Server Yönetim Endpoint'leri — hem UUID hem Docker container ID kabul eder
 app.post('/api/servers/:id/command', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { rconPassword, command } = req.body;
-    const container = docker.getContainer(id);
-    const info = await container.inspect();
-    if (info.Config.Labels.owner_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+
+    if (!rconPassword) return res.status(400).json({ success: false, error: 'RCON şifresi gerekli.' });
+    if (!command) return res.status(400).json({ success: false, error: 'Komut gerekli.' });
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let port = null;
+
+    if (isUUID) {
+      // Kullanıcının JWT token'ı ile user-scoped sorgu (RLS uyumlu)
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.split(' ')[1] : null;
+      let dbServer = null;
+
+      if (token) {
+        const userSb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+        const { data } = await userSb.from('purchased_servers').select('port, owner_id').eq('id', id).single();
+        dbServer = data;
+      }
+
+      if (dbServer) {
+        // RLS ile bulundu
+        if (dbServer.owner_id !== req.user.id) return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+        port = dbServer.port;
+      } else {
+        // RLS bulamadı → Docker container listesinde owner_id label'ına göre ara
+        const containers = await docker.listContainers({ filters: { label: [`cs-web-game=true`, `owner_id=${req.user.id}`] } });
+        if (containers.length === 0) return res.status(404).json({ success: false, error: 'Aktif sunucu bulunamadı.' });
+        // Birden fazla container varsa port en büyüğünü al (en son başlatılan)
+        const container = containers[0];
+        const boundPort = container.Ports.find(p => p.PrivatePort === 27015)?.PublicPort;
+        if (!boundPort) return res.status(400).json({ success: false, error: 'Sunucu kapalı veya port bulunamadı.' });
+        port = boundPort;
+      }
+    } else {
+      // Docker container ID → inspect → port bul
+      const container = docker.getContainer(id);
+      const info = await container.inspect();
+      if (info.Config.Labels.owner_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+      }
+      const portBind = info.NetworkSettings.Ports['27015/udp'];
+      if (!portBind) throw new Error('Sunucu kapalı');
+      port = parseInt(portBind[0].HostPort);
     }
-    const portBind = info.NetworkSettings.Ports['27015/udp'];
-    if (!portBind) throw new Error('Sunucu kapalı');
-    const port = parseInt(portBind[0].HostPort);
 
     const response = await sendRcon('127.0.0.1', port, rconPassword, command);
     res.json({ success: true, response });
@@ -406,6 +519,7 @@ app.post('/api/servers/:id/command', requireAuth, async (req, res) => {
     res.status(500).json({ success: false, error: e.message });
   }
 });
+
 
 // Tek başına RCON şifre güncelleme
 app.post('/api/servers/:id/rcon', requireAuth, async (req, res) => {
@@ -626,11 +740,22 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     if (isUUID) {
       const { data, error } = await userSupabase.from('purchased_servers').select('*').eq('id', id).single();
-      if (error || !data) {
-        return res.status(404).json({ success: false, error: 'Sunucu bulunamadı veya yetkiniz yok.' });
+      if (data) {
+        dbServer = data;
+        containerId = data.container_id;
+      } else {
+        // RLS / kayıt yok → Docker'da owner_id label'ına göre ara
+        const containers = await docker.listContainers({ filters: { label: [`cs-web-game=true`, `owner_id=${req.user.id}`] } });
+        if (containers.length === 0) {
+          return res.status(404).json({ success: false, error: 'Aktif sunucu bulunamadı.' });
+        }
+        const c = containers[0];
+        const boundPort = c.Ports.find(p => p.PrivatePort === 27015)?.PublicPort;
+        if (!boundPort) return res.status(400).json({ success: false, error: 'Sunucu kapalı veya port bulunamadı.' });
+        // Geçici dbServer objesi oluştur
+        dbServer = { id: null, owner_id: req.user.id, port: boundPort, rcon_password: 'admin', start_money: 16000, gravity: 800, round_time: 5 };
+        containerId = c.Id;
       }
-      dbServer = data;
-      containerId = data.container_id;
     } else {
       const containerInfo = await docker.getContainer(id).inspect().catch(() => null);
       if (!containerInfo) {
@@ -660,14 +785,16 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
     if (adminName !== undefined) updates.admin_name = adminName;
     if (adminPassword !== undefined) updates.admin_password = adminPassword;
 
-    if (Object.keys(updates).length > 0) {
+    // Supabase'de kayıt varsa güncelle (Docker fallback durumunda id null olur)
+    if (dbServer.id && Object.keys(updates).length > 0) {
       const { error: updateErr } = await userSupabase
         .from('purchased_servers')
         .update(updates)
         .eq('id', dbServer.id);
         
       if (updateErr) {
-        return res.status(500).json({ success: false, error: 'Ayarlar veritabanına kaydedilemedi: ' + updateErr.message });
+        console.warn('Supabase update warning:', updateErr.message);
+        // Kritik değil, cfg dosyası yine de yazılacak
       }
     }
 
@@ -684,8 +811,19 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
     const s_admin = updates.admin_name !== undefined ? updates.admin_name : (dbServer.admin_name || '');
     const s_pass = updates.admin_password !== undefined ? updates.admin_password : (dbServer.admin_password || '');
 
+    const formatHostname = (rawName) => {
+      const trMap = {
+        'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'I': 'I',
+        'i': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S',
+        'ü': 'u', 'Ü': 'U'
+      };
+      const cleanName = String(rawName || '').replace(/[çÇğĞıIİöÖşŞüÜ]/g, m => trMap[m]);
+      return `BROWSERCS | ${cleanName}`;
+    };
+    const finalHostname = formatHostname(dbServer.name);
+
     const serverCfgContent = `
-hostname "${dbServer.name}"
+hostname "${finalHostname}"
 rcon_password "${s_rcon}"
 mp_startmoney ${s_money}
 sv_gravity ${s_grav}

@@ -294,25 +294,19 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// ─── Keyboard Intercept (minimal) ───────────────────────────────────────
+// Tab tuşunun tarayıcı odaklanmasını bozmasını engelle (Skorbord için), ancak form girişlerinde serbest bırak
 window.addEventListener('keydown', (e) => {
   const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-
-  // [1] input/textarea: tuşlar engine'e gitmesin
-  if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
-    if (e.key !== 'Escape') {
+  
+  // Allow typing in inputs/textareas without engine stealing keys
+  if (activeTag === 'input' || activeTag === 'textarea') {
+    // Let Esc, Tilde through so user can close console
+    if (e.key !== '`' && e.key !== '~' && e.key !== 'é' && e.code !== 'Backquote' && e.key !== 'Escape') {
       e.stopPropagation();
-      return;
+      return; 
     }
   }
 
-  // [2] Oyun çalışırken tüm tuşlarda tarayıcı default'unu engelle
-  // macOS accent picker, tab focus, kısayollar vs.
-  if (typeof engineRunning !== 'undefined' && engineRunning) {
-    e.preventDefault();
-  }
-
-  // [3] Tilde/backtick: konsol aç/kapat
   if (e.key === '`' || e.key === '~' || e.key === 'é' || e.code === 'Backquote') {
     e.stopPropagation();
     e.preventDefault();
@@ -320,23 +314,113 @@ window.addEventListener('keydown', (e) => {
     if (cp) {
       cp.classList.toggle('open');
       if (cp.classList.contains('open')) {
-        document.exitPointerLock();
+        document.exitPointerLock(); // Free mouse for console
         const inp = document.getElementById('console-input');
         if (inp) inp.focus();
       } else {
-        window.focus();
+        window.focus(); // Give focus back to the canvas
         if (document.activeElement) document.activeElement.blur();
       }
     }
     return;
   }
 
-  // [4] Tab: tarayıcı focus döngüsünü engelle
-  if (e.key === 'Tab') {
-    e.preventDefault();
+  // Text menu key intercept (1-9, 0)
+  const tm = document.getElementById('custom-textmenu');
+  if (tm && tm.style.display !== 'none' && window.textMenuSlots) {
+    if (e.key >= '0' && e.key <= '9') {
+      e.stopPropagation();
+      e.preventDefault();
+      const slotNum = parseInt(e.key);
+      const isZero = (slotNum === 0);
+      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
+      if ((window.textMenuSlots & bitCheck) !== 0) {
+         if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
+         tm.style.display = 'none';
+      }
+      return;
+    }
   }
-}, true);
 
+  // Scoreboard Tab intercept
+  if (e.key === 'Tab') {
+    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+    if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
+      e.preventDefault();
+    }
+  }
+}, true); // use capture to intercept before Xash3D canvas gets it
+// ----------------------------------------
+// --- BROWSERCS TEXT MENU HANDLERS ---
+window._openTextMenu = function(validSlots, textStr) {
+  try {
+    document.exitPointerLock(); // Free mouse for the menu
+    window.textMenuSlots = validSlots;
+    const tm = document.getElementById('custom-textmenu');
+    const tmTitle = document.getElementById('textmenu-title');
+    const tmItems = document.getElementById('textmenu-items');
+    
+    if (tm && tmTitle && tmItems) {
+      tmItems.innerHTML = '';
+      const lines = textStr.replace(/\\n/g, '\n').split('\n');
+      
+      // Clean color codes (\y, \w, \r, \d, \b) from the title
+      let titleStr = lines[0] || 'MENU';
+      titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
+      tmTitle.innerText = titleStr;
+      
+      for (let i = 1; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line) continue;
+        
+        // Clean color codes before regex match
+        line = line.replace(/\\[ywrdb]/g, '').trim();
+        
+        const match = line.match(/^(\d+)\.\s*(.*)/);
+        if (match) {
+          const slotNum = parseInt(match[1]);
+          const slotText = match[2];
+          
+          const btn = document.createElement('div');
+          btn.className = 'textmenu-item';
+          btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
+          
+          // Check if slot is valid
+          const isZero = (slotNum === 0);
+          const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
+          if ((window.textMenuSlots & bitCheck) !== 0) {
+            btn.onclick = () => {
+              if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
+              tm.style.display = 'none';
+            };
+          } else {
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'not-allowed';
+          }
+          tmItems.appendChild(btn);
+        } else {
+          // Non-selectable text line
+          const div = document.createElement('div');
+          div.style.color = 'var(--text-dim)';
+          div.style.fontSize = '0.7rem';
+          div.style.padding = '0.2rem 0';
+          div.innerText = line;
+          tmItems.appendChild(div);
+        }
+      }
+      console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
+      tm.style.display = 'flex';
+    }
+  } catch (e) {
+    console.error('Textmenu parse error', e);
+  }
+};
+
+window._closeTextMenu = function() {
+  const tm = document.getElementById('custom-textmenu');
+  if (tm) tm.style.display = 'none';
+  window.textMenuSlots = 0;
+};
 
 // Fix for typing in console input (stop event from bubbling to Emscripten)
 document.addEventListener('DOMContentLoaded', () => {
@@ -735,8 +819,7 @@ class Xash3DWebSocket extends Xash3D {
                 
                 this.packetCountRecv++;
                 if (this.packetCountRecv <= 20) {
-                    // Per-paket log devre dışı — oyun performansı için
-                    // console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı.`);
+                    console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı.`);
                 }
 
                 const srcIp = this.isHost ? [10, 0, 0, 2] : [10, 0, 0, 1];
@@ -837,8 +920,7 @@ class Xash3DWebSocket extends Xash3D {
         this.packetCountSend++;
         if (this.packetCountSend <= 20) {
             const dest = ip ? ip.join('.') : '?';
-            // Per-paket gönderme log devre dışı
-            // console.log(`[Ağ Log - Gönderilen #${this.packetCountSend}] ${packet.data.byteLength} byte → ${dest}:${packet.port}`);
+            console.log(`[Ağ Log - Gönderilen #${this.packetCountSend}] ${packet.data.byteLength} byte → ${dest}:${packet.port}`);
             addConsoleLog(`[Ağ] Paket #${this.packetCountSend} gönderiliyor: ${packet.data.byteLength} byte`, 'ok');
         }
 
@@ -1392,9 +1474,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v34.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v34.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v21.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v20.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v20.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
@@ -1519,11 +1601,11 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '-heapsize', '65536',
         '+ip', '10.0.0.2',
         '+clientport', (27000 + Math.floor(Math.random() * 1000)).toString(),
-        '+cl_updaterate', '30',
-        '+cl_cmdrate', '30',
-        '+rate', '25000',
-        '+ex_interp', '0.1',
-        '+fps_max', '60',
+        '+cl_updaterate', '101',
+        '+cl_cmdrate', '101',
+        '+rate', '100000',
+        '+ex_interp', '0.01',
+        '+fps_max', '100',
         // In-game console error overlay'i kapat
         '+sensitivity', '3',
         '+zoom_sensitivity_ratio', '1.2',
@@ -1561,9 +1643,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         },
 
       libraries: {
-        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v34.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
+        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v23.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1571,10 +1653,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        'cl_dlls/client_emscripten_wasm32_v34.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v34.wasm',
-        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
-        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
+        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v20.wasm',
+        'cl_dlls/client_emscripten_wasm32_v18.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v22.wasm',
+        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
+        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
       },
 
       module: {
@@ -1854,7 +1936,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
           // DLL dosyaları
           em.FS.writeFile('/cstrike/dlls/cs_emscripten_wasm32.wasm', csServerBuffer);
-          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v34.wasm', csClientBuffer);
+          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v18.wasm', csClientBuffer);
           em.FS.writeFile('/cstrike/cl_dlls/menu_emscripten_wasm32.wasm', csMenuBuffer);
           
           em.FS.writeFile('/filesystem_stdio.wasm', fsBuffer);
@@ -2084,6 +2166,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         if (!isHost && connectPort && connectPort !== 'listen' && connectPort !== true) {
           console.log('[DEBUG] Assetler yüklendi, uzak sunucuya bağlanılıyor...');
           if (typeof addConsoleLog === 'function') addConsoleLog('Assetler tamamlandı. Sunucuya bağlanılıyor...', 'ok');
+          executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
 
@@ -2117,7 +2202,11 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     if (btnReconnect) {
       btnReconnect.addEventListener('click', () => {
         if (reconnectOverlay) reconnectOverlay.classList.remove('show');
+        // Motora yeniden bağlan komutu gönder
         if (xash && engineRunning) {
+          executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
       });
@@ -2136,7 +2225,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           if (xash && engineRunning) {
             console.log('[Map Change] Auto-reconnect tetiklendi, sunucuya yeniden bağlanılıyor...');
             if (typeof addConsoleLog === 'function') addConsoleLog('Harita değişti — sunucuya yeniden bağlanılıyor...', 'ok');
-            executeEngineCommand('connect 10.0.0.1:27015');
+            executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('setinfo _vgui_menus 0');
+          executeEngineCommand('connect 10.0.0.1:27015');
             if (reconnectOverlay) reconnectOverlay.classList.remove('show');
           }
         }, 3000);
