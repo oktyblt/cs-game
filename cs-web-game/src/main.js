@@ -2259,6 +2259,14 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           keybindOverlay.style.display = 'block';
           setTimeout(() => { keybindOverlay.style.display = 'none'; }, 9000);
         }
+
+        // ── Welcome MOTD overlay: bağlantıdan 1.5sn sonra göster ─────
+        setTimeout(() => {
+          const meta = window._motdServerMeta || {};
+          if (typeof window.showWelcomeMOTD === 'function') {
+            window.showWelcomeMOTD(meta.serverName, meta.mapName);
+          }
+        }, 1500);
       }, 500);
     }, 1500);
 
@@ -2875,6 +2883,7 @@ async function loadServerList() {
             </div>
           `;
           card.querySelector('.btn-join-room').addEventListener('click', async () => {
+            window._motdServerMeta = { serverName: server.name, mapName: server.map };
             if (!getCurrentUser()) {
               const guestNick = await window.openGuestNameModal(server.port, server.map);
               if (!guestNick) return;
@@ -3781,6 +3790,41 @@ async function runSplash() {
     }, 3000);
   }
 }
+// ── WELCOME MOTD OVERLAY ───────────────────────────────────────────────────
+let _motdTimer = null;
+window.showWelcomeMOTD = function(serverName, mapName) {
+  const overlay = document.getElementById('welcome-motd');
+  if (!overlay) return;
+  // Alanları doldur
+  const svEl = document.getElementById('motd-server-name');
+  const mapEl = document.getElementById('motd-map-name');
+  if (svEl)  svEl.textContent  = serverName || 'BrowserCS Official';
+  if (mapEl) mapEl.textContent = mapName    || '—';
+  // Göster
+  overlay.classList.remove('hiding');
+  overlay.classList.add('visible');
+  // Progress bar animasyonu
+  const bar = document.getElementById('motd-progress-bar');
+  const cd  = document.getElementById('motd-countdown');
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '0%'; }, 30); }
+  // Countdown
+  let sec = 7;
+  if (cd) cd.textContent = `${sec} sn`;
+  clearInterval(_motdTimer);
+  _motdTimer = setInterval(() => {
+    sec--;
+    if (cd) cd.textContent = `${sec} sn`;
+    if (sec <= 0) { clearInterval(_motdTimer); window.dismissWelcomeMOTD(); }
+  }, 1000);
+};
+window.dismissWelcomeMOTD = function() {
+  clearInterval(_motdTimer);
+  const overlay = document.getElementById('welcome-motd');
+  if (!overlay) return;
+  overlay.classList.add('hiding');
+  setTimeout(() => { overlay.classList.remove('visible', 'hiding'); }, 420);
+};
+
 window.connectToServer = async function (port, mapName, isHost = false) {
   if (engineRunning) {
     window.customAlert("Oyun zaten açık! Lütfen sayfayı yenileyip tekrar deneyin.");
