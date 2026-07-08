@@ -365,6 +365,65 @@ window.addEventListener('keyup', (e) => {
   }
 }, true);
 
+// ─── SCOREBOARD GÜNCELLEME (C++ → JS) ────────────────────────────────────────
+window.updateBrowserCSScoreboard = function(playersJson, serverName, localPlayerId) {
+  try {
+    const players = JSON.parse(playersJson);
+    const sbServerName = document.getElementById('sb-server-name');
+    const sbCT = document.getElementById('sb-ct-list');
+    const sbT  = document.getElementById('sb-t-list');
+    const sbSpec = document.getElementById('sb-spec-list');
+    const sbSpecContainer = document.getElementById('sb-spec-container');
+    if (!sbCT || !sbT) return;
+
+    if (sbServerName) sbServerName.textContent = serverName || 'BrowserCS';
+
+    const makeRow = (p) => {
+      const isLocal = p.id === localPlayerId || p.local;
+      const name = isLocal ? `★ ${p.name}` : p.name;
+      const bg = isLocal ? 'background:rgba(255,200,0,0.08);' : '';
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${bg}">
+        <td style="padding:6px 10px; font-weight:${isLocal?'700':'400'}; color:${isLocal?'#ffd700':'#eee'};">${name}</td>
+        <td style="padding:6px 10px; text-align:center; color:#4caf50;">${p.frags ?? 0}</td>
+        <td style="padding:6px 10px; text-align:center; color:#ef5350;">${p.deaths ?? 0}</td>
+        <td style="padding:6px 10px; text-align:center; color:#90caf9;">${p.ping ?? 0}</td>
+      </tr>`;
+    };
+
+    const cts   = players.filter(p => p.team && (p.team.toLowerCase().includes('ct') || p.team === 'TERRORIST' ? false : p.team.toLowerCase() === 'ct'));
+    const ts    = players.filter(p => p.team && p.team.toLowerCase() === 'terrorist');
+    const specs = players.filter(p => !p.team || p.team === 'unassigned' || p.team === 'spectator');
+
+    // Daha güvenli team detection
+    const ctPlayers = players.filter(p => {
+      const t = (p.team || '').toLowerCase();
+      return t === 'ct' || t === 'counter-terrorist' || t === 'counterterrorist';
+    });
+    const tPlayers = players.filter(p => {
+      const t = (p.team || '').toLowerCase();
+      return t === 'terrorist' || t === 't';
+    });
+    const specPlayers = players.filter(p => {
+      const t = (p.team || '').toLowerCase();
+      return !ctPlayers.includes(p) && !tPlayers.includes(p);
+    });
+
+    sbCT.innerHTML = ctPlayers.length ? ctPlayers.map(makeRow).join('') :
+      '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
+    sbT.innerHTML = tPlayers.length ? tPlayers.map(makeRow).join('') :
+      '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
+
+    if (specPlayers.length > 0) {
+      sbSpecContainer.style.display = 'block';
+      sbSpec.textContent = specPlayers.map(p => p.name).join(', ');
+    } else {
+      sbSpecContainer.style.display = 'none';
+    }
+  } catch(e) {
+    console.error('[Scoreboard] Parse error:', e);
+  }
+};
+
 // ----------------------------------------
 // --- BROWSERCS TEXT MENU HANDLERS ---
 window._openTextMenu = function(validSlots, textStr) {
