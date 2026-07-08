@@ -53,7 +53,7 @@ export async function getMyServers(userId) {
   return { data, error }
 }
 
-export async function createPurchasedServer(userId, name, map, max_players, port) {
+export async function createPurchasedServer(userId, name, map, max_players, port, rconPassword) {
   const expiresAt = new Date();
   expiresAt.setFullYear(expiresAt.getFullYear() + 10); // 10 years VIP duration
   
@@ -66,7 +66,8 @@ export async function createPurchasedServer(userId, name, map, max_players, port
       max_players: max_players, 
       status: 'running',
       port: port,
-      expires_at: expiresAt.toISOString()
+      expires_at: expiresAt.toISOString(),
+      rcon_password: rconPassword || 'admin'
     }])
     .select()
   return { data, error }

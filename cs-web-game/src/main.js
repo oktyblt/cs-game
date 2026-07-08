@@ -2579,6 +2579,7 @@ if (btnBuyPremium) {
       if (isUserPremium()) {
         const sName = (await window.customPrompt('Sunucu Adı Girin:', 'CS 1.5 Özel Sunucu', 'SUNUCU ADI')) || 'CS 1.5 Özel Sunucu';
         const sMap = (await window.customPrompt('Harita Seçin:', 'de_dust2', 'HARİTA SEÇ')) || 'de_dust2';
+        const sRcon = (await window.customPrompt('RCON Şifresi Belirleyin:', 'admin123', 'RCON ŞİFRESİ')) || 'admin';
 
         notify('VIP Üye Tanındı: AWS üzerinde sunucunuz başlatılıyor...', 'success');
 
@@ -2589,13 +2590,13 @@ if (btnBuyPremium) {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({ map: sMap, maxplayers: 16, name: sName, host: 'bymTL' })
+          body: JSON.stringify({ map: sMap, maxplayers: 16, name: sName, host: 'bymTL', rconPassword: sRcon })
         });
 
         const d = await res.json();
         if (d.success && d.port) {
           const { createPurchasedServer } = await import('./supabase.js');
-          const dbRes = await createPurchasedServer(user.id, sName, sMap, 16, d.port);
+          const dbRes = await createPurchasedServer(user.id, sName, sMap, 16, d.port, sRcon);
 
           if (dbRes.error) {
             notify('AWS Sunucusu açıldı ancak veritabanı kayıt hatası: ' + dbRes.error.message, 'error');
@@ -3176,27 +3177,33 @@ window.openServerSettings = async function (id, serverObj) {
   if ($('rcon-console-output')) $('rcon-console-output').textContent = 'Hazır. RCON şifresini gir ve komut gönder.';
   if ($('rcon-command-input')) $('rcon-command-input').value = '';
 
-  // Önce serverObj'den doldur (server listesinden geliyor, rcon_password var)
+  // Önce serverObj'den doldur (hemen göstermek için)
   const sv = serverObj || {};
-  if ($('cfg-rcon-pass')   && sv.rcon_password) $('cfg-rcon-pass').value   = sv.rcon_password;
-  if ($('rcon-auth-pass') && sv.rcon_password) $('rcon-auth-pass').value  = sv.rcon_password;
-  if ($('cfg-startmoney') && sv.start_money)   $('cfg-startmoney').value  = sv.start_money;
-  if ($('cfg-gravity')    && sv.gravity)       $('cfg-gravity').value     = sv.gravity;
-  if ($('cfg-roundtime')  && sv.round_time)    $('cfg-roundtime').value   = sv.round_time;
+  const fillFields = (src) => {
+    if ($('rcon-auth-pass') && src.rcon_password) $('rcon-auth-pass').value = src.rcon_password;
+    if ($('cfg-rcon-pass')  && src.rcon_password) $('cfg-rcon-pass').value  = src.rcon_password;
+    if ($('cfg-startmoney') && src.start_money)   $('cfg-startmoney').value = src.start_money;
+    if ($('cfg-gravity')    && src.gravity)       $('cfg-gravity').value    = src.gravity;
+    if ($('cfg-roundtime')  && src.round_time)    $('cfg-roundtime').value  = src.round_time;
+  };
+  fillFields(sv);
 
-  // API'dan daha fazla detay çekmeyi dene (mevcut endpoint: /status)
+  // GET /api/servers/:id → Supabase'den tam kayıt çek (rcon_password dahil)
   try {
     const token = await getSessionToken();
-    const servers = await fetch(`${API_URL}/api/servers`, {
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-    }).then(r => r.json());
-    const found = (servers.servers || []).find(s => s.id === id || s.containerId === id);
-    if (found) {
-      if ($('cfg-rcon-pass')   && found.rcon_password) $('cfg-rcon-pass').value   = found.rcon_password;
-      if ($('rcon-auth-pass') && found.rcon_password) $('rcon-auth-pass').value  = found.rcon_password;
-      if ($('cfg-startmoney') && found.start_money)   $('cfg-startmoney').value  = found.start_money;
-      if ($('cfg-gravity')    && found.gravity)       $('cfg-gravity').value     = found.gravity;
-      if ($('cfg-roundtime')  && found.round_time)    $('cfg-roundtime').value   = found.round_time;
+    if (token) {
+      const res = await fetch(`${API_URL}/api/servers/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const full = d.server || d;
+        fillFields(full);
+        // Sunucu adını modal başlığına yaz
+        if ($('settings-modal-title') && full.name) {
+          $('settings-modal-title').textContent = `⚙ ${full.name.toUpperCase()} — YÖNETİM`;
+        }
+      }
     }
   } catch(e) { /* sessiz */ }
 };
