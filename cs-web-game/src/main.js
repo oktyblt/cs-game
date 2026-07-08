@@ -316,21 +316,112 @@ window.addEventListener('keydown', (e) => {
   }
 }, true); // capture: true SADECE tilde için
 
-// input/textarea içinde tuş engine'e gitmesin — capture phase'de yakalanır
+// Diğer tuş olayları — bubble phase (engine önce alır, sonra JS işler)
 window.addEventListener('keydown', (e) => {
   const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-  if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+  
+  // input/textarea içinde: engine'e gitmesin
+  if (activeTag === 'input' || activeTag === 'textarea') {
     if (e.key !== 'Escape') {
       e.stopPropagation();
       return;
     }
   }
-  // Tab: tarayıcı focus değiştirmesin, engine native scoreboard handle eder
-  if (e.key === 'Tab') {
-    e.preventDefault();
+
+  // Text menu: sadece görünürdeyse 0-9 yakala
+  const tm = document.getElementById('custom-textmenu');
+  if (tm && tm.style.display !== 'none' && window.textMenuSlots) {
+    if (e.key >= '0' && e.key <= '9') {
+      const slotNum = parseInt(e.key);
+      const isZero = (slotNum === 0);
+      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
+      if ((window.textMenuSlots & bitCheck) !== 0) {
+        if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
+        tm.style.display = 'none';
+      }
+      return;
+    }
   }
-}, true); // capture: true — browser default'tan ÖNCE tetiklenir
-// HTML text menü bridge kaldırıldı — native VGUI kullanılıyor
+
+  // Tab: tarayıcı focus'unu engelle ama engine'e ilet
+  if (e.key === 'Tab') {
+    if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
+      e.preventDefault(); // tarayıcı focus değiştirmesin
+      // stopPropagation YOK — engine Tab'ı scoreboard için kullanır
+    }
+  }
+}, false); // capture: false = bubble phase, engine önce işler
+// ----------------------------------------
+// --- BROWSERCS TEXT MENU HANDLERS ---
+window._openTextMenu = function(validSlots, textStr) {
+  try {
+    document.exitPointerLock(); // Free mouse for the menu
+    window.textMenuSlots = validSlots;
+    const tm = document.getElementById('custom-textmenu');
+    const tmTitle = document.getElementById('textmenu-title');
+    const tmItems = document.getElementById('textmenu-items');
+    
+    if (tm && tmTitle && tmItems) {
+      tmItems.innerHTML = '';
+      const lines = textStr.replace(/\\n/g, '\n').split('\n');
+      
+      // Clean color codes (\y, \w, \r, \d, \b) from the title
+      let titleStr = lines[0] || 'MENU';
+      titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
+      tmTitle.innerText = titleStr;
+      
+      for (let i = 1; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line) continue;
+        
+        // Clean color codes before regex match
+        line = line.replace(/\\[ywrdb]/g, '').trim();
+        
+        const match = line.match(/^(\d+)\.\s*(.*)/);
+        if (match) {
+          const slotNum = parseInt(match[1]);
+          const slotText = match[2];
+          
+          const btn = document.createElement('div');
+          btn.className = 'textmenu-item';
+          btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
+          
+          // Check if slot is valid
+          const isZero = (slotNum === 0);
+          const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
+          if ((window.textMenuSlots & bitCheck) !== 0) {
+            btn.onclick = () => {
+              if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
+              tm.style.display = 'none';
+            };
+          } else {
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'not-allowed';
+          }
+          tmItems.appendChild(btn);
+        } else {
+          // Non-selectable text line
+          const div = document.createElement('div');
+          div.style.color = 'var(--text-dim)';
+          div.style.fontSize = '0.7rem';
+          div.style.padding = '0.2rem 0';
+          div.innerText = line;
+          tmItems.appendChild(div);
+        }
+      }
+      console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
+      tm.style.display = 'flex';
+    }
+  } catch (e) {
+    console.error('Textmenu parse error', e);
+  }
+};
+
+window._closeTextMenu = function() {
+  const tm = document.getElementById('custom-textmenu');
+  if (tm) tm.style.display = 'none';
+  window.textMenuSlots = 0;
+};
 
 // Fix for typing in console input (stop event from bubbling to Emscripten)
 document.addEventListener('DOMContentLoaded', () => {
@@ -1480,6 +1571,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       let xashArgs = [
         '-windowed',
         '-game', 'cstrike',
+        '+setinfo', '_vgui_menus 0',
         '+mp_consistency', '0',
         '+sv_lan', '0',
         '+sv_allow_download', '1',
@@ -1524,6 +1616,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '+hud_fastswitch', '1',
         '+gl_clear', '1',
         '+r_novis', '0',
+        '+setinfo', '_vgui_menus', '0',
       ];
 
 
@@ -1679,6 +1772,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                 '/wasm/cstrike_sound.pk3',
                 '/wasm/cstrike_sprites.pk3',
                 '/wasm/cstrike_essential.pk3',
+                '/wasm/buy_menus.pk3?nocache=1',
                 '/wasm/valve_models.pk3',
                 '/wasm/valve_sound.pk3',
                 '/wasm/valve_sprites.pk3',
@@ -1687,14 +1781,18 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                 '/wasm/cstrike_wads.pk3'
              ];
              
-               let loadedCount = 0;
+              let loadedCount = 0;
               for (const file of pk3Files) {
                  try {
                     const rawFile = file.split('?')[0];
                     const filename = rawFile.split('/').pop();
                     const targetPath = rawFile.includes('valve_') ? `/valve/${filename}` : `/cstrike/${filename}`;
                     addLoadingLog(`İndiriliyor: ${filename}...`);
-                    const res = await cachedFetch(file);
+                    // buy_menus.pk3 için cache bypass
+                    const isBuyMenus = rawFile.includes('buy_menus');
+                    const res = isBuyMenus
+                       ? await fetch(rawFile, { cache: 'no-store' })
+                       : await cachedFetch(file);
                     if (res && res.ok) {
                         const buf = new Uint8Array(await res.arrayBuffer());
                         em.FS.writeFile(targetPath, buf);
@@ -1708,6 +1806,34 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
              addLoadingLog(`📦 ${loadedCount} adet oyun paketi (.pk3) başarıyla sisteme yazıldı.`, 'ok');
              console.log("[DEBUG VFS] /cstrike/ contents:", em.FS.readdir('/cstrike'));
              console.log("[DEBUG VFS] /valve/ contents:", em.FS.readdir('/valve'));
+             
+              // CS 1.5 buy CFG'leri - cstrike/custom/touch/ = Xash3D en yüksek öncelikli dizin
+              const buyMenuCFGs = ['buy_pistol_t','buy_pistol_ct','buy_rifle_t','buy_rifle_ct',
+                                   'buy_submachinegun_t','buy_submachinegun_ct',
+                                   'buy_machinegun_t','buy_machinegun_ct',
+                                   'buy_shotgun_t','buy_shotgun_ct'];
+              try { em.FS.mkdir('/cstrike/custom'); } catch(e) {}
+              try { em.FS.mkdir('/cstrike/custom/touch'); } catch(e) {}
+              try { em.FS.mkdir('/cstrike/touch'); } catch(e) {}
+              let cfgWritten = 0;
+              for (const cfgName of buyMenuCFGs) {
+                 try {
+                    const r = await fetch(`/wasm/touch/${cfgName}.cfg`, { cache: 'no-store' });
+                    if (r.ok) {
+                       const buf = new Uint8Array(await r.arrayBuffer());
+                       // #1 oncelik: cstrike/custom/touch/ (Xash3D en yuksek oncelik)
+                       em.FS.writeFile(`/cstrike/custom/touch/${cfgName}.cfg`, buf);
+                       // #2 fallback: cstrike/touch/
+                       em.FS.writeFile(`/cstrike/touch/${cfgName}.cfg`, buf);
+                       cfgWritten++;
+                       console.log(`[BuyMenu] Yazildi: ${cfgName}.cfg (${buf.length}B)`);
+                    } else {
+                       console.error(`[BuyMenu] HATA: ${cfgName}.cfg HTTP ${r.status}`);
+                    }
+                 } catch(e) { console.error(`[BuyMenu] Exception: ${cfgName}`, e); }
+              }
+              addLoadingLog(`CS 1.5 buy CFGleri yazildi: ${cfgWritten}/${buyMenuCFGs.length}`, 'ok');
+              console.log('[BuyMenu] custom/touch VFS:', em.FS.readdir('/cstrike/custom/touch'));
              // Fetch custom localized files to override pk3 defaults
              const customTexts = [
                 '/cs-assets/cstrike/motd.txt',
@@ -1883,7 +2009,85 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
             return;
           }
 
-          // BROWSERCS_TEXTMENU/SCOREBOARD bridge kaldırıldı — native VGUI kullanılıyor
+          if (log.includes('[BROWSERCS_HIDE_SCOREBOARD]')) {
+            const sbContainer = document.getElementById('custom-scoreboard');
+            if (sbContainer) sbContainer.style.display = 'none';
+            return;
+          }
+
+          if (log.includes('[BROWSERCS_TEXTMENU_CLOSE]')) {
+            const tm = document.getElementById('custom-textmenu');
+            if (tm) tm.style.display = 'none';
+            window.textMenuSlots = 0;
+            return;
+          }
+
+          if (log.includes('[BROWSERCS_TEXTMENU]')) {
+            try {
+              const parts = log.split('[BROWSERCS_TEXTMENU]')[1].trim();
+              const pipeIdx = parts.indexOf('|');
+              if (pipeIdx > -1) {
+                window.textMenuSlots = parseInt(parts.substring(0, pipeIdx));
+                const textStr = parts.substring(pipeIdx + 1).replace(/\\n/g, '\n');
+                
+                const tm = document.getElementById('custom-textmenu');
+                const tmTitle = document.getElementById('textmenu-title');
+                const tmItems = document.getElementById('textmenu-items');
+                if (tm && tmTitle && tmItems) {
+                  tmItems.innerHTML = '';
+                  const lines = textStr.split('\n');
+                  
+                  // Clean color codes (\y, \w, \r, \d, \b) from the title
+                  let titleStr = lines[0] || 'MENU';
+                  titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
+                  tmTitle.innerText = titleStr;
+                  
+                  for (let i = 1; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // Clean color codes before regex match
+                    line = line.replace(/\\[ywrdb]/g, '').trim();
+                    
+                    const match = line.match(/^(\d+)\.\s*(.*)/);
+                    if (match) {
+                      const slotNum = parseInt(match[1]);
+                      const slotText = match[2];
+                      
+                      const btn = document.createElement('div');
+                      btn.className = 'textmenu-item';
+                      btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
+                      
+                      // Check if slot is valid
+                      const isZero = (slotNum === 0);
+                      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
+                      if ((window.textMenuSlots & bitCheck) !== 0) {
+                        btn.onclick = () => {
+                          if (window.executeEngineCommand) window.executeEngineCommand(`menuselect ${slotNum}`);
+                          tm.style.display = 'none';
+                        };
+                      } else {
+                        btn.style.opacity = '0.4';
+                        btn.style.cursor = 'not-allowed';
+                      }
+                      tmItems.appendChild(btn);
+                    } else {
+                      // Non-selectable text line
+                      const div = document.createElement('div');
+                      div.style.color = 'var(--text-dim)';
+                      div.style.fontSize = '0.7rem';
+                      div.style.padding = '0.2rem 0';
+                      div.innerText = line;
+                      tmItems.appendChild(div);
+                    }
+                  }
+                  console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
+                  tm.style.display = 'flex';
+                }
+              }
+            } catch(e) { console.error('Textmenu parse error', e); }
+            return;
+          }
 
           // BUY DEBUG: silah satın alma logları
           if (log.includes('[BUY_DEBUG]')) {
