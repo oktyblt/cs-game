@@ -3463,7 +3463,76 @@ sv_restartround 3
       notify('Match CFG hatası: ' + e.message, 'error');
     }
     btn.disabled = false;
-    btn.textContent = '⚔ 5v5 MAÇ MODU (EXEC MATCH.CFG)';
+    btn.textContent = '⚔ 5v5 MAÇ MODU';
+  });
+}
+
+// ── NORMAL MODA DÖN — NORMAL.CFG YAZ + EXEC ──────────────────────────────
+if ($('btn-normal-mode')) {
+  $('btn-normal-mode').addEventListener('click', async () => {
+    const btn = $('btn-normal-mode');
+    const rconPass = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
+    if (!rconPass) { notify('RCON sekmesinde şifrenizi girin!', 'error'); switchTab(tabRcon, settingsRconView); return; }
+    if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return; }
+    btn.textContent = 'NORMAL.CFG YAZILIYOR...';
+    btn.disabled = true;
+
+    // DB'deki kayıtlı ayarları kullan (varsa), yoksa pub default'ları
+    const startMoney = $('cfg-startmoney')?.value || '16000';
+    const roundTime  = $('cfg-roundtime')?.value  || '5';
+    const freezeTime = $('cfg-freezetime')?.value || '6';
+    const gravity    = $('cfg-gravity')?.value    || '800';
+    const timelimit  = $('cfg-timelimit')?.value  || '30';
+
+    const normalCfgContent = `// CS 1.5 Normal Pub Config - BrowserCS
+sv_cheats 0
+sv_lan 0
+sv_gravity ${gravity}
+sv_maxspeed 320
+mp_friendlyfire 0
+mp_autoteambalance 1
+mp_limitteams 2
+mp_autokick 1
+mp_tkpunish 1
+mp_startmoney ${startMoney}
+mp_buytime 1.5
+mp_freezetime ${freezeTime}
+mp_roundtime ${roundTime}
+mp_c4timer 35
+mp_timelimit ${timelimit}
+mp_maxrounds 0
+mp_winlimit 0
+mp_flashlight 1
+mp_footsteps 1
+mp_fadetoblack 0
+mp_forcechasecam 0
+allow_spectators 1
+sv_password ""
+log off
+say "== NORMAL MOD AKTIF =="
+say "FF:OFF | MONEY:${startMoney} | ROUND:${roundTime}dk | TIME:${timelimit}dk"
+sv_restartround 3
+`;
+
+    try {
+      const token = await getSessionToken();
+      const writeRes = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/write-cfg`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ filename: 'normal', content: normalCfgContent })
+      });
+      const writeData = await writeRes.json();
+      if (!writeData.success) throw new Error(writeData.error || 'CFG yazılamıyor');
+
+      const execOk = await sendRcon('exec normal.cfg', null);
+      if (execOk) {
+        notify('↩ Normal mod aktif! Sunucu 3 saniyede yeniden başlayacak.', 'success');
+      }
+    } catch (e) {
+      notify('Normal CFG hatası: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = '↩ NORMAL MODA DÖN';
   });
 }
 
