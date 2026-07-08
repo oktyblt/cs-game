@@ -714,7 +714,7 @@ app.get('/api/stats', async (req, res) => {
 
 
 
-// GET /api/servers/:id — tek sunucu detayı
+// GET /api/servers/:id — tek sunucu detayı (UUID veya Docker container ID)
 app.get('/api/servers/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -724,7 +724,26 @@ app.get('/api/servers/:id', requireAuth, async (req, res) => {
     const userSb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
-    const { data, error } = await userSb.from('purchased_servers').select('*').eq('id', id).single();
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let data, error;
+    if (isUUID) {
+      ({ data, error } = await userSb.from('purchased_servers').select('*').eq('id', id).single());
+    } else {
+      // Docker container ID → container_id sütununa bak
+      ({ data, error } = await userSb.from('purchased_servers').select('*').eq('container_id', id).single());
+      // Bulamazsa port üzerinden ara
+      if (!data) {
+        try {
+          const container = docker.getContainer(id);
+          const info = await container.inspect();
+          const portBindings = info.NetworkSettings.Ports['27015/udp'];
+          const port = portBindings ? parseInt(portBindings[0].HostPort) : null;
+          if (port) {
+            ({ data, error } = await userSb.from('purchased_servers').select('*').eq('port', port).single());
+          }
+        } catch(_) {}
+      }
+    }
     if (error || !data) return res.status(404).json({ success: false, error: 'Sunucu bulunamadı.' });
     res.json({ success: true, server: data });
   } catch (e) {
