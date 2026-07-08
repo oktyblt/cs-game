@@ -209,6 +209,12 @@
     /* FATAL ERROR */
     #fatal-error-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:monospace;}
     
+    /* CUSTOM TEXT MENU */
+    #custom-textmenu { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:99999; background:rgba(4,6,8,0.94); border:1px solid var(--border-bright); border-radius:6px; padding:1.2rem; display:none; flex-direction:column; gap:0.5rem; font-family:var(--font-hud); color:var(--text-bright); min-width:280px; backdrop-filter:blur(10px); box-shadow:0 10px 40px rgba(0,0,0,0.8); pointer-events:auto; }
+    .textmenu-title { color:var(--cs-yellow); font-size:0.9rem; letter-spacing:0.05em; border-bottom:1px solid var(--border); padding-bottom:0.5rem; margin-bottom:0.4rem; text-transform:uppercase; font-weight:bold; }
+    .textmenu-item { display:flex; align-items:center; gap:0.6rem; padding:0.4rem 0.6rem; background:rgba(255,255,255,0.03); border:1px solid transparent; border-radius:3px; cursor:pointer; font-size:0.75rem; transition:all 0.15s; }
+    .textmenu-item:hover { background:rgba(240,160,0,0.15); border-color:var(--cs-yellow); }
+    .textmenu-key { display:inline-block; background:rgba(0,0,0,0.5); border:1px solid var(--border-bright); padding:0.1rem 0.4rem; border-radius:2px; color:var(--cs-yellow); font-weight:bold; }
     @media (max-width: 768px) {
       #app { grid-template-columns: 1fr; grid-template-rows: 48px auto 1fr; grid-template-areas: "header" "sidebar" "main"; }
       #sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; overflow-y: auto; }
@@ -236,6 +242,12 @@
 
   <!-- APP -->
   <div id="app">
+
+    <!-- CUSTOM TEXT MENU OVERLAY -->
+    <div id="custom-textmenu">
+      <div class="textmenu-title" id="textmenu-title">Menu Title</div>
+      <div id="textmenu-items"></div>
+    </div>
 
     <!-- HEADER -->
     <header id="header">
@@ -268,6 +280,61 @@
       </div>
       <div class="h-badge">WebGL2</div>
     </header>
+
+    <!-- CUSTOM HTML SCOREBOARD -->
+    <div id="custom-scoreboard" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(3px);">
+      <div style="background:rgba(20,20,20,0.85); border:1px solid rgba(255,255,255,0.1); border-radius:12px; width:95%; max-width:800px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.8);">
+        <!-- Header -->
+        <div style="padding:15px 20px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.4);">
+          <div>
+            <h1 style="margin:0; font-family:'Inter', sans-serif; font-size:1.4rem; color:var(--cs-yellow); font-weight:800; letter-spacing:1px;">BROWSERCS</h1>
+            <div id="sb-server-name" style="color:#aaa; font-size:0.8rem; margin-top:4px; font-family:var(--font-hud);">Server Name</div>
+          </div>
+        </div>
+        <!-- Content -->
+        <div style="padding:15px; overflow-y:auto; flex:1; font-family:'Inter', sans-serif; font-size:0.85rem;">
+          <!-- CT Section -->
+          <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(99, 134, 186, 0.2); border-radius:6px; margin-bottom:8px; border-left:4px solid #6386ba;">
+              <div style="color:#6386ba; font-weight:bold; font-size:1rem;">Anti-Teröristler</div>
+            </div>
+            <table style="width:100%; border-collapse:collapse; color:#ddd;">
+              <thead>
+                <tr style="color:#888; font-size:0.7rem; text-transform:uppercase; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <tr style="color:#888; font-size:0.7rem; text-transform:uppercase; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <th style="padding:8px 10px; width:50%;">İsim</th>
+                  <th style="padding:8px 10px; text-align:center; width:12%;">Skor</th>
+                  <th style="padding:8px 10px; text-align:center; width:12%;">Ölüm</th>
+                  <th style="padding:8px 10px; text-align:center; width:14%;">Ping</th>
+                </tr>
+              </thead>
+              <tbody id="sb-ct-list"></tbody>
+            </table>
+          </div>
+          <!-- T Section -->
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(186, 99, 99, 0.2); border-radius:6px; margin-bottom:8px; border-left:4px solid #ba6363;">
+              <div style="color:#ba6363; font-weight:bold; font-size:1rem;">Teröristler</div>
+            </div>
+            <table style="width:100%; border-collapse:collapse; color:#ddd;">
+              <thead>
+                  <th style="padding:8px 10px; width:50%;">İsim</th>
+                  <th style="padding:8px 10px; text-align:center; width:12%;">Skor</th>
+                  <th style="padding:8px 10px; text-align:center; width:12%;">Ölüm</th>
+                  <th style="padding:8px 10px; text-align:center; width:14%;">Ping</th>
+                </tr>
+              </thead>
+              <tbody id="sb-t-list"></tbody>
+            </table>
+          </div>
+          <!-- Spectators -->
+          <div id="sb-spec-container" style="display:none; margin-top:20px;">
+            <div style="color:#888; font-size:0.8rem; margin-bottom:6px; padding-left:5px;">İzleyiciler:</div>
+            <div id="sb-spec-list" style="color:#bbb; font-size:0.8rem; padding-left:5px; line-height:1.4;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ADMIN LOGIN MODAL -->
     <div id="admin-login-modal" style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.96);backdrop-filter:blur(8px);z-index:9000;align-items:center;justify-content:center;flex-direction:column;">
@@ -325,80 +392,150 @@
       </div>
     </div>
 
-    <!-- SERVER SETTINGS MODAL -->
-    <div id="server-settings-modal" style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.96);backdrop-filter:blur(10px);z-index:9500;align-items:center;justify-content:center;flex-direction:column;">
-      <div style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:8px;width:90%;max-width:500px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.6);">
-        <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-          <h2 style="color:var(--cs-yellow);font-family:var(--font-title);margin:0;font-size:1.2rem;" id="settings-modal-title">SUNUCU AYARLARI</h2>
-          <button class="toolbar-btn danger" id="btn-settings-close">KAPAT</button>
-        </div>
-        
-        <div style="display:flex;border-bottom:1px solid var(--border);">
-          <button class="filter-tab active" style="flex:1;border:none;border-radius:0;border-bottom:2px solid var(--cs-yellow);" id="tab-rcon">RCON / KONSOL</button>
-          <button class="filter-tab" style="flex:1;border:none;border-radius:0;" id="tab-general">GENEL AYARLAR</button>
-          <button class="filter-tab" style="flex:1;border:none;border-radius:0;" id="tab-amx">AMX MOD / ADMİN</button>
+    <!-- SERVER SETTINGS DROPDOWN (Yönet butonuna bağlı, oyun arka planı görünür kalır) -->
+    <div id="server-settings-modal" style="
+      display:none;
+      position:fixed;
+      top:34px;
+      right:0;
+      z-index:9500;
+      width:420px;
+      max-width:95vw;
+      max-height:calc(100vh - 40px);
+      overflow-y:auto;
+      background:rgba(8,13,20,0.92);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      border:1px solid rgba(255,255,255,0.08);
+      border-top:2px solid var(--cs-yellow);
+      border-radius:0 0 0 8px;
+      box-shadow:-4px 8px 32px rgba(0,0,0,0.7);
+      flex-direction:column;
+      animation:dropdown-slide 0.18s ease;
+    ">
+      <!-- Dropdown CSS animasyonu -->
+      <style>
+        @keyframes dropdown-slide {
+          from { opacity:0; transform:translateY(-8px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+      </style>
+
+      <!-- Başlık satırı -->
+      <div style="padding:0.65rem 1rem;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:rgba(8,13,20,0.97);z-index:1;">
+        <span style="color:var(--cs-yellow);font-family:var(--font-hud);font-size:0.75rem;letter-spacing:0.12em;" id="settings-modal-title">⚙ SUNUCU YÖNETİM PANELİ</span>
+        <button class="toolbar-btn danger" id="btn-settings-close" style="padding:0.15rem 0.5rem;font-size:0.6rem;">✕ KAPAT</button>
+      </div>
+
+      <!-- Sekmeler -->
+      <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);">
+        <button class="filter-tab active" style="flex:1;border:none;border-radius:0;border-bottom:2px solid var(--cs-yellow);font-size:0.65rem;padding:0.5rem;" id="tab-rcon">RCON / KONSOL</button>
+        <button class="filter-tab" style="flex:1;border:none;border-radius:0;font-size:0.65rem;padding:0.5rem;" id="tab-general">GENEL AYARLAR</button>
+      </div>
+
+      <!-- İçerik -->
+      <div style="padding:0.85rem 1rem 1.2rem;display:flex;flex-direction:column;gap:0;">
+
+        <!-- RCON TAB -->
+        <div id="settings-rcon-view" style="display:flex;flex-direction:column;gap:0.6rem;">
+
+          <!-- RCON Şifre Satırı -->
+          <div class="room-field" style="margin-bottom:0;">
+            <label style="font-size:0.6rem;">RCON ŞİFRESİ <span id="rcon-pass-saved-badge" style="display:none;color:#4caf50;font-size:0.55rem;">✓ KAYITLI</span></label>
+            <input type="password" id="rcon-auth-pass" class="room-input" style="font-size:0.75rem;padding:0.35rem 0.5rem;" placeholder="Sunucunun RCON şifresini girin" />
+          </div>
+
+          <!-- Hızlı Komut Butonları -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.35rem;">HIZLI KOMUTLAR</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;">
+              <button class="toolbar-btn rcon-quick" data-cmd="sv_restart 1" style="font-size:0.62rem;padding:0.3rem;">♻ Round Yenile</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="mp_freezetime 0" style="font-size:0.62rem;padding:0.3rem;">⏩ Freeze Kapat</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="mp_freezetime 5" style="font-size:0.62rem;padding:0.3rem;">⏸ Freeze 5sn</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="mp_timelimit 30" style="font-size:0.62rem;padding:0.3rem;">⏱ Süre 30dk</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="mp_startmoney 16000" style="font-size:0.62rem;padding:0.3rem;">💰 Para 16000</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="mp_startmoney 800" style="font-size:0.62rem;padding:0.3rem;">💰 Para 800</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="sv_gravity 800" style="font-size:0.62rem;padding:0.3rem;">🌍 Normal Yerçekimi</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="sv_gravity 200" style="font-size:0.62rem;padding:0.3rem;">🌙 Düşük Yerçekimi</button>
+              <button class="toolbar-btn rcon-quick" data-cmd="mp_roundtime 3" style="font-size:0.62rem;padding:0.3rem;">⏲ Round 3dk</button>
+            </div>
+          </div>
+
+          <!-- Harita Değiştir -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">HARİTA DEĞİŞTİR</label>
+            <div style="display:flex;gap:0.35rem;">
+              <input type="text" id="rcon-map-input" class="room-input" style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="de_dust2, cs_assault..." />
+              <button class="toolbar-btn" id="btn-rcon-map" style="border-color:var(--cs-green);color:var(--cs-green);white-space:nowrap;font-size:0.65rem;">🗺 DEĞİŞTİR</button>
+            </div>
+          </div>
+
+          <!-- Oyuncu Kick -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">OYUNCU AT (KICK)</label>
+            <div style="display:flex;gap:0.35rem;">
+              <input type="text" id="rcon-kick-input" class="room-input" style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="Oyuncu adı veya #ID" />
+              <button class="toolbar-btn" id="btn-rcon-kick" style="border-color:var(--cs-red);color:var(--cs-red);font-size:0.65rem;">🚫 KICK</button>
+            </div>
+          </div>
+
+          <!-- Oyuncu Ban -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">OYUNCU BANLA</label>
+            <div style="display:flex;gap:0.35rem;">
+              <input type="text" id="rcon-ban-input" class="room-input" style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="IP veya #ID (Örn: #15 veya 1.2.3.4)" />
+              <button class="toolbar-btn" id="btn-rcon-ban" style="border-color:#b91c1c;color:#fca5a5;font-size:0.65rem;background:#450a0a;">🔨 BAN</button>
+            </div>
+          </div>
+
+          <!-- Sunucu Şifresi -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">SUNUCU ŞİFRESİ</label>
+            <div style="display:flex;gap:0.35rem;">
+              <input type="text" id="rcon-svpass-input" class="room-input" style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="Boş bırak = şifre kaldır" />
+              <button class="toolbar-btn" id="btn-rcon-svpass" style="border-color:var(--cs-yellow);color:var(--cs-yellow);font-size:0.65rem;">🔒 AYARLA</button>
+            </div>
+          </div>
+
+          <!-- Konsol Çıktısı -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">KONSOL ÇIKTISI</label>
+            <div id="rcon-console-output" style="background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.6rem;font-family:var(--font-hud);font-size:0.62rem;color:#a0e0a0;overflow-y:auto;height:75px;white-space:pre-wrap;line-height:1.5;">Hazır. RCON şifreni gir ve komut gönder.</div>
+          </div>
+
+          <!-- Serbest Komut -->
+          <div>
+            <label style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">SERBEST KOMUT</label>
+            <div style="display:flex;gap:0.35rem;">
+              <input type="text" id="rcon-command-input" class="room-input" style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="Herhangi bir RCON komutu..." />
+              <button class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);font-size:0.65rem;" id="btn-rcon-send">▶ GÖNDER</button>
+            </div>
+          </div>
         </div>
 
-        <div style="padding:1.5rem;flex:1;overflow-y:auto;min-height:300px;">
-          <!-- RCON TAB -->
-          <div id="settings-rcon-view" style="display:flex;flex-direction:column;gap:1rem;height:100%;">
-            <div class="room-field">
-              <label>RCON ŞİFRESİ (Yetki İçin)</label>
-              <input type="password" id="rcon-auth-pass" class="room-input" placeholder="Sunucunun RCON şifresini girin" />
+        <!-- GENERAL SETTINGS TAB -->
+        <div id="settings-general-view" style="display:none;flex-direction:column;gap:0.75rem;">
+          <div class="room-field" style="margin-top:0.2rem;">
+            <label>YENİ RCON ŞİFRESİ</label>
+            <input type="text" id="cfg-rcon-pass" class="room-input" placeholder="Boş bırakırsanız değişmez" />
+          </div>
+          <div class="room-field">
+            <label>BAŞLANGIÇ PARASI (mp_startmoney)</label>
+            <input type="number" id="cfg-startmoney" class="room-input" placeholder="800" />
+          </div>
+          <div style="display:flex;gap:0.75rem;">
+            <div class="room-field" style="flex:1;">
+              <label>YERÇEKİMİ (sv_gravity)</label>
+              <input type="number" id="cfg-gravity" class="room-input" placeholder="800" />
             </div>
             <div class="room-field" style="flex:1;">
-              <label>KONSOL ÇIKTISI</label>
-              <div id="rcon-console-output" style="flex:1;background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:0.5rem;font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);overflow-y:auto;min-height:100px;white-space:pre-wrap;">Bağlantı bekleniyor...</div>
-            </div>
-            <div class="room-field">
-              <label>KOMUT GÖNDER</label>
-              <div style="display:flex;gap:0.5rem;">
-                <input type="text" id="rcon-command-input" class="room-input" style="flex:1;" placeholder="Örn: changelevel de_inferno, sv_restart 1" />
-                <button class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);" id="btn-rcon-send">GÖNDER</button>
-              </div>
+              <label>ROUND SÜRESİ (DK)</label>
+              <input type="number" id="cfg-roundtime" class="room-input" placeholder="5" />
             </div>
           </div>
-
-          <!-- GENERAL SETTINGS TAB -->
-          <div id="settings-general-view" style="display:none;flex-direction:column;gap:1rem;">
-            <div class="room-field">
-              <label>YENİ RCON ŞİFRESİ</label>
-              <input type="text" id="cfg-rcon-pass" class="room-input" placeholder="Boş bırakırsanız değişmez" />
-            </div>
-            <div class="room-field">
-              <label>BAŞLANGIÇ PARASI (mp_startmoney)</label>
-              <input type="number" id="cfg-startmoney" class="room-input" placeholder="800" />
-            </div>
-            <div style="display:flex;gap:1rem;">
-              <div class="room-field" style="flex:1;">
-                <label>YERÇEKİMİ (sv_gravity)</label>
-                <input type="number" id="cfg-gravity" class="room-input" placeholder="800" />
-              </div>
-              <div class="room-field" style="flex:1;">
-                <label>ROUND SÜRESİ (DK)</label>
-                <input type="number" id="cfg-roundtime" class="room-input" placeholder="5" />
-              </div>
-            </div>
-            <button class="toolbar-btn" style="width:100%;padding:0.8rem;border-color:var(--cs-yellow);color:var(--cs-yellow);font-weight:bold;margin-top:0.5rem;" id="btn-cfg-save">AYARLARI KAYDET VE SUNUCUYU YENİDEN BAŞLAT</button>
-          </div>
-
-          <!-- AMX MOD TAB -->
-          <div id="settings-amx-view" style="display:none;flex-direction:column;gap:1rem;">
-            <div style="font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);margin-bottom:0.5rem;">
-              AMX Mod sunucunuzda eklidir. Aşağıdan yeni bir Admin ekleyebilirsiniz. (Oyunda şifre ile giriş yapmak için konsola <code>setinfo _pw "şifreniz"</code> yazmanız gerekir).
-            </div>
-            <div class="room-field">
-              <label>OYUNCU (NICKNAME)</label>
-              <input type="text" id="amx-admin-name" class="room-input" placeholder="Örn: Oktay" />
-            </div>
-            <div class="room-field">
-              <label>ADMİN ŞİFRESİ</label>
-              <input type="text" id="amx-admin-pass" class="room-input" placeholder="Örn: gizli123" />
-            </div>
-            <button class="toolbar-btn" style="width:100%;padding:0.8rem;border-color:var(--cs-yellow);color:var(--cs-yellow);font-weight:bold;margin-top:0.5rem;" id="btn-amx-save">ADMİNİ EKLE VE SUNUCUYU YENİDEN BAŞLAT</button>
-          </div>
-
+          <button class="toolbar-btn" style="width:100%;padding:0.65rem;border-color:var(--cs-yellow);color:var(--cs-yellow);font-weight:bold;" id="btn-cfg-save">AYARLARI KAYDET VE SUNUCUYU YENİDEN BAŞLAT</button>
         </div>
+
       </div>
     </div>
 
@@ -509,6 +646,11 @@
           <div class="game-map-name" id="toolbar-map-name">de_dust2</div>
           <div style="font-family:var(--font-hud);font-size:0.6rem;color:var(--text-dim);margin-left:0.3rem;">· BrowserCS</div>
           <div class="toolbar-spacer"></div>
+          <!-- Kullanıcı adı (oyun içi) -->
+          <div id="toolbar-user-info" style="display:none;align-items:center;gap:0.5rem;">
+            <span style="font-family:var(--font-hud);font-size:0.62rem;color:var(--cs-yellow);letter-spacing:0.08em;" id="toolbar-username"></span>
+            <button class="toolbar-btn" id="btn-game-manage" style="display:none;border-color:var(--cs-yellow);color:var(--cs-yellow);font-weight:bold;padding:0.2rem 0.7rem;" title="Sunucunu Yönet">⚙ YÖNET</button>
+          </div>
           <div class="fps-counter" id="ram-display" style="color:var(--cs-yellow);">— RAM</div>
           <div class="fps-counter" id="fps-display">— FPS</div>
           <button class="toolbar-btn" id="btn-console">KONSOL [`]</button>
@@ -676,16 +818,17 @@
           </div>
         </div>
 
-        <!-- AMX Admin Panel -->
+        <!-- RCON Hızlı Panel (Dashboard) -->
         <div style="background:var(--bg-deep); padding:1rem; border-radius:6px; border:1px solid var(--border);">
-          <h3 style="color:#4caf50; font-family:var(--font-title); margin-bottom:0.5rem; margin-top:0;">AMX Mod Admin Ekle</h3>
-          <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.5rem; margin-top:0;">Oyuncu nickinizi ve bir admin şifresi girerek tam yetkili admin ekleyin.</p>
-          <input type="text" id="admin-name-input" class="auth-input" placeholder="Oyuncu Adı (örn: Player)">
-          <div style="display:flex; gap:0.5rem;">
-            <input type="text" id="admin-password-input" class="auth-input" placeholder="Admin Şifresi" style="margin-bottom:0;">
-            <button id="btn-save-admin" class="auth-submit-btn" style="width:auto; padding:0 1.5rem; margin-top:0;">Ekle</button>
+          <h3 style="color:var(--cs-yellow); font-family:var(--font-title); margin-bottom:0.5rem; margin-top:0;">⚡ RCON Hızlı Komutlar</h3>
+          <p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:0.75rem; margin-top:0;">Sunucunuzu yönetmek için RCON komutlarını kullanın. Önce RCON şifrenizi <strong>Sunucu Ayarları</strong> modalından girin.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+            <button id="btn-dash-restart" class="toolbar-btn" style="font-size:0.75rem;">♻ Round Yenile</button>
+            <button id="btn-dash-freeze-off" class="toolbar-btn" style="font-size:0.75rem;">⏩ Freeze Kapat</button>
+            <button id="btn-dash-money-hi" class="toolbar-btn" style="font-size:0.75rem;">💰 Para 16000</button>
+            <button id="btn-dash-money-lo" class="toolbar-btn" style="font-size:0.75rem;">💰 Para 800</button>
           </div>
-          <p style="font-size:0.75rem; color:#aaa; margin-top:0.5rem; margin-bottom:0;">Bilgi: Oyuna girmeden önce konsola <code style="color:#fff">setinfo _pw "Şifreniz"</code> yazmanız gerekir.</p>
+          <p style="font-size:0.7rem; color:var(--text-dim); margin-top:0.5rem; margin-bottom:0;">Daha fazla komut için Sunucu Ayarları → RCON/KONSOL sekmesini kullanın.</p>
         </div>
 
         <!-- Restart Panel -->
@@ -739,36 +882,174 @@
     </div>
   </div>
 
-  <!-- CUSTOM ALERT MODAL -->
-  <div id="custom-alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9500;align-items:center;justify-content:center;">
-    <div style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;width:380px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center;">
-      <h2 id="custom-alert-title" style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;">BİLGİ</h2>
-      <p id="custom-alert-message" style="font-family:var(--font-ui);font-size:0.9rem;color:var(--text-bright);line-height:1.5;margin-bottom:1.5rem;"></p>
-      <button id="btn-custom-alert-ok" class="toolbar-btn" style="padding:0.6rem 2rem;border-color:var(--cs-yellow);color:var(--cs-yellow);">TAMAM</button>
-    </div>
-  </div>
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- CUSTOM MODALS — CS TEMA (Alert / Confirm / Prompt)        -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <style>
+    .cs-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(4,6,10,0.88);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      animation: csOverlayIn 0.15s ease;
+    }
+    @keyframes csOverlayIn { from { opacity:0 } to { opacity:1 } }
+    .cs-modal-box {
+      background: linear-gradient(145deg, #0e1318 0%, #0a0e13 100%);
+      border: 1px solid rgba(201,170,97,0.35);
+      border-radius: 8px;
+      width: 420px;
+      max-width: 92vw;
+      padding: 0;
+      box-shadow: 0 0 0 1px rgba(201,170,97,0.08), 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(201,170,97,0.06);
+      animation: csBoxIn 0.18s cubic-bezier(.34,1.56,.64,1);
+      overflow: hidden;
+    }
+    @keyframes csBoxIn { from { opacity:0; transform:scale(0.88) translateY(12px) } to { opacity:1; transform:scale(1) translateY(0) } }
+    .cs-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.4rem 0.9rem;
+      border-bottom: 1px solid rgba(201,170,97,0.15);
+      background: linear-gradient(90deg, rgba(201,170,97,0.07) 0%, transparent 100%);
+    }
+    .cs-modal-icon {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cs-modal-title {
+      font-family: var(--font-hud);
+      color: var(--cs-yellow);
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      margin: 0;
+      font-weight: bold;
+    }
+    .cs-modal-body {
+      padding: 1.3rem 1.4rem 1.4rem;
+    }
+    .cs-modal-message {
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      color: #c8cfd8;
+      line-height: 1.65;
+      margin: 0 0 1.3rem 0;
+    }
+    .cs-modal-actions {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: flex-end;
+    }
+    .cs-modal-btn {
+      font-family: var(--font-hud);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      padding: 0.55rem 1.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: #8a9ab0;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+    .cs-modal-btn:hover { background: rgba(255,255,255,0.08); color: #c8cfd8; border-color: rgba(255,255,255,0.2); }
+    .cs-modal-btn:active { transform: scale(0.97); }
+    .cs-modal-btn.primary {
+      border-color: rgba(201,170,97,0.6);
+      color: var(--cs-yellow);
+      background: rgba(201,170,97,0.08);
+    }
+    .cs-modal-btn.primary:hover { background: rgba(201,170,97,0.16); border-color: var(--cs-yellow); }
+    .cs-modal-btn.danger {
+      border-color: rgba(255,80,80,0.5);
+      color: #ff5050;
+      background: rgba(255,80,80,0.06);
+    }
+    .cs-modal-btn.danger:hover { background: rgba(255,80,80,0.14); border-color: #ff5050; }
+    .cs-modal-input {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(201,170,97,0.25);
+      border-radius: 4px;
+      padding: 0.6rem 0.8rem;
+      color: #e0e8f0;
+      font-family: var(--font-hud);
+      font-size: 0.82rem;
+      outline: none;
+      margin-bottom: 1.2rem;
+      box-sizing: border-box;
+      transition: border-color 0.15s;
+    }
+    .cs-modal-input:focus { border-color: rgba(201,170,97,0.6); }
+    .cs-modal-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,170,97,0.2), transparent);
+      margin-bottom: 1rem;
+    }
+  </style>
 
-  <!-- CUSTOM CONFIRM MODAL -->
-  <div id="custom-confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9500;align-items:center;justify-content:center;">
-    <div style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;width:380px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center;">
-      <h2 id="custom-confirm-title" style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;">ONAY</h2>
-      <p id="custom-confirm-message" style="font-family:var(--font-ui);font-size:0.9rem;color:var(--text-bright);line-height:1.5;margin-bottom:1.5rem;"></p>
-      <div style="display:flex;gap:0.8rem;">
-        <button id="btn-custom-confirm-cancel" class="toolbar-btn" style="flex:1;padding:0.6rem;">İPTAL</button>
-        <button id="btn-custom-confirm-ok" class="toolbar-btn" style="flex:1;padding:0.6rem;border-color:var(--cs-red);color:var(--cs-red);">EVET</button>
+  <!-- CUSTOM ALERT -->
+  <div id="custom-alert-modal" class="cs-modal-overlay">
+    <div class="cs-modal-box">
+      <div class="cs-modal-header">
+        <div class="cs-modal-icon">🛡️</div>
+        <h2 id="custom-alert-title" class="cs-modal-title">BİLGİ</h2>
+      </div>
+      <div class="cs-modal-body">
+        <div class="cs-modal-divider"></div>
+        <p id="custom-alert-message" class="cs-modal-message"></p>
+        <div class="cs-modal-actions">
+          <button id="btn-custom-alert-ok" class="cs-modal-btn primary">TAMAM</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- CUSTOM PROMPT MODAL -->
-  <div id="custom-prompt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9500;align-items:center;justify-content:center;">
-    <div style="background:var(--bg-card);border:1px solid var(--border-bright);border-radius:6px;width:380px;padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center;">
-      <h2 id="custom-prompt-title" style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;">GİRDİ BEKLENİYOR</h2>
-      <p id="custom-prompt-message" style="font-family:var(--font-ui);font-size:0.9rem;color:var(--text-bright);line-height:1.5;margin-bottom:1rem;"></p>
-      <input type="text" id="custom-prompt-input" class="room-input" style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
-      <div style="display:flex;gap:0.5rem;">
-        <button id="btn-custom-prompt-cancel" class="toolbar-btn" style="flex:1;">İPTAL</button>
-        <button id="btn-custom-prompt-ok" class="toolbar-btn" style="flex:1;border-color:var(--cs-yellow);color:var(--cs-yellow);">ONAYLA</button>
+  <!-- CUSTOM CONFIRM -->
+  <div id="custom-confirm-modal" class="cs-modal-overlay">
+    <div class="cs-modal-box">
+      <div class="cs-modal-header">
+        <div class="cs-modal-icon">⚠️</div>
+        <h2 id="custom-confirm-title" class="cs-modal-title">ONAY</h2>
+      </div>
+      <div class="cs-modal-body">
+        <div class="cs-modal-divider"></div>
+        <p id="custom-confirm-message" class="cs-modal-message"></p>
+        <div class="cs-modal-actions">
+          <button id="btn-custom-confirm-cancel" class="cs-modal-btn">İPTAL</button>
+          <button id="btn-custom-confirm-ok" class="cs-modal-btn danger">EVET, DEVAM ET</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM PROMPT -->
+  <div id="custom-prompt-modal" class="cs-modal-overlay">
+    <div class="cs-modal-box">
+      <div class="cs-modal-header">
+        <div class="cs-modal-icon">✏️</div>
+        <h2 id="custom-prompt-title" class="cs-modal-title">GİRDİ BEKLENİYOR</h2>
+      </div>
+      <div class="cs-modal-body">
+        <div class="cs-modal-divider"></div>
+        <p id="custom-prompt-message" class="cs-modal-message"></p>
+        <input type="text" id="custom-prompt-input" class="cs-modal-input" autocomplete="off" spellcheck="false" />
+        <div class="cs-modal-actions">
+          <button id="btn-custom-prompt-cancel" class="cs-modal-btn">İPTAL</button>
+          <button id="btn-custom-prompt-ok" class="cs-modal-btn primary">ONAYLA</button>
+        </div>
       </div>
     </div>
   </div>
