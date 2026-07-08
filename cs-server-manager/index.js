@@ -714,7 +714,68 @@ app.get('/api/stats', async (req, res) => {
 
 
 
+// GET /api/servers/:id — tek sunucu detayı
+app.get('/api/servers/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const authHeader = req.headers.authorization;
+    const token = authHeader ? authHeader.split(' ')[1] : null;
+    if (!token) return res.status(401).json({ success: false, error: 'Authorization gerekli.' });
+    const userSb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+    const { data, error } = await userSb.from('purchased_servers').select('*').eq('id', id).single();
+    if (error || !data) return res.status(404).json({ success: false, error: 'Sunucu bulunamadı.' });
+    res.json({ success: true, server: data });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/servers/:id/write-cfg — server'a cfg dosyası yaz (restart gerektirmez)
+app.post('/api/servers/:id/write-cfg', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { filename, content } = req.body;
+    if (!filename || !/^[a-zA-Z0-9_]+$/.test(filename)) {
+      return res.status(400).json({ success: false, error: 'Geçersiz dosya adı.' });
+    }
+    if (!content) return res.status(400).json({ success: false, error: 'İçerik gerekli.' });
+
+    const authHeader = req.headers.authorization;
+    const token = authHeader ? authHeader.split(' ')[1] : null;
+    if (!token) return res.status(401).json({ success: false, error: 'Authorization gerekli.' });
+    const userSb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let port = null;
+
+    if (isUUID) {
+      const { data } = await userSb.from('purchased_servers').select('port, owner_id').eq('id', id).single();
+      if (!data) return res.status(404).json({ success: false, error: 'Sunucu bulunamadı.' });
+      if (data.owner_id !== req.user.id) return res.status(403).json({ success: false, error: 'Yetki yok.' });
+      port = data.port;
+    } else {
+      const containers = await docker.listContainers({ filters: { label: [`cs-web-game=true`, `owner_id=${req.user.id}`] } });
+      const c = containers.find(c => c.Id.startsWith(id)) || containers[0];
+      if (!c) return res.status(404).json({ success: false, error: 'Container bulunamadı.' });
+      port = c.Ports.find(p => p.PrivatePort === 27015)?.PublicPort;
+      if (!port) return res.status(400).json({ success: false, error: 'Port bulunamadı.' });
+    }
+
+    const configDir = `/home/ubuntu/server_configs/${port}`;
+    fs.mkdirSync(configDir, { recursive: true });
+    fs.writeFileSync(path.join(configDir, `${filename}.cfg`), content, 'utf8');
+    res.json({ success: true, path: `${configDir}/${filename}.cfg` });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
+
 
   try {
     const { id } = req.params;
