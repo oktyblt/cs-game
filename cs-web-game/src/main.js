@@ -294,9 +294,21 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// Tilde (~) için capture-phase listener — SADECE konsol tuşu, diğerleri engine'e bırakılır
+// ─── Keyboard Intercept (capture:true) ───────────────────────────────────────
+// capture:true = bu listener SDL/engine'den ÖNCE çalışır.
+// Sadece gerçekten intercept etmemiz gereken tuşlar için stopPropagation kullanılır.
 window.addEventListener('keydown', (e) => {
-  // Tilde/backtick: konsol aç/kapat — bu capture'da olmalı
+  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+
+  // [1] input/textarea: tüm tuşlar engine'e gitmesin (Esc hariç)
+  if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+    if (e.key !== 'Escape') {
+      e.stopPropagation();
+      return;
+    }
+  }
+
+  // [2] Tilde/backtick: konsol aç/kapat
   if (e.key === '`' || e.key === '~' || e.key === 'é' || e.code === 'Backquote') {
     e.stopPropagation();
     e.preventDefault();
@@ -314,24 +326,13 @@ window.addEventListener('keydown', (e) => {
     }
     return;
   }
-}, true); // capture: true SADECE tilde için
 
-// Diğer tuş olayları — bubble phase (engine önce alır, sonra JS işler)
-window.addEventListener('keydown', (e) => {
-  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-  
-  // input/textarea içinde: engine'e gitmesin
-  if (activeTag === 'input' || activeTag === 'textarea') {
-    if (e.key !== 'Escape') {
-      e.stopPropagation();
-      return;
-    }
-  }
-
-  // Text menu: sadece görünürdeyse 0-9 yakala
+  // [3] Text menu açıkken 0-9: engine'e gitmesin, JS handle eder
   const tm = document.getElementById('custom-textmenu');
   if (tm && tm.style.display !== 'none' && window.textMenuSlots) {
     if (e.key >= '0' && e.key <= '9') {
+      e.stopPropagation();
+      e.preventDefault();
       const slotNum = parseInt(e.key);
       const isZero = (slotNum === 0);
       const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
@@ -343,14 +344,14 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  // Tab: tarayıcı focus'unu engelle ama engine'e ilet
+  // [4] Tab: tarayıcı focus döngüsünü engelle, engine SDL üzerinden Tab'ı alır
   if (e.key === 'Tab') {
     if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
-      e.preventDefault(); // tarayıcı focus değiştirmesin
-      // stopPropagation YOK — engine Tab'ı scoreboard için kullanır
+      e.preventDefault(); // browser focus change yok — stopPropagation YOK, engine alır
     }
   }
-}, false); // capture: false = bubble phase, engine önce işler
+}, true); // capture:true — engine'den önce çalışır
+
 // ----------------------------------------
 // --- BROWSERCS TEXT MENU HANDLERS ---
 window._openTextMenu = function(validSlots, textStr) {
