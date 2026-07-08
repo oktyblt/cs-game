@@ -3158,15 +3158,33 @@ const settingsGeneralView = $('settings-general-view');
 const settingsAmxView = $('settings-amx-view');
 
 let currentSettingsServerId = null;
+let _currentSettingsServer = null; // tam server objesi
 
-window.openServerSettings = function (id) {
+window.openServerSettings = async function (id, serverObj) {
   currentSettingsServerId = id;
+  _currentSettingsServer = serverObj || null;
   serverSettingsModal.style.display = 'flex';
-  // Reset tabs to RCON
-  tabRcon.click();
-  $('rcon-console-output').textContent = 'Bağlantı hazır. RCON şifresini girip komut gönderin.';
-  $('rcon-auth-pass').value = '';
-  $('rcon-command-input').value = '';
+  // Genel Ayarlar tab'ını default yap
+  switchTab(tabGeneral, settingsGeneralView);
+  if ($('rcon-console-output')) $('rcon-console-output').textContent = 'Bağlantı hazır. RCON şifresini girip komut gönderin.';
+  if ($('rcon-command-input')) $('rcon-command-input').value = '';
+
+  // Sunucu ayarlarını API'dan çek ve doldur
+  try {
+    const token = await getSessionToken();
+    const res = await fetch(`${API_URL}/api/servers/${id}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    if (res.ok) {
+      const d = await res.json();
+      const sv = d.server || d;
+      if ($('cfg-rcon-pass')    && sv.rcon_password) $('cfg-rcon-pass').value    = sv.rcon_password;
+      if ($('rcon-auth-pass')   && sv.rcon_password) $('rcon-auth-pass').value   = sv.rcon_password;
+      if ($('cfg-startmoney')   && sv.start_money)   $('cfg-startmoney').value   = sv.start_money;
+      if ($('cfg-gravity')      && sv.gravity)       $('cfg-gravity').value      = sv.gravity;
+      if ($('cfg-roundtime')    && sv.round_time)    $('cfg-roundtime').value    = sv.round_time;
+    }
+  } catch(e) { /* sessiz başar */ }
 };
 
 if (btnSettingsClose) {
@@ -3191,18 +3209,17 @@ if (serverSettingsModal) {
 }
 
 // Tab Switching
-if (tabRcon && tabGeneral && tabAmx) {
-  function switchTab(activeBtn, activeView) {
-    [tabRcon, tabGeneral, tabAmx].forEach(t => { t.classList.remove('active'); t.style.borderBottom = 'none'; });
-    [settingsRconView, settingsGeneralView, settingsAmxView].forEach(v => v.style.display = 'none');
-    activeBtn.classList.add('active');
-    activeBtn.style.borderBottom = '2px solid var(--cs-yellow)';
-    activeView.style.display = 'flex';
-  }
-  tabRcon.addEventListener('click', () => switchTab(tabRcon, settingsRconView));
-  tabGeneral.addEventListener('click', () => switchTab(tabGeneral, settingsGeneralView));
-  tabAmx.addEventListener('click', () => switchTab(tabAmx, settingsAmxView));
+const _allSettingsTabs  = [tabRcon, tabGeneral, tabAmx].filter(Boolean);
+const _allSettingsViews = [settingsRconView, settingsGeneralView, settingsAmxView].filter(Boolean);
+function switchTab(activeBtn, activeView) {
+  _allSettingsTabs.forEach(t  => { t.classList.remove('active'); t.style.borderBottom = 'none'; });
+  _allSettingsViews.forEach(v => { v.style.display = 'none'; });
+  if (activeBtn)  { activeBtn.classList.add('active'); activeBtn.style.borderBottom = '2px solid var(--cs-yellow)'; }
+  if (activeView) { activeView.style.display = 'flex'; }
 }
+if (tabRcon)    tabRcon.addEventListener('click',    () => switchTab(tabRcon,    settingsRconView));
+if (tabGeneral) tabGeneral.addEventListener('click', () => switchTab(tabGeneral, settingsGeneralView));
+if (tabAmx)     tabAmx.addEventListener('click',     () => switchTab(tabAmx,     settingsAmxView));
 
 // RCON SEND
 if ($('btn-rcon-send')) {
@@ -3537,38 +3554,48 @@ window.connectToServer = async function (port, mapName, isHost = false) {
     engineText.innerHTML = `Engine hazırlanıyor... <br/><span style="color:var(--cs-yellow); font-size: 0.75rem; letter-spacing:0.05em; margin-top:5px; display:inline-block;">⚠️ İlk yükleme (harita ve modeller) internet hızınıza bağlı olarak uzun sürebilir. Lütfen bekleyin.</span>`;
   }
 
-  // ── Toolbar: kullanıcı adı + VIP "Yönet" butonu ──────────────────────────
+  // ── Toolbar: kullanıcı adı + sunucu adı + VIP "Yönet" butonu ───────────────
   const toolbarUserInfo = $('toolbar-user-info');
   const toolbarUsername = $('toolbar-username');
-  const btnGameManage = $('btn-game-manage');
+  const btnGameManage   = $('btn-game-manage');
+  const toolbarSvName   = $('toolbar-server-name');
 
   if (toolbarUserInfo && toolbarUsername) {
     const currentUsername = getCurrentUsername();
-    const currentUsr = getCurrentUser();
+    const currentUsr      = getCurrentUser();
     if (currentUsername && currentUsr) {
       toolbarUsername.textContent = '👤 ' + currentUsername;
       toolbarUserInfo.style.display = 'flex';
 
-      // VIP kullanıcı mı? Eğer öyleyse sunucu listesinden bu porta sahip sunucu var mı?
-      if (btnGameManage && isUserPremium()) {
+      // VIP kullanıcı mı? Bu porta sahip sunucu var mı?
+      if (isUserPremium()) {
         try {
-          const srvRes = await fetch(`${API_URL}/api/servers`);
+          const srvRes  = await fetch(`${API_URL}/api/servers`);
           const srvData = await srvRes.json();
           const myServer = (srvData.servers || []).find(s =>
             s.port == port && s.owner_id && s.owner_id === currentUsr.id
           );
           if (myServer) {
-            btnGameManage.style.display = 'inline-flex';
-            btnGameManage.onclick = () => window.openServerSettings(myServer.id || myServer.containerId);
+            // Sunucu adını toolbar'da göster
+            if (toolbarSvName) {
+              toolbarSvName.textContent = '🖥 ' + myServer.name;
+              toolbarSvName.style.display = 'inline';
+            }
+            if (btnGameManage) {
+              btnGameManage.style.display = 'inline-flex';
+              btnGameManage.onclick = () => window.openServerSettings(myServer.id || myServer.containerId, myServer);
+            }
           } else {
-            btnGameManage.style.display = 'none';
+            if (toolbarSvName) toolbarSvName.style.display = 'none';
+            if (btnGameManage) btnGameManage.style.display = 'none';
           }
         } catch (e) {
-          // API hatası — butonu gizle
-          btnGameManage.style.display = 'none';
+          if (toolbarSvName) toolbarSvName.style.display = 'none';
+          if (btnGameManage) btnGameManage.style.display = 'none';
         }
-      } else if (btnGameManage) {
-        btnGameManage.style.display = 'none';
+      } else {
+        if (toolbarSvName) toolbarSvName.style.display = 'none';
+        if (btnGameManage) btnGameManage.style.display = 'none';
       }
     } else {
       toolbarUserInfo.style.display = 'none';
