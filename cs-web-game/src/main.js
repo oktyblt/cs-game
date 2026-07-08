@@ -3164,27 +3164,33 @@ window.openServerSettings = async function (id, serverObj) {
   currentSettingsServerId = id;
   _currentSettingsServer = serverObj || null;
   serverSettingsModal.style.display = 'flex';
-  // Genel Ayarlar tab'ını default yap
   switchTab(tabGeneral, settingsGeneralView);
-  if ($('rcon-console-output')) $('rcon-console-output').textContent = 'Bağlantı hazır. RCON şifresini girip komut gönderin.';
+  if ($('rcon-console-output')) $('rcon-console-output').textContent = 'Hazır. RCON şifresini gir ve komut gönder.';
   if ($('rcon-command-input')) $('rcon-command-input').value = '';
 
-  // Sunucu ayarlarını API'dan çek ve doldur
+  // Önce serverObj'den doldur (server listesinden geliyor, rcon_password var)
+  const sv = serverObj || {};
+  if ($('cfg-rcon-pass')   && sv.rcon_password) $('cfg-rcon-pass').value   = sv.rcon_password;
+  if ($('rcon-auth-pass') && sv.rcon_password) $('rcon-auth-pass').value  = sv.rcon_password;
+  if ($('cfg-startmoney') && sv.start_money)   $('cfg-startmoney').value  = sv.start_money;
+  if ($('cfg-gravity')    && sv.gravity)       $('cfg-gravity').value     = sv.gravity;
+  if ($('cfg-roundtime')  && sv.round_time)    $('cfg-roundtime').value   = sv.round_time;
+
+  // API'dan daha fazla detay çekmeyi dene (mevcut endpoint: /status)
   try {
     const token = await getSessionToken();
-    const res = await fetch(`${API_URL}/api/servers/${id}`, {
+    const servers = await fetch(`${API_URL}/api/servers`, {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-    });
-    if (res.ok) {
-      const d = await res.json();
-      const sv = d.server || d;
-      if ($('cfg-rcon-pass')    && sv.rcon_password) $('cfg-rcon-pass').value    = sv.rcon_password;
-      if ($('rcon-auth-pass')   && sv.rcon_password) $('rcon-auth-pass').value   = sv.rcon_password;
-      if ($('cfg-startmoney')   && sv.start_money)   $('cfg-startmoney').value   = sv.start_money;
-      if ($('cfg-gravity')      && sv.gravity)       $('cfg-gravity').value      = sv.gravity;
-      if ($('cfg-roundtime')    && sv.round_time)    $('cfg-roundtime').value    = sv.round_time;
+    }).then(r => r.json());
+    const found = (servers.servers || []).find(s => s.id === id || s.containerId === id);
+    if (found) {
+      if ($('cfg-rcon-pass')   && found.rcon_password) $('cfg-rcon-pass').value   = found.rcon_password;
+      if ($('rcon-auth-pass') && found.rcon_password) $('rcon-auth-pass').value  = found.rcon_password;
+      if ($('cfg-startmoney') && found.start_money)   $('cfg-startmoney').value  = found.start_money;
+      if ($('cfg-gravity')    && found.gravity)       $('cfg-gravity').value     = found.gravity;
+      if ($('cfg-roundtime')  && found.round_time)    $('cfg-roundtime').value   = found.round_time;
     }
-  } catch(e) { /* sessiz başar */ }
+  } catch(e) { /* sessiz */ }
 };
 
 if (btnSettingsClose) {
@@ -3257,7 +3263,88 @@ if ($('btn-rcon-send')) {
   });
 }
 
-// ── GENERAL SETTINGS SAVE ─────────────────────────────────────────────────
+// ── ORTAK RCON YARDIMCI FONKSİYON ─────────────────────────────────────────
+async function sendRcon(command, successMsg) {
+  const password = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
+  const out = $('rcon-console-output');
+  if (!password) { notify('Önce RCON şifresini girin!', 'error'); return false; }
+  if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return false; }
+  if (out) out.textContent += `\n] ${command}\nİşleniyor...`;
+  try {
+    const token = await getSessionToken();
+    const r = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/command`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ rconPassword: password, command })
+    });
+    const d = await r.json();
+    if (d.success) {
+      if (out) out.textContent += `\n${d.response || 'OK'}`;
+      if (successMsg) notify(successMsg, 'success');
+      if (out) out.scrollTop = out.scrollHeight;
+      return true;
+    } else {
+      if (out) out.textContent += `\nHATA: ${d.error}`;
+      notify('RCON hatası: ' + d.error, 'error');
+      if (out) out.scrollTop = out.scrollHeight;
+      return false;
+    }
+  } catch (e) {
+    if (out) out.textContent += `\nBağlantı hatası!`;
+    notify('Bağlantı hatası!', 'error');
+    if (out) out.scrollTop = out.scrollHeight;
+    return false;
+  }
+}
+
+// ── HIZLI KOMUT BUTONLARI (.rcon-quick) ───────────────────────────────────
+document.querySelectorAll('.rcon-quick').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const cmd = btn.getAttribute('data-cmd');
+    if (!cmd) return;
+    await sendRcon(cmd, `✓ ${cmd}`);
+  });
+});
+
+// ── HARİTA DEĞİŞTİR ───────────────────────────────────────────────────────
+if ($('btn-rcon-map')) {
+  $('btn-rcon-map').addEventListener('click', async () => {
+    const map = ($('rcon-map-input') ? $('rcon-map-input').value : '').trim();
+    if (!map) { notify('Harita adı girin!', 'error'); return; }
+    await sendRcon(`changelevel ${map}`, `Harita değiştiriliyor: ${map}`);
+  });
+}
+
+// ── OYUNCU KICK ───────────────────────────────────────────────────────────
+if ($('btn-rcon-kick')) {
+  $('btn-rcon-kick').addEventListener('click', async () => {
+    const target = ($('rcon-kick-input') ? $('rcon-kick-input').value : '').trim();
+    if (!target) { notify('Oyuncu adı veya #ID girin!', 'error'); return; }
+    const cmd = target.startsWith('#') ? `kick ${target}` : `kick "${target}"`;
+    await sendRcon(cmd, `Oyuncu atıldı: ${target}`);
+  });
+}
+
+// ── OYUNCU BAN ────────────────────────────────────────────────────────────
+if ($('btn-rcon-ban')) {
+  $('btn-rcon-ban').addEventListener('click', async () => {
+    const target = ($('rcon-ban-input') ? $('rcon-ban-input').value : '').trim();
+    if (!target) { notify('IP veya #ID girin!', 'error'); return; }
+    const cmd = target.includes('.') ? `addip 0 ${target}; writeid` : `banid 0 ${target}; writeid`;
+    await sendRcon(cmd, `Banlama yapıldı: ${target}`);
+  });
+}
+
+// ── SUNUCU ŞİFRESİ AYARLA ─────────────────────────────────────────────────
+if ($('btn-rcon-svpass')) {
+  $('btn-rcon-svpass').addEventListener('click', async () => {
+    const pass = ($('rcon-svpass-input') ? $('rcon-svpass-input').value : '').trim();
+    const cmd = pass ? `sv_password "${pass}"` : 'sv_password ""';
+    const msg = pass ? `Sunucu şifresi ayarlandı` : 'Sunucu şifresi kaldırıldı';
+    await sendRcon(cmd, msg);
+  });
+}
+
 if ($('btn-cfg-save')) {
   $('btn-cfg-save').addEventListener('click', async () => {
     const rconPass = $('cfg-rcon-pass').value;
