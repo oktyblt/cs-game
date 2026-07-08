@@ -1844,7 +1844,7 @@
             <!-- 5v5 Maç Modu -->
             <button id="btn-match-mode"
               style="width:100%;margin-top:0.4rem;padding:0.4rem;background:linear-gradient(135deg,rgba(20,80,20,0.8),rgba(30,120,30,0.6));border:1px solid #2ecc71;border-radius:4px;color:#2ecc71;font-family:var(--font-hud);font-size:0.68rem;font-weight:bold;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;">⚔
-              5v5 MAÇ MODU</button>
+              5v5 MAÇ MODU (EXEC MATCH.CFG)</button>
           </div>
 
           <!-- Harita Değiştir -->
@@ -1853,8 +1853,9 @@
               style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.3rem;">HARİTA
               DEĞİŞTİR</label>
             <div style="display:flex;gap:0.35rem;">
-              <input type="text" id="rcon-map-input" class="room-input"
-                style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="de_dust2, cs_assault..." />
+              <select id="rcon-map-select" class="room-input" style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;background:var(--bg-deep);border:1px solid var(--border-bright);color:var(--text-bright);font-family:var(--font-hud);border-radius:4px;">
+                <option value="de_dust2">de_dust2</option>
+              </select>
               <button class="toolbar-btn" id="btn-rcon-map"
                 style="border-color:var(--cs-green);color:var(--cs-green);white-space:nowrap;font-size:0.65rem;">🗺
                 DEĞİŞTİR</button>

@@ -1338,6 +1338,14 @@ async function loadMapList() {
 }
 
 function renderMapList() {
+  // RCON harita select'ini de doldur
+  const rconMapSel = $('rcon-map-select');
+  if (rconMapSel) {
+    const cur = rconMapSel.value;
+    rconMapSel.innerHTML = maps.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+    if (cur && maps.find(m => m.name === cur)) rconMapSel.value = cur;
+  }
+
   const query = mapSearch.value.toLowerCase();
   const filter = activeFilter;
 
@@ -3345,35 +3353,110 @@ if ($('btn-rcon-svpass')) {
   });
 }
 
+// ── GENEL AYARLAR KAYDET (TÜM AYARLAR RCON İLE) ──────────────────────
 if ($('btn-cfg-save')) {
   $('btn-cfg-save').addEventListener('click', async () => {
-    const rconPass = $('cfg-rcon-pass').value;
-    const startMoney = $('cfg-startmoney').value;
-    const gravity = $('cfg-gravity').value;
-    const roundTime = $('cfg-roundtime').value;
+    const btn = $('btn-cfg-save');
+    btn.disabled = true;
+    btn.textContent = 'UYGULANIY0R...';
+    const get = id => $(id) ? $(id).value.trim() : '';
+    const cmds = [];
+    if (get('cfg-startmoney'))     cmds.push(`mp_startmoney ${get('cfg-startmoney')}`);
+    if (get('cfg-roundtime'))      cmds.push(`mp_roundtime ${get('cfg-roundtime')}`);
+    if (get('cfg-freezetime'))     cmds.push(`mp_freezetime ${get('cfg-freezetime')}`);
+    if (get('cfg-c4timer'))        cmds.push(`mp_c4timer ${get('cfg-c4timer')}`);
+    if (get('cfg-buytime'))        cmds.push(`mp_buytime ${get('cfg-buytime')}`);
+    if (get('cfg-gravity'))        cmds.push(`sv_gravity ${get('cfg-gravity')}`);
+    if (get('cfg-maxrounds'))      cmds.push(`mp_maxrounds ${get('cfg-maxrounds')}`);
+    if (get('cfg-timelimit'))      cmds.push(`mp_timelimit ${get('cfg-timelimit')}`);
+    if (get('cfg-limitteams'))     cmds.push(`mp_limitteams ${get('cfg-limitteams')}`);
+    if ($('cfg-friendlyfire'))     cmds.push(`mp_friendlyfire ${$('cfg-friendlyfire').value}`);
+    if ($('cfg-autoteambalance'))  cmds.push(`mp_autoteambalance ${$('cfg-autoteambalance').value}`);
+    if ($('cfg-autokick'))         cmds.push(`mp_autokick ${$('cfg-autokick').value}`);
+    if ($('cfg-tkpunish'))         cmds.push(`mp_tkpunish ${$('cfg-tkpunish').value}`);
+    if ($('cfg-svcheats'))         cmds.push(`sv_cheats ${$('cfg-svcheats').value}`);
+    const svPass = get('cfg-sv-password');
+    cmds.push(svPass ? `sv_password "${svPass}"` : 'sv_password ""');
+    const newRcon = get('cfg-rcon-pass');
+    if (newRcon) cmds.push(`rcon_password "${newRcon}"`);
+    // Tek seferlik gönder
+    const allCmd = cmds.join('; ');
+    const ok = await sendRcon(allCmd, null);
+    if (ok) notify(`${cmds.length} ayar uygulandı!`, 'success');
+    btn.disabled = false;
+    btn.textContent = 'AYARLARI UYGULA (RCON)';
+  });
+}
 
-    $('btn-cfg-save').disabled = true;
-    $('btn-cfg-save').textContent = 'KAYDEDİLİYOR...';
+// ── 5v5 MAÇ MODU — MATCH.CFG YAZ + EXEC ───────────────────────────────
+if ($('btn-match-mode')) {
+  $('btn-match-mode').addEventListener('click', async () => {
+    const btn = $('btn-match-mode');
+    const rconPass = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
+    if (!rconPass) { notify('RCON sekmesinde şifrenizi girin!', 'error'); switchTab(tabRcon, settingsRconView); return; }
+    if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return; }
+    btn.textContent = 'MATCH.CFG YAZILIYOR...';
+    btn.disabled = true;
+
+    const matchCfgContent = `// CS 1.5 Clan Match Config - BrowserCS
+hostname "CS 1.5 Clan Match Server"
+sv_password "mac123"
+sv_cheats 0
+sv_lan 0
+sv_pausable 1
+sv_voiceenable 1
+sv_alltalk 0
+sv_gravity 800
+sv_maxspeed 320
+sv_airaccelerate 10
+sv_aim 0
+mp_friendlyfire 1
+mp_autoteambalance 0
+mp_limitteams 0
+mp_autokick 0
+mp_tkpunish 0
+mp_startmoney 800
+mp_buytime 0.25
+mp_freezetime 6
+mp_roundtime 5
+mp_c4timer 35
+mp_timelimit 0
+mp_maxrounds 15
+mp_winlimit 0
+mp_flashlight 1
+mp_footsteps 1
+mp_fadetoblack 0
+mp_forcechasecam 2
+allow_spectators 1
+log on
+mp_logmessages 1
+mp_logdetail 3
+say "== CLAN MATCH CFG LOADED =="
+say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"
+sv_restartround 3
+`;
+
     try {
       const token = await getSessionToken();
-      const res = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/settings`, {
+      // Önce dosyayı server'a yaz
+      const writeRes = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/write-cfg`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({ rconPassword: rconPass, startMoney, gravity, roundTime })
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ filename: 'match', content: matchCfgContent })
       });
-      const data = await res.json();
-      if (data.success) {
-        notify('Ayarlar kaydedildi ve sunucu yeniden başlatıldı!', 'success');
-        serverSettingsModal.style.display = 'none';
-      } else {
-        notify('Hata: ' + data.error, 'error');
+      const writeData = await writeRes.json();
+      if (!writeData.success) throw new Error(writeData.error || 'CFG yazılamıyor');
+
+      // Sonra RCON ile exec et
+      const execOk = await sendRcon('exec match.cfg', null);
+      if (execOk) {
+        notify('⚔ 5v5 Maç CFG yüklendi! Sunucu 3 saniyede yeniden başlayacak.', 'success');
       }
-    } catch (e) { notify('Bağlantı hatası', 'error'); }
-    $('btn-cfg-save').disabled = false;
-    $('btn-cfg-save').textContent = 'AYARLARI KAYDET VE SUNUCUYU YENİDEN BAŞLAT';
+    } catch (e) {
+      notify('Match CFG hatası: ' + e.message, 'error');
+    }
+    btn.disabled = false;
+    btn.textContent = '⚔ 5v5 MAÇ MODU (EXEC MATCH.CFG)';
   });
 }
 
