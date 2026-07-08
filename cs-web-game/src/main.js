@@ -140,7 +140,7 @@ const ASSET_URL = (window.location.hostname === 'localhost' || window.location.h
   ? 'http://localhost:3000'
   : 'https://browsercs.com';
 
-const API_URL = 'https://backend.browsercs.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
 
 // Fix for Xash3D Emscripten Black Sky Bug: Force WebGL alpha to false
 // This prevents the browser from making the canvas transparent where alpha=0
@@ -2660,7 +2660,7 @@ if (btnAdminLoginSubmit) {
       const data = await res.json();
       if (data.success && data.token) {
         adminToken = data.token;
-        localStorage.setItem('cs_admin_token', adminToken);
+        sessionStorage.setItem('cs_admin_token', adminToken);
         adminLoginModal.style.display = 'none';
         notify('Admin girişi başarılı!', 'success');
         openMasterAdminPanel();

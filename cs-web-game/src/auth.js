@@ -1,5 +1,8 @@
 import { supabase, signUp, signIn, signOut, getProfile, getMyServers, buyServer } from './supabase.js';
 
+// API backend URL - env variable'dan al
+const API_BACKEND = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
+
 let currentUser = null;
 let currentProfile = null;
 
@@ -173,6 +176,11 @@ export async function initAuth() {
         const email = document.getElementById('reg-email')?.value || '';
         const pass  = document.getElementById('reg-pass')?.value || '';
         if (!user || !email || !pass) { window.customAlert('Tüm alanlar zorunludur.'); return; }
+        // Şifre güç kontrolü
+        if (pass.length < 8) { window.customAlert('Şifre en az 8 karakter olmalıdır.'); return; }
+        if (!/[A-Z]/.test(pass) || !/[0-9]/.test(pass)) {
+          window.customAlert('Şifre en az bir büyük harf ve bir rakam içermelidir.'); return;
+        }
         const { error } = await signUp(email, pass, user);
         if (error) window.customAlert('Hata: ' + error.message);
         else {
@@ -200,7 +208,8 @@ export async function initAuth() {
       btnBuyServer.textContent = 'YÖNLENDİRİLİYOR...';
       
       try {
-        if (currentUser.email === 'tusevonline@gmail.com') {
+      // VIP Kullanıcı Kontrolü - Supabase profil üzerinden
+        if (currentProfile?.is_premium || currentProfile?.role === 'vip' || currentProfile?.role === 'admin') {
           const sName = prompt("Sunucu Adı Girin:", "bymTL Özel Sunucu") || "bymTL Özel Sunucu";
           const sMap = prompt("Harita Seçin (de_dust2, de_inferno vb.):", "de_dust2") || "de_dust2";
           
@@ -213,7 +222,6 @@ export async function initAuth() {
           const token = session.data?.session?.access_token;
 
           // 1. Start the actual Docker server on AWS Backend
-          const API_BACKEND = 'https://backend.browsercs.com';
           const res = await fetch(`${API_BACKEND}/api/start-server`, {
             method: 'POST',
             headers: { 
@@ -319,17 +327,55 @@ async function refreshDashboard() {
     const statusColor = isActive ? 'var(--cs-green)' : (isPending ? 'var(--cs-yellow)' : 'var(--cs-red)');
     const statusText  = isActive ? 'AKTİF 7/24' : (isPending ? 'ÖDEME BEKLENİYOR...' : 'SÜRESİ DOLDU');
 
-    div.innerHTML = `
-      <div>
-        <div style="font-family:var(--font-hud);color:var(--text-bright);font-size:0.9rem;">${srv.name}</div>
-        <div style="font-family:var(--font-ui);color:var(--text-dim);font-size:0.75rem;margin-top:0.3rem;">Harita: ${srv.map} | Slot: ${srv.max_players}</div>
-        <div style="font-family:var(--font-hud);color:${statusColor};font-size:0.7rem;margin-top:0.4rem;">${statusText}</div>
-      </div>
-      <div style="display:flex;gap:0.5rem;">
-        <button class="toolbar-btn" style="padding:0.4rem;font-size:0.7rem;background:var(--bg-hover);" ${isActive ? '' : 'disabled'} onclick="if(window.openServerSettings){window.openServerSettings('${srv.id}');document.getElementById('dashboard-modal').style.display='none';}else{window.customAlert('Ayarlar menüsü yüklenemedi.');}">YÖNET</button>
-        <button class="toolbar-btn" style="padding:0.4rem;font-size:0.7rem;border-color:var(--cs-yellow);color:var(--cs-yellow);" ${isActive ? '' : 'disabled'} onclick="joinMyServer('${srv.id}', '${srv.map}', ${srv.max_players}, ${srv.port || 0})">BAĞLAN (ADMIN)</button>
-      </div>
-    `;
+    // XSS korunmalı HTML yapısı - kullanıcı verisi textContent ile set edilir
+    const infoDiv = document.createElement('div');
+    
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-family:var(--font-hud);color:var(--text-bright);font-size:0.9rem;';
+    nameEl.textContent = srv.name;  // XSS-safe: textContent
+    
+    const detailEl = document.createElement('div');
+    detailEl.style.cssText = 'font-family:var(--font-ui);color:var(--text-dim);font-size:0.75rem;margin-top:0.3rem;';
+    detailEl.textContent = `Harita: ${srv.map} | Slot: ${srv.max_players}`;  // XSS-safe
+    
+    const statusEl = document.createElement('div');
+    statusEl.style.cssText = `font-family:var(--font-hud);color:${statusColor};font-size:0.7rem;margin-top:0.4rem;`;
+    statusEl.textContent = statusText;
+    
+    infoDiv.appendChild(nameEl);
+    infoDiv.appendChild(detailEl);
+    infoDiv.appendChild(statusEl);
+    
+    const btnDiv = document.createElement('div');
+    btnDiv.style.cssText = 'display:flex;gap:0.5rem;';
+    
+    const manageBtn = document.createElement('button');
+    manageBtn.className = 'toolbar-btn';
+    manageBtn.style.cssText = 'padding:0.4rem;font-size:0.7rem;background:var(--bg-hover);';
+    manageBtn.textContent = 'YÖNET';
+    manageBtn.disabled = !isActive;
+    manageBtn.addEventListener('click', () => {
+      if (window.openServerSettings) {
+        window.openServerSettings(srv.id);
+        document.getElementById('dashboard-modal').style.display = 'none';
+      } else {
+        window.customAlert('Ayarlar menüsü yüklenemedi.');
+      }
+    });
+    
+    const joinBtn = document.createElement('button');
+    joinBtn.className = 'toolbar-btn';
+    joinBtn.style.cssText = 'padding:0.4rem;font-size:0.7rem;border-color:var(--cs-yellow);color:var(--cs-yellow);';
+    joinBtn.textContent = 'BAĞLA (ADMİN)';
+    joinBtn.disabled = !isActive;
+    joinBtn.addEventListener('click', () => {
+      joinMyServer(srv.id, srv.map, srv.max_players, srv.port || 0);
+    });
+    
+    btnDiv.appendChild(manageBtn);
+    btnDiv.appendChild(joinBtn);
+    div.appendChild(infoDiv);
+    div.appendChild(btnDiv);
     list.appendChild(div);
   });
 }
@@ -337,7 +383,8 @@ async function refreshDashboard() {
 window.joinMyServer = (roomId, mapName, maxplayers, port) => {
   if (!roomId) return window.customAlert('Sunucu geçersiz.');
   document.getElementById('dashboard-modal').style.display = 'none';
-  localStorage.setItem('cs_admin_token', 'premium_owner_' + roomId);
+  // Admin token sadece oturum boyunca sessionStorage'da saklanır
+  sessionStorage.setItem('cs_admin_token', 'premium_owner_' + roomId);
   
   if (port && port > 0) {
      const adminPw = prompt("Lütfen YÖNET panelinde belirlediğiniz Admin Şifrenizi giriniz (Henüz belirlemediyseniz boş bırakın):");
@@ -375,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (manageModal) {
     document.getElementById('close-manage-btn').onclick = () => manageModal.style.display = 'none';
     
-    const API_BACKEND = 'https://backend.browsercs.com';
+    const API_BACKEND_LOCAL = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
 
     document.getElementById('btn-save-rcon').onclick = async () => {
       const id   = document.getElementById('manage-server-id').value;
@@ -383,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!pass) return window.customAlert('Lütfen bir şifre girin.');
       document.getElementById('btn-save-rcon').textContent = 'Kaydediliyor...';
       try {
-        const res  = await fetch(`${API_BACKEND}/api/servers/${id}/rcon`, {
+        const res  = await fetch(`${API_BACKEND_LOCAL}/api/servers/${id}/rcon`, {
           method: 'POST', headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ rconPassword: pass })
         });
@@ -401,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!name) return window.customAlert('Lütfen oyuncu adınızı girin.');
       document.getElementById('btn-save-admin').textContent = 'Ekleniyor...';
       try {
-        const res  = await fetch(`${API_BACKEND}/api/servers/${id}/admin`, {
+        const res  = await fetch(`${API_BACKEND_LOCAL}/api/servers/${id}/admin`, {
           method: 'POST', headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ adminName: name, adminPassword: pass })
         });
@@ -418,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirmed) return;
       document.getElementById('btn-restart-server').textContent = 'Yeniden Başlatılıyor...';
       try {
-        const res  = await fetch(`${API_BACKEND}/api/servers/${id}/restart`, { method: 'POST' });
+        const res  = await fetch(`${API_BACKEND_LOCAL}/api/servers/${id}/restart`, { method: 'POST' });
         const data = await res.json();
         if (data.success) window.customAlert('Sunucu yeniden başlatıldı!');
         else window.customAlert('Hata: ' + data.error);
@@ -437,7 +484,8 @@ export function getCurrentUser() {
 }
 
 export function isUserPremium() {
-  if (currentUser && currentUser.email === 'tusevonline@gmail.com') return true;
+  // VIP/admin kontrolü Supabase profilü üzerinden yapılır (hardcoded email yok)
+  if (currentProfile?.role === 'admin' || currentProfile?.role === 'vip') return true;
   return currentProfile ? currentProfile.is_premium : false;
 }
 

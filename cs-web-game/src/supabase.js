@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://nobzqygwzuqdlipnuchi.supabase.co'
-const supabaseKey = 'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nobzqygwzuqdlipnuchi.supabase.co'
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-'
+
+if (!import.meta.env.VITE_SUPABASE_URL) {
+  console.warn('[Supabase] VITE_SUPABASE_URL env değişkeni ayarlanmamış, varsayılan kullanılıyor.')
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 

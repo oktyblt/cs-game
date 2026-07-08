@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const Docker = require('dockerode');
 const nodeDataChannel = require('node-datachannel');
 require('dotenv').config();
@@ -11,14 +12,47 @@ const path = require('path');
 global.WebSocket = require('ws');
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  'https://nobzqygwzuqdlipnuchi.supabase.co',
-  'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-'
-);
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nobzqygwzuqdlipnuchi.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'browsercsadmin';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin_secret_token_777';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'https://browsercs.com';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const app = express();
-app.use(cors());
+
+// CORS: Sadece browsercs.com ve localhost (development)
+const allowedOrigins = [CORS_ORIGIN, 'http://localhost:3000', 'http://localhost:5173'];
+app.use(cors({
+  origin: (origin, callback) => {
+    // origin undefined = same-origin / curl testleri
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy: Bu origin izinli değil: ' + origin));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
+
+// Rate Limiting
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 10, // 15 dakikada en fazla 10 deneme
+  message: { success: false, error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 dakika
+  max: 30,
+  message: { success: false, error: 'Too many requests. Please slow down.' }
+});
+
+app.use('/api/', apiLimiter);
 
 const docker = new Docker(); // Connects to local docker socket by default
 
@@ -148,12 +182,22 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-app.post('/api/start-server', requireAuth, async (req, res) => {
+app.post('/api/start-server', loginLimiter, requireAuth, async (req, res) => {
   try {
     const { map, maxplayers, name, host } = req.body;
     
-    // In a real scenario, we'd find an available port starting from 27016
-    const port = 27000 + Math.floor(Math.random() * 1000); 
+    // Mevcut kullanıcı port aralığını kontrol ederek çakışmayan port bul
+    const existingContainers = await docker.listContainers({ all: true });
+    const usedPorts = new Set();
+    existingContainers.forEach(c => {
+      if (c.Ports) c.Ports.forEach(p => { if (p.PublicPort) usedPorts.add(p.PublicPort); });
+    });
+    
+    let port = 27200;
+    while (usedPorts.has(port) && port < 28000) port++;
+    if (port >= 28000) {
+      return res.status(503).json({ success: false, error: 'Sunucu kapasitesi dolu.' });
+    }
     
     const container = await createServerContainer({
       map: map || 'de_dust2',
@@ -297,7 +341,7 @@ app.get('/api/servers', async (req, res) => {
         maxplayers: maxPlayers,
         port: port,
         isOfficial: isOfficial,
-        owner_id: c.Labels.owner_id || null,
+        // owner_id ve container details güvenlik için response'dan çıkarıldı
         state: c.State
       };
     }));
@@ -309,9 +353,6 @@ app.get('/api/servers', async (req, res) => {
 });
 
 // Admin Endpoints
-const ADMIN_PASS = 'browsercsadmin';
-const ADMIN_TOKEN = 'admin_secret_token_777';
-
 function requireAdmin(req, res, next) {
   const token = req.headers['x-admin-token'];
   if (token === ADMIN_TOKEN) {
@@ -321,7 +362,7 @@ function requireAdmin(req, res, next) {
   }
 }
 
-app.post('/api/admin/login', express.json(), (req, res) => {
+app.post('/api/admin/login', loginLimiter, express.json(), (req, res) => {
   if (req.body.password === ADMIN_PASS) {
     res.json({ success: true, token: ADMIN_TOKEN });
   } else {
@@ -375,8 +416,8 @@ app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
 
     const { createClient } = require('@supabase/supabase-js');
     const userSupabase = createClient(
-      'https://nobzqygwzuqdlipnuchi.supabase.co',
-      'sb_publishable_UCmJqqwDuYcPuxALFv8Z0w_VJrFZ8F-',
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
@@ -476,11 +517,20 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
     const { id } = req.params;
     const container = docker.getContainer(id);
     const info = await container.inspect();
-    if (info.Config.Labels.owner_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Bu sunucuyu yönetme yetkiniz yok.' });
+    
+    // Owner kontrolü - sadece kendi sunucusunu restart edebilir
+    if (info.Config.Labels.owner_id && info.Config.Labels.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Bu sunucuyu yeniden başlatma yetkiniz yok.' });
     }
     
-    // Güvenlik ve timeout fix'i için restart anında da config basıyoruz
+    // Resmi sunucular sadece admin restart edebilir
+    if (info.Config.Labels.isOfficial === 'true') {
+      const adminHeader = req.headers['x-admin-token'];
+      if (adminHeader !== ADMIN_TOKEN) {
+        return res.status(403).json({ success: false, error: 'Resmi sunucular sadece admin tarafından yeniden başlatılabilir.' });
+      }
+    }
+    
     try {
       const exec = await container.exec({
         Cmd: ['sh', '-c', 'echo \'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_consistency 0\nsv_consistency 0\n\' >> cstrike/server.cfg'],
