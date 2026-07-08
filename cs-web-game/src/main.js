@@ -1476,7 +1476,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
       cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v21.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v30.wasm'),
       cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
@@ -1645,7 +1645,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       libraries: {
         menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v30.wasm',
         server: '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
@@ -1655,7 +1655,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
         'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm',
-        'cl_dlls/client_emscripten_wasm32_v29.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm',
+        'cl_dlls/client_emscripten_wasm32_v30.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v30.wasm',
         'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
         'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
       },
@@ -1937,7 +1937,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
           // DLL dosyaları
           em.FS.writeFile('/cstrike/dlls/cs_emscripten_wasm32.wasm', csServerBuffer);
-          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v29.wasm', csClientBuffer);
+          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v30.wasm', csClientBuffer);
           em.FS.writeFile('/cstrike/cl_dlls/menu_emscripten_wasm32.wasm', csMenuBuffer);
           
           em.FS.writeFile('/filesystem_stdio.wasm', fsBuffer);
