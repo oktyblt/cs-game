@@ -1,110 +1,82 @@
-// CUSTOM MODALS — CS Temalı (Alert / Confirm / Prompt)
-function csModalShow(el) { if (el) { el.style.display = 'flex'; } }
-function csModalHide(el) { if (el) { el.style.display = 'none'; } }
-
+// CUSTOM MODALS
 window.customAlert = function(msg, title = 'BİLGİ') {
   return new Promise(resolve => {
     const modal = document.getElementById('custom-alert-modal');
     const titleEl = document.getElementById('custom-alert-title');
-    const msgEl   = document.getElementById('custom-alert-message');
-    const btnOk   = document.getElementById('btn-custom-alert-ok');
-    if (!modal || !btnOk) {
-      // Fallback: native alert yok, sadece console
-      console.warn('[customAlert]', msg);
-      resolve();
-      return;
-    }
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl) msgEl.innerHTML = msg.replace(/\n/g, '<br/>');
-    csModalShow(modal);
+    const msgEl = document.getElementById('custom-alert-message');
+    const btnOk = document.getElementById('btn-custom-alert-ok');
+    if (!modal) { window.customAlert(msg); resolve(); return; }
     
-    const onOk = () => {
-      csModalHide(modal);
-      btnOk.removeEventListener('click', onOk);
-      document.removeEventListener('keydown', onKey);
+    titleEl.textContent = title;
+    msgEl.innerHTML = msg.replace(/\n/g, '<br/>');
+    modal.style.display = 'flex';
+    
+    const onClick = () => {
+      modal.style.display = 'none';
+      btnOk.removeEventListener('click', onClick);
       resolve();
     };
-    const onKey = (e) => { if (e.key === 'Enter' || e.key === 'Escape') onOk(); };
-    btnOk.addEventListener('click', onOk);
-    document.addEventListener('keydown', onKey);
+    btnOk.addEventListener('click', onClick);
   });
 };
 
 window.customPrompt = function(msg, defaultVal = '', title = 'GİRDİ BEKLENİYOR') {
   return new Promise(resolve => {
-    const modal   = document.getElementById('custom-prompt-modal');
+    const modal = document.getElementById('custom-prompt-modal');
     const titleEl = document.getElementById('custom-prompt-title');
-    const msgEl   = document.getElementById('custom-prompt-message');
+    const msgEl = document.getElementById('custom-prompt-message');
     const inputEl = document.getElementById('custom-prompt-input');
-    const btnOk   = document.getElementById('btn-custom-prompt-ok');
-    const btnCan  = document.getElementById('btn-custom-prompt-cancel');
-    if (!modal || !btnOk || !inputEl) {
-      console.warn('[customPrompt]', msg);
-      resolve(defaultVal || null);
-      return;
-    }
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl)   msgEl.textContent = msg;
+    const btnOk = document.getElementById('btn-custom-prompt-ok');
+    const btnCancel = document.getElementById('btn-custom-prompt-cancel');
+    
+    if (!modal) { resolve(prompt(msg, defaultVal)); return; }
+    
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
     inputEl.value = defaultVal;
-    inputEl.type = (msg.toLowerCase().includes('şifre') || msg.toLowerCase().includes('password')) ? 'password' : 'text';
-    csModalShow(modal);
-    setTimeout(() => inputEl.focus(), 80);
+    inputEl.type = msg.toLowerCase().includes('şifre') ? 'password' : 'text';
+    modal.style.display = 'flex';
+    inputEl.focus();
     
     const cleanup = () => {
-      csModalHide(modal);
+      modal.style.display = 'none';
       btnOk.removeEventListener('click', onOk);
-      if (btnCan) btnCan.removeEventListener('click', onCancel);
-      document.removeEventListener('keydown', onKey);
+      btnCancel.removeEventListener('click', onCancel);
     };
-    const onOk     = () => { cleanup(); resolve(inputEl.value); };
+    
+    const onOk = () => { cleanup(); resolve(inputEl.value); };
     const onCancel = () => { cleanup(); resolve(null); };
-    const onKey    = (e) => {
-      if (e.key === 'Enter')  { e.preventDefault(); onOk(); }
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-    };
+    
     btnOk.addEventListener('click', onOk);
-    if (btnCan) btnCan.addEventListener('click', onCancel);
-    document.addEventListener('keydown', onKey);
+    btnCancel.addEventListener('click', onCancel);
   });
 };
+
 
 window.customConfirm = function(msg, title = 'ONAY') {
   return new Promise(resolve => {
-    const modal   = document.getElementById('custom-confirm-modal');
+    const modal = document.getElementById('custom-confirm-modal');
     const titleEl = document.getElementById('custom-confirm-title');
-    const msgEl   = document.getElementById('custom-confirm-message');
-    const btnOk   = document.getElementById('btn-custom-confirm-ok');
-    const btnCan  = document.getElementById('btn-custom-confirm-cancel');
-    if (!modal || !btnOk) {
-      console.warn('[customConfirm]', msg);
-      resolve(false);
-      return;
-    }
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl)   msgEl.textContent = msg;
-    csModalShow(modal);
-    
+    const msgEl = document.getElementById('custom-confirm-message');
+    const btnOk = document.getElementById('btn-custom-confirm-ok');
+    const btnCancel = document.getElementById('btn-custom-confirm-cancel');
+    if (!modal) { resolve(confirm(msg)); return; }
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+    modal.style.display = 'flex';
     const cleanup = () => {
-      csModalHide(modal);
+      modal.style.display = 'none';
       btnOk.removeEventListener('click', onOk);
-      if (btnCan) btnCan.removeEventListener('click', onCancel);
-      document.removeEventListener('keydown', onKey);
+      btnCancel.removeEventListener('click', onCancel);
     };
-    const onOk     = () => { cleanup(); resolve(true); };
+    const onOk = () => { cleanup(); resolve(true); };
     const onCancel = () => { cleanup(); resolve(false); };
-    const onKey    = (e) => {
-      if (e.key === 'Enter')  { e.preventDefault(); onOk(); }
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-    };
     btnOk.addEventListener('click', onOk);
-    if (btnCan) btnCan.addEventListener('click', onCancel);
-    document.addEventListener('keydown', onKey);
+    btnCancel.addEventListener('click', onCancel);
   });
 };
 
-// Native alert'i override et (sync kullanımları yakala)
-window.alert = (msg) => { window.customAlert(String(msg)); };
-
+// Guest name modal helper — opens the modal, waits for name, resolves with nickname
 window.openGuestNameModal = function(port, mapName) {
   return new Promise(resolve => {
     const modal = document.getElementById('guest-name-modal');
@@ -161,7 +133,7 @@ window.alert = (msg) => { window.customAlert(msg); };
 // Cannot cleanly override prompt as it is synchronous, but we can replace its usages in code.
 
 import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium } from "./auth.js";
-import { buyServer, supabase } from './supabase.js';
+import { buyServer } from './supabase.js';
 import { unzipSync } from 'fflate';
 
 const ASSET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -294,152 +266,13 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// ─── Keyboard Intercept (capture:true) ───────────────────────────────────────
-// capture:true = bu listener SDL/engine'den ÖNCE çalışır.
-// Sadece gerçekten intercept etmemiz gereken tuşlar için stopPropagation kullanılır.
+// Tab tuşunun tarayıcı odaklanmasını bozmasını engelle (Skorbord için), ancak form girişlerinde serbest bırak
 window.addEventListener('keydown', (e) => {
-  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-
-  // [1] input/textarea: tüm tuşlar engine'e gitmesin (Esc hariç)
-  if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
-    if (e.key !== 'Escape') {
-      e.stopPropagation();
-      return;
-    }
-  }
-
-  // [2] Tilde/backtick: konsol aç/kapat
-  if (e.key === '`' || e.key === '~' || e.key === 'é' || e.code === 'Backquote') {
-    e.stopPropagation();
-    e.preventDefault();
-    const cp = document.getElementById('console-panel');
-    if (cp) {
-      cp.classList.toggle('open');
-      if (cp.classList.contains('open')) {
-        document.exitPointerLock();
-        const inp = document.getElementById('console-input');
-        if (inp) inp.focus();
-      } else {
-        window.focus();
-        if (document.activeElement) document.activeElement.blur();
-      }
-    }
-    return;
-  }
-
-  // [3] Text menu açıkken 0-9: engine'e gitmesin, JS handle eder
-  const tm = document.getElementById('custom-textmenu');
-  if (tm && tm.style.display !== 'none' && window.textMenuSlots) {
-    if (e.key >= '0' && e.key <= '9') {
-      e.stopPropagation();
-      e.preventDefault();
-      const slotNum = parseInt(e.key);
-      const isZero = (slotNum === 0);
-      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-      if ((window.textMenuSlots & bitCheck) !== 0) {
-        if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
-        tm.style.display = 'none';
-      }
-      return;
-    }
-  }
-
-  // [4] Tab: tarayıcı focus döngüsünü engelle, engine SDL üzerinden Tab'ı alır
   if (e.key === 'Tab') {
+    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
     if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
-      e.preventDefault(); // browser focus change yok — stopPropagation YOK, engine alır
+      e.preventDefault();
     }
-  }
-}, true); // capture:true — engine'den önce çalışır
-
-// ----------------------------------------
-// --- BROWSERCS TEXT MENU HANDLERS ---
-window._openTextMenu = function(validSlots, textStr) {
-  try {
-    document.exitPointerLock(); // Free mouse for the menu
-    window.textMenuSlots = validSlots;
-    const tm = document.getElementById('custom-textmenu');
-    const tmTitle = document.getElementById('textmenu-title');
-    const tmItems = document.getElementById('textmenu-items');
-    
-    if (tm && tmTitle && tmItems) {
-      tmItems.innerHTML = '';
-      const lines = textStr.replace(/\\n/g, '\n').split('\n');
-      
-      // Clean color codes (\y, \w, \r, \d, \b) from the title
-      let titleStr = lines[0] || 'MENU';
-      titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
-      tmTitle.innerText = titleStr;
-      
-      for (let i = 1; i < lines.length; i++) {
-        let line = lines[i].trim();
-        if (!line) continue;
-        
-        // Clean color codes before regex match
-        line = line.replace(/\\[ywrdb]/g, '').trim();
-        
-        const match = line.match(/^(\d+)\.\s*(.*)/);
-        if (match) {
-          const slotNum = parseInt(match[1]);
-          const slotText = match[2];
-          
-          const btn = document.createElement('div');
-          btn.className = 'textmenu-item';
-          btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
-          
-          // Check if slot is valid
-          const isZero = (slotNum === 0);
-          const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-          if ((window.textMenuSlots & bitCheck) !== 0) {
-            btn.onclick = () => {
-              if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
-              tm.style.display = 'none';
-            };
-          } else {
-            btn.style.opacity = '0.4';
-            btn.style.cursor = 'not-allowed';
-          }
-          tmItems.appendChild(btn);
-        } else {
-          // Non-selectable text line
-          const div = document.createElement('div');
-          div.style.color = 'var(--text-dim)';
-          div.style.fontSize = '0.7rem';
-          div.style.padding = '0.2rem 0';
-          div.innerText = line;
-          tmItems.appendChild(div);
-        }
-      }
-      console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
-      tm.style.display = 'flex';
-    }
-  } catch (e) {
-    console.error('Textmenu parse error', e);
-  }
-};
-
-window._closeTextMenu = function() {
-  const tm = document.getElementById('custom-textmenu');
-  if (tm) tm.style.display = 'none';
-  window.textMenuSlots = 0;
-};
-
-// Fix for typing in console input (stop event from bubbling to Emscripten)
-document.addEventListener('DOMContentLoaded', () => {
-  const consoleInput = document.getElementById('console-input');
-  if (consoleInput) {
-    consoleInput.addEventListener('keydown', (e) => {
-      e.stopPropagation(); // Stop bubbling to window (where Emscripten listens)
-      if (e.key === 'Escape') {
-        const cp = document.getElementById('console-panel');
-        if (cp) cp.classList.remove('open');
-        window.focus();
-        consoleInput.blur();
-      }
-    });
-    // Also stop keyup and keypress
-    consoleInput.addEventListener('keyup', (e) => e.stopPropagation());
-    consoleInput.addEventListener('keypress', (e) => e.stopPropagation());
   }
 });
 // ----------------------------------------
@@ -1053,8 +886,8 @@ scopeOverlay.style.cssText = [
   'z-index:9999',
   'pointer-events:none',
   'display:none',
-  // Siyah maske + yuvarlak şeffaf delik — CS 1.6 ölçeği (ekran yüksekliğinin %80'si)
-  'background:radial-gradient(circle closest-side at 50% 50%, transparent 80%, rgba(0,0,0,0.97) 81%)',
+  // Siyah maske + yuvarlak şeffaf delik — CS 1.6 ölçeği (ekran yüksekliğinin %72'si)
+  'background:radial-gradient(circle closest-side at 50% 50%, transparent 72%, rgba(0,0,0,0.97) 73%)',
 ].join(';');
 // Crosshair çizgiler için overlay içi SVG
 scopeOverlay.innerHTML = `
@@ -1132,7 +965,7 @@ function addConsoleLog(msg, cls = '') {
 }
 
 // Güvenli konsol komutu çalıştırma yardımcısı (Doğrudan WASM _Cmd_ExecuteString çağrısı yapar)
-window.executeEngineCommand = function executeEngineCommand(cmd) {
+function executeEngineCommand(cmd) {
   if (!xash || !xash.em) {
     console.warn('[Konsol] Komut gönderilemedi, engine hazır değil:', cmd);
     return;
@@ -1476,9 +1309,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v28.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v20.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v20.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v20.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
@@ -1603,10 +1436,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '-heapsize', '65536',
         '+ip', '10.0.0.2',
         '+clientport', (27000 + Math.floor(Math.random() * 1000)).toString(),
-        '+cl_updaterate', '30',
-        '+cl_cmdrate', '30',
-        '+rate', '25000',
-        '+ex_interp', '0.05',
+        '+cl_updaterate', '101',
+        '+cl_cmdrate', '101',
+        '+rate', '100000',
+        '+ex_interp', '0.01',
         '+fps_max', '100',
         // In-game console error overlay'i kapat
         '+sensitivity', '3',
@@ -1619,8 +1452,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '+r_novis', '0',
         '+setinfo', '_vgui_menus', '0',
       ];
-
-
+      
+      const amxPw = localStorage.getItem('cs_amx_pw');
+      if (amxPw) {
+         xashArgs.push('+setinfo', '_pw', amxPw);
+      }
+      
       let actualWsPort = null;
       if (isHost || !connectPort || connectPort === 'listen' || connectPort === true) {
         xashArgs.push('+maxplayers', '16', '+map', mapName);
@@ -1645,9 +1482,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         },
 
       libraries: {
-        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32_v28.wasm',
+        menu:   '/wasm/cl_dlls/menu_emscripten_wasm32_v20.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v20.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v20.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1655,10 +1492,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm',
-        'cl_dlls/client_emscripten_wasm32_v29.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v29.wasm',
-        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v28.wasm',
-        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v28.wasm',
+        'cl_dlls/menu_emscripten_wasm32.wasm':   '/wasm/cl_dlls/menu_emscripten_wasm32_v20.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v20.wasm',
+        'dlls/cs_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v20.wasm',
+        'dlls/hl_emscripten_wasm32.wasm':        '/wasm/dlls/cs_emscripten_wasm32_v20.wasm',
       },
 
       module: {
@@ -1938,7 +1775,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
           // DLL dosyaları
           em.FS.writeFile('/cstrike/dlls/cs_emscripten_wasm32.wasm', csServerBuffer);
-          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v29.wasm', csClientBuffer);
+          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32.wasm', csClientBuffer);
           em.FS.writeFile('/cstrike/cl_dlls/menu_emscripten_wasm32.wasm', csMenuBuffer);
           
           em.FS.writeFile('/filesystem_stdio.wasm', fsBuffer);
@@ -1996,100 +1833,6 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           if (log.includes('Could not get TCP/IPv6 address')) return;
           if (log.includes('File exists from loopback')) return;
           if (log.includes('ScriptProcessorNode')) return;
-          
-          if (log.includes('[BROWSERCS_SCOREBOARD]')) {
-            try {
-              const jsonStr = log.split('[BROWSERCS_SCOREBOARD]')[1].trim();
-              const payload = JSON.parse(jsonStr);
-              if (window.updateBrowserCSScoreboard) {
-                window.updateBrowserCSScoreboard(JSON.stringify(payload.players), payload.serverName, payload.localPlayerId);
-              }
-            } catch(e) {
-              console.error('Scoreboard parse error', e);
-            }
-            return;
-          }
-
-          if (log.includes('[BROWSERCS_HIDE_SCOREBOARD]')) {
-            const sbContainer = document.getElementById('custom-scoreboard');
-            if (sbContainer) sbContainer.style.display = 'none';
-            return;
-          }
-
-          if (log.includes('[BROWSERCS_TEXTMENU_CLOSE]')) {
-            const tm = document.getElementById('custom-textmenu');
-            if (tm) tm.style.display = 'none';
-            window.textMenuSlots = 0;
-            return;
-          }
-
-          if (log.includes('[BROWSERCS_TEXTMENU]')) {
-            try {
-              const parts = log.split('[BROWSERCS_TEXTMENU]')[1].trim();
-              const pipeIdx = parts.indexOf('|');
-              if (pipeIdx > -1) {
-                window.textMenuSlots = parseInt(parts.substring(0, pipeIdx));
-                const textStr = parts.substring(pipeIdx + 1).replace(/\\n/g, '\n');
-                
-                const tm = document.getElementById('custom-textmenu');
-                const tmTitle = document.getElementById('textmenu-title');
-                const tmItems = document.getElementById('textmenu-items');
-                if (tm && tmTitle && tmItems) {
-                  tmItems.innerHTML = '';
-                  const lines = textStr.split('\n');
-                  
-                  // Clean color codes (\y, \w, \r, \d, \b) from the title
-                  let titleStr = lines[0] || 'MENU';
-                  titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
-                  tmTitle.innerText = titleStr;
-                  
-                  for (let i = 1; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    // Clean color codes before regex match
-                    line = line.replace(/\\[ywrdb]/g, '').trim();
-                    
-                    const match = line.match(/^(\d+)\.\s*(.*)/);
-                    if (match) {
-                      const slotNum = parseInt(match[1]);
-                      const slotText = match[2];
-                      
-                      const btn = document.createElement('div');
-                      btn.className = 'textmenu-item';
-                      btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
-                      
-                      // Check if slot is valid
-                      const isZero = (slotNum === 0);
-                      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-                      if ((window.textMenuSlots & bitCheck) !== 0) {
-                        btn.onclick = () => {
-                          if (window.executeEngineCommand) window.executeEngineCommand(`menuselect ${slotNum}`);
-                          tm.style.display = 'none';
-                        };
-                      } else {
-                        btn.style.opacity = '0.4';
-                        btn.style.cursor = 'not-allowed';
-                      }
-                      tmItems.appendChild(btn);
-                    } else {
-                      // Non-selectable text line
-                      const div = document.createElement('div');
-                      div.style.color = 'var(--text-dim)';
-                      div.style.fontSize = '0.7rem';
-                      div.style.padding = '0.2rem 0';
-                      div.innerText = line;
-                      tmItems.appendChild(div);
-                    }
-                  }
-                  console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
-                  tm.style.display = 'flex';
-                }
-              }
-            } catch(e) { console.error('Textmenu parse error', e); }
-            return;
-          }
-
           // BUY DEBUG: silah satın alma logları
           if (log.includes('[BUY_DEBUG]')) {
             console.warn('%c' + log, 'color: #ff0; background: #000; font-weight: bold; font-size: 13px;');
@@ -2107,12 +1850,6 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
             console.warn('[ENGINE KEY]', log);
             addConsoleLog('>>> ' + log, 'warn');
           } else {
-            // Filter noisy keystrokes or unbounds
-            if (log.trim().length <= 3) return;
-            if (log.startsWith('"')) return;
-            if (log.includes('is unbound')) return;
-            if (log.includes('Unknown command:')) return;
-            
             console.log('[Engine Output]', log);
             addConsoleLog(log);
           }
@@ -2168,9 +1905,6 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         if (!isHost && connectPort && connectPort !== 'listen' && connectPort !== true) {
           console.log('[DEBUG] Assetler yüklendi, uzak sunucuya bağlanılıyor...');
           if (typeof addConsoleLog === 'function') addConsoleLog('Assetler tamamlandı. Sunucuya bağlanılıyor...', 'ok');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
 
@@ -2206,35 +1940,14 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         if (reconnectOverlay) reconnectOverlay.classList.remove('show');
         // Motora yeniden bağlan komutu gönder
         if (xash && engineRunning) {
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
       });
     }
 
-    // WebSocket kapanınca reconnect overlay göster ve otomatik yeniden bağlan
-    let _activeConnectPort = connectPort; // map change sonrası yeniden kullanmak için
-    let _activeMapName = mapName;
-    let _isClientMode = !isHost && connectPort && connectPort !== 'listen' && connectPort !== true;
-
+    // WebSocket kapanınca reconnect overlay göster
     window.addEventListener('xash3d-ws-closed', () => {
       if (reconnectOverlay) reconnectOverlay.classList.add('show');
-      // İstemci modundaysa (dedicated sunucuya bağlıysa) 3sn sonra otomatik reconnect dene
-      if (_isClientMode && _activeConnectPort) {
-        setTimeout(() => {
-          if (xash && engineRunning) {
-            console.log('[Map Change] Auto-reconnect tetiklendi, sunucuya yeniden bağlanılıyor...');
-            if (typeof addConsoleLog === 'function') addConsoleLog('Harita değişti — sunucuya yeniden bağlanılıyor...', 'ok');
-            executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('connect 10.0.0.1:27015');
-            if (reconnectOverlay) reconnectOverlay.classList.remove('show');
-          }
-        }, 3000);
-      }
     });
 
     // Focus canvas automatically on click
@@ -2498,13 +2211,13 @@ if (btnBuyPremium) {
 
     try {
       if (isUserPremium()) {
-        const sName = (await window.customPrompt('Sunucu Adı Girin:', 'CS 1.5 Özel Sunucu', 'SUNUCU ADI')) || 'CS 1.5 Özel Sunucu';
-        const sMap  = (await window.customPrompt('Harita Seçin:', 'de_dust2', 'HARİTA SEÇ')) || 'de_dust2';
+        const sName = prompt("Sunucu Adı Girin:", "bymTL Özel Sunucu") || "bymTL Özel Sunucu";
+        const sMap = prompt("Harita Seçin (de_dust2, de_inferno vb.):", "de_dust2") || "de_dust2";
         
         notify('VIP Üye Tanındı: AWS üzerinde sunucunuz başlatılıyor...', 'success');
         
         const token = await getSessionToken();
-        const res = await fetch(`${API_URL}/api/create-server`, {
+        const res = await fetch(`${API_URL}/api/start-server`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -2916,42 +2629,10 @@ const masterAdminPanel = $('master-admin-panel');
 const btnAdminPanelClose = $('btn-admin-panel-close');
 const masterAdminTableBody = $('master-admin-table-body');
 
-let adminToken = sessionStorage.getItem('cs_admin_token') || null;
+let adminToken = localStorage.getItem('cs_admin_token') || null;
 
-// Supabase rol kontrolü — sadece role='admin' kullanıcılar /csadmin açabilir
-async function checkAdminRole() {
-  try {
-    if (!supabase) return false;
-    
-    // Auth state'in yüklenmesini bekle (getCurrentUser() asenkron geride kalabilir)
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !sessionData?.session?.user) return false;
-    
-    const userId = sessionData.session.user.id;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
-      
-    if (error || !data) return false;
-    return data.role === 'admin';
-  } catch(e) { return false; }
-}
-
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('DOMContentLoaded', () => {
   if (window.location.pathname === '/csadmin') {
-    // Önce rol kontrolü yap
-    const isAdmin = await checkAdminRole();
-    if (!isAdmin) {
-      // Yetkisiz erişim — ana sayfaya yönlendir
-      sessionStorage.removeItem('cs_admin_token');
-      adminToken = null;
-      notify('Bu sayfaya erişim yetkiniz yok!', 'error');
-      setTimeout(() => { window.location.pathname = '/'; }, 1500);
-      return;
-    }
     if (adminToken) {
       openMasterAdminPanel();
     } else {
@@ -3101,21 +2782,6 @@ window.openServerSettings = function(id) {
 if (btnSettingsClose) {
   btnSettingsClose.addEventListener('click', () => {
     serverSettingsModal.style.display = 'none';
-    // Kapatıldığında oyun focus'unu geri ver
-    if (engineRunning) {
-      const gameCanvas = document.getElementById('canvas');
-      if (gameCanvas) gameCanvas.focus();
-    }
-  });
-}
-
-// OYUN MOTORUNUN (Xash3D) TUŞLARI ÇALMASINI ENGELLE
-// Dropdown panel üzerindeki hiçbir keydown/keyup olayının window'a ulaşmasına izin verme
-if (serverSettingsModal) {
-  ['keydown', 'keyup', 'keypress'].forEach(evtType => {
-    serverSettingsModal.addEventListener(evtType, (e) => {
-      e.stopPropagation();
-    });
   });
 }
 
@@ -3169,7 +2835,7 @@ if ($('btn-rcon-send')) {
   });
 }
 
-// ── GENERAL SETTINGS SAVE ─────────────────────────────────────────────────
+// GENERAL SETTINGS SAVE
 if ($('btn-cfg-save')) {
   $('btn-cfg-save').addEventListener('click', async () => {
     const rconPass = $('cfg-rcon-pass').value;
@@ -3199,6 +2865,39 @@ if ($('btn-cfg-save')) {
     } catch(e) { notify('Bağlantı hatası', 'error'); }
     $('btn-cfg-save').disabled = false;
     $('btn-cfg-save').textContent = 'AYARLARI KAYDET VE SUNUCUYU YENİDEN BAŞLAT';
+  });
+}
+
+// AMX MOD ADMIN SAVE
+if ($('btn-amx-save')) {
+  $('btn-amx-save').addEventListener('click', async () => {
+    const adminName = $('amx-admin-name').value;
+    const adminPassword = $('amx-admin-pass').value;
+    
+    if (!adminName) { notify('Admin ismi gerekli!', 'error'); return; }
+    
+    $('btn-amx-save').disabled = true;
+    $('btn-amx-save').textContent = 'EKLENİYOR...';
+    try {
+      const token = await getSessionToken();
+      const res = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/settings`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ adminName, adminPassword })
+      });
+      const data = await res.json();
+      if (data.success) {
+        notify(`${adminName} başarıyla admin yapıldı!`, 'success');
+        serverSettingsModal.style.display = 'none';
+      } else {
+        notify('Hata: ' + data.error, 'error');
+      }
+    } catch(e) { notify('Bağlantı hatası', 'error'); }
+    $('btn-amx-save').disabled = false;
+    $('btn-amx-save').textContent = 'ADMİNİ EKLE VE SUNUCUYU YENİDEN BAŞLAT';
   });
 }
 
@@ -3465,45 +3164,6 @@ window.connectToServer = async function(port, mapName, isHost = false) {
   if (engineText) {
     engineText.innerHTML = `Engine hazırlanıyor... <br/><span style="color:var(--cs-yellow); font-size: 0.75rem; letter-spacing:0.05em; margin-top:5px; display:inline-block;">⚠️ İlk yükleme (harita ve modeller) internet hızınıza bağlı olarak uzun sürebilir. Lütfen bekleyin.</span>`;
   }
-
-  // ── Toolbar: kullanıcı adı + VIP "Yönet" butonu ──────────────────────────
-  const toolbarUserInfo  = $('toolbar-user-info');
-  const toolbarUsername  = $('toolbar-username');
-  const btnGameManage    = $('btn-game-manage');
-
-  if (toolbarUserInfo && toolbarUsername) {
-    const currentUsername = getCurrentUsername();
-    const currentUsr      = getCurrentUser();
-    if (currentUsername && currentUsr) {
-      toolbarUsername.textContent = '👤 ' + currentUsername;
-      toolbarUserInfo.style.display = 'flex';
-
-      // VIP kullanıcı mı? Eğer öyleyse sunucu listesinden bu porta sahip sunucu var mı?
-      if (btnGameManage && isUserPremium()) {
-        try {
-          const srvRes = await fetch(`${API_URL}/api/servers`);
-          const srvData = await srvRes.json();
-          const myServer = (srvData.servers || []).find(s =>
-            s.port == port && s.owner_id && s.owner_id === currentUsr.id
-          );
-          if (myServer) {
-            btnGameManage.style.display = 'inline-flex';
-            btnGameManage.onclick = () => window.openServerSettings(myServer.id || myServer.containerId);
-          } else {
-            btnGameManage.style.display = 'none';
-          }
-        } catch(e) {
-          // API hatası — butonu gizle
-          btnGameManage.style.display = 'none';
-        }
-      } else if (btnGameManage) {
-        btnGameManage.style.display = 'none';
-      }
-    } else {
-      toolbarUserInfo.style.display = 'none';
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────────────
 
   // initEngine'i çağır
   initEngine(mapName, port, isHost);

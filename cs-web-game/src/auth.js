@@ -210,20 +210,9 @@ export async function initAuth() {
       try {
       // VIP Kullanıcı Kontrolü - Supabase profil üzerinden
         if (currentProfile?.is_premium || currentProfile?.role === 'vip' || currentProfile?.role === 'admin') {
-          // null kontrolü — İPTAL'e basılırsa customPrompt null döner
-          const sName = await window.customPrompt('Sunucu Adı Girin:', 'CS 1.5 Özel Sunucu', 'SUNUCU ADI');
-          if (sName === null) {
-            btnBuyServer.disabled = false;
-            btnBuyServer.textContent = originalText;
-            return;
-          }
-          const sMap = await window.customPrompt('Harita Seçin (de_dust2, de_inferno vb.):', 'de_dust2', 'HARİTA SEÇ');
-          if (sMap === null) {
-            btnBuyServer.disabled = false;
-            btnBuyServer.textContent = originalText;
-            return;
-          }
-
+          const sName = prompt("Sunucu Adı Girin:", "bymTL Özel Sunucu") || "bymTL Özel Sunucu";
+          const sMap = prompt("Harita Seçin (de_dust2, de_inferno vb.):", "de_dust2") || "de_dust2";
+          
           btnBuyServer.disabled = true;
           btnBuyServer.textContent = 'OLUŞTURULUYOR...';
 
@@ -232,20 +221,28 @@ export async function initAuth() {
           const session = await supabase.auth.getSession();
           const token = session.data?.session?.access_token;
 
-          // AWS'de Docker sunucuyu başlat (backend purchased_servers kaydını da oluşturur)
+          // 1. Start the actual Docker server on AWS Backend
           const res = await fetch(`${API_BACKEND}/api/start-server`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
               ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({ map: sMap || 'de_dust2', maxplayers: 16, name: sName || 'CS 1.5 Özel Sunucu', host: currentProfile?.username || 'owner' })
+            body: JSON.stringify({ map: sMap, maxplayers: 16, name: sName, host: 'bymTL' })
           });
           
           const d = await res.json();
           if (d.success && d.port) {
-            window.customAlert(`AWS Sunucunuz başarıyla oluşturuldu!\nPort: ${d.port}\nDashboard üzerinden bağlanabilirsiniz.`, 'BAŞARILI');
-            if (window.refreshDashboard) window.refreshDashboard();
+            // 2. Save it to Supabase so it shows up in "Satın Alınan Sunucularım"
+            const { createPurchasedServer } = await import('./supabase.js');
+            const dbRes = await createPurchasedServer(currentUser.id, sName, sMap, 16, d.port);
+            
+            if (dbRes.error) {
+              window.customAlert('AWS Sunucusu açıldı ancak veritabanı kayıt hatası: ' + dbRes.error.message);
+            } else {
+              window.customAlert('AWS Sunucunuz başarıyla oluşturuldu ve aktif edildi! Dashboard üzerinden bağlanabilirsiniz.', 'BAŞARILI');
+              if (window.refreshDashboard) window.refreshDashboard();
+            }
           } else {
             window.customAlert('İşlem başarısız: AWS Sunucusu başlatılamadı. ' + (d.error || ''));
           }
@@ -390,7 +387,13 @@ window.joinMyServer = (roomId, mapName, maxplayers, port) => {
   sessionStorage.setItem('cs_admin_token', 'premium_owner_' + roomId);
   
   if (port && port > 0) {
-     window.customAlert('Dedicated AWS Sunucusuna bağlanılıyor...');
+     const adminPw = prompt("Lütfen YÖNET panelinde belirlediğiniz Admin Şifrenizi giriniz (Henüz belirlemediyseniz boş bırakın):");
+     if (adminPw) {
+       localStorage.setItem('cs_amx_pw', adminPw);
+     } else {
+       localStorage.removeItem('cs_amx_pw');
+     }
+     window.customAlert('Admin yetkisi onaylandı. Dedicated AWS Sunucusuna bağlanılıyor...');
      if (window.connectToServer) {
        window.connectToServer(port, mapName, false);
      }
@@ -417,17 +420,15 @@ window.openManageModal = (containerId) => {
 document.addEventListener('DOMContentLoaded', () => {
   const manageModal = document.getElementById('server-manage-modal');
   if (manageModal) {
-    const closeManagedBtn = document.getElementById('close-manage-btn');
-    if (closeManagedBtn) closeManagedBtn.onclick = () => manageModal.style.display = 'none';
+    document.getElementById('close-manage-btn').onclick = () => manageModal.style.display = 'none';
     
     const API_BACKEND_LOCAL = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
 
-    const btnSaveRcon = document.getElementById('btn-save-rcon');
-    if (btnSaveRcon) btnSaveRcon.onclick = async () => {
+    document.getElementById('btn-save-rcon').onclick = async () => {
       const id   = document.getElementById('manage-server-id').value;
       const pass = document.getElementById('rcon-password-input').value;
       if (!pass) return window.customAlert('Lütfen bir şifre girin.');
-      btnSaveRcon.textContent = 'Kaydediliyor...';
+      document.getElementById('btn-save-rcon').textContent = 'Kaydediliyor...';
       try {
         const res  = await fetch(`${API_BACKEND_LOCAL}/api/servers/${id}/rcon`, {
           method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -437,22 +438,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) window.customAlert('RCON Şifresi başarıyla ayarlandı!');
         else window.customAlert('Hata: ' + data.error);
       } catch(e) { window.customAlert('Bağlantı hatası!'); }
-      btnSaveRcon.textContent = 'Kaydet';
+      document.getElementById('btn-save-rcon').textContent = 'Kaydet';
     };
 
-    const btnRestartServer = document.getElementById('btn-restart-server');
-    if (btnRestartServer) btnRestartServer.onclick = async () => {
+    document.getElementById('btn-save-admin').onclick = async () => {
+      const id   = document.getElementById('manage-server-id').value;
+      const name = document.getElementById('admin-name-input').value;
+      const pass = document.getElementById('admin-password-input').value;
+      if (!name) return window.customAlert('Lütfen oyuncu adınızı girin.');
+      document.getElementById('btn-save-admin').textContent = 'Ekleniyor...';
+      try {
+        const res  = await fetch(`${API_BACKEND_LOCAL}/api/servers/${id}/admin`, {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ adminName: name, adminPassword: pass })
+        });
+        const data = await res.json();
+        if (data.success) window.customAlert('Admin başarıyla eklendi!');
+        else window.customAlert('Hata: ' + data.error);
+      } catch(e) { window.customAlert('Bağlantı hatası!'); }
+      document.getElementById('btn-save-admin').textContent = 'Ekle';
+    };
+
+    document.getElementById('btn-restart-server').onclick = async () => {
       const id = document.getElementById('manage-server-id').value;
       const confirmed = await window.customConfirm('Sunucuyu yeniden başlatmak istediğinize emin misiniz? İçerideki oyuncular düşer.');
       if (!confirmed) return;
-      btnRestartServer.textContent = 'Yeniden Başlatılıyor...';
+      document.getElementById('btn-restart-server').textContent = 'Yeniden Başlatılıyor...';
       try {
         const res  = await fetch(`${API_BACKEND_LOCAL}/api/servers/${id}/restart`, { method: 'POST' });
         const data = await res.json();
         if (data.success) window.customAlert('Sunucu yeniden başlatıldı!');
         else window.customAlert('Hata: ' + data.error);
       } catch(e) { window.customAlert('Bağlantı hatası!'); }
-      btnRestartServer.textContent = 'Sunucuyu Yeniden Başlat';
+      document.getElementById('btn-restart-server').textContent = 'Sunucuyu Yeniden Başlat';
     };
   }
 });
