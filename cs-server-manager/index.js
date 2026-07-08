@@ -37,19 +37,24 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Nginx/proxy arkasında çalışırken X-Forwarded-For güvenini aç
+app.set('trust proxy', 1);
+
 // Rate Limiting
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 dakika
   max: 10, // 15 dakikada en fazla 10 deneme
   message: { success: false, error: 'Too many login attempts. Please try again in 15 minutes.' },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false } // proxy arkasında false bırak
 });
 
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 dakika
-  max: 30,
-  message: { success: false, error: 'Too many requests. Please slow down.' }
+  max: 60, // 60 istek/dakika
+  message: { success: false, error: 'Too many requests. Please slow down.' },
+  validate: { xForwardedForHeader: false }
 });
 
 app.use('/api/', apiLimiter);
@@ -402,7 +407,201 @@ app.post('/api/servers/:id/command', requireAuth, async (req, res) => {
   }
 });
 
+// Tek başına RCON şifre güncelleme
+app.post('/api/servers/:id/rcon', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rconPassword } = req.body;
+    if (!rconPassword) return res.status(400).json({ success: false, error: 'RCON şifresi gerekli.' });
+
+    // settings endpoint'ini yeniden kullan (sadece rconPassword güncelle)
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ success: false, error: 'Authorization gerekli.' });
+    const token = authHeader.split(' ')[1];
+    const { createClient } = require('@supabase/supabase-js');
+    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let dbServer = null;
+    if (isUUID) {
+      const { data } = await userSupabase.from('purchased_servers').select('*').eq('id', id).single();
+      dbServer = data;
+    } else {
+      const info = await docker.getContainer(id).inspect().catch(() => null);
+      if (info) {
+        const port = info.HostConfig.PortBindings?.['27015/udp']?.[0]?.HostPort;
+        if (port) {
+          const { data } = await userSupabase.from('purchased_servers').select('*').eq('port', parseInt(port)).single();
+          dbServer = data;
+        }
+      }
+    }
+    if (!dbServer || dbServer.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Yetki yok veya sunucu bulunamadı.' });
+    }
+
+    await userSupabase.from('purchased_servers').update({ rcon_password: rconPassword }).eq('id', dbServer.id);
+
+    // server.cfg güncelle
+    const configDir = `/home/ubuntu/server_configs/${dbServer.port}`;
+    const cfgPath = `${configDir}/server.cfg`;
+    if (fs.existsSync(cfgPath)) {
+      let cfg = fs.readFileSync(cfgPath, 'utf8');
+      cfg = cfg.replace(/rcon_password\s+".*?"/, `rcon_password "${rconPassword}"`);
+      fs.writeFileSync(cfgPath, cfg);
+    }
+
+    res.json({ success: true, message: 'RCON şifresi güncellendi.' });
+  } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Admin ekleme
+app.post('/api/servers/:id/admin', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { adminName, adminPassword } = req.body;
+    if (!adminName) return res.status(400).json({ success: false, error: 'Admin adı gerekli.' });
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ success: false, error: 'Authorization gerekli.' });
+    const token = authHeader.split(' ')[1];
+    const { createClient } = require('@supabase/supabase-js');
+    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let dbServer = null;
+    if (isUUID) {
+      const { data } = await userSupabase.from('purchased_servers').select('*').eq('id', id).single();
+      dbServer = data;
+    } else {
+      const info = await docker.getContainer(id).inspect().catch(() => null);
+      if (info) {
+        const port = info.HostConfig.PortBindings?.['27015/udp']?.[0]?.HostPort;
+        if (port) {
+          const { data } = await userSupabase.from('purchased_servers').select('*').eq('port', parseInt(port)).single();
+          dbServer = data;
+        }
+      }
+    }
+    if (!dbServer || dbServer.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Yetki yok veya sunucu bulunamadı.' });
+    }
+
+    await userSupabase.from('purchased_servers').update({ admin_name: adminName, admin_password: adminPassword || '' }).eq('id', dbServer.id);
+
+    // users.ini güncelle
+    const configDir = `/home/ubuntu/server_configs/${dbServer.port}`;
+    fs.mkdirSync(configDir, { recursive: true });
+    const usersIni = adminName ? `"${adminName}" "${adminPassword || ''}" "abcdefghijklmnopqrstu" "a"\n` : '';
+    fs.writeFileSync(`${configDir}/users.ini`, usersIni);
+
+    res.json({ success: true, message: `${adminName} admin olarak eklendi.` });
+  } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Tek sunucu durumu sorgulama
+app.get('/api/servers/:id/status', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const container = docker.getContainer(id);
+    const info = await container.inspect();
+
+    if (info.Config.Labels.owner_id && info.Config.Labels.owner_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Yetki yok.' });
+    }
+
+    const portBind = info.NetworkSettings.Ports?.['27015/udp'];
+    const port = portBind ? parseInt(portBind[0].HostPort) : null;
+    let a2sData = null;
+    if (port && info.State.Running) {
+      a2sData = await queryA2S('127.0.0.1', port).catch(() => null);
+    }
+
+    res.json({
+      success: true,
+      id: info.Id,
+      name: info.Config.Labels.serverName,
+      state: info.State.Status,
+      running: info.State.Running,
+      port,
+      map: a2sData?.map || info.Config.Labels.mapName,
+      players: a2sData?.players || 0,
+      maxplayers: parseInt(info.Config.Labels.maxPlayers) || 16,
+      startedAt: info.State.StartedAt
+    });
+  } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Stripe key yönetimi (admin only)
+app.post('/api/admin/stripe', requireAdmin, (req, res) => {
+  try {
+    const { stripeSecretKey, stripeWebhookSecret } = req.body;
+    if (!stripeSecretKey) return res.status(400).json({ success: false, error: 'Stripe key gerekli.' });
+
+    // .env dosyasına yaz (runtime güncelleme)
+    const envPath = path.join(__dirname, '.env');
+    let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+    
+    if (envContent.includes('STRIPE_SECRET_KEY=')) {
+      envContent = envContent.replace(/STRIPE_SECRET_KEY=.*/g, `STRIPE_SECRET_KEY=${stripeSecretKey}`);
+    } else {
+      envContent += `\nSTRIPE_SECRET_KEY=${stripeSecretKey}`;
+    }
+    if (stripeWebhookSecret) {
+      if (envContent.includes('STRIPE_WEBHOOK_SECRET=')) {
+        envContent = envContent.replace(/STRIPE_WEBHOOK_SECRET=.*/g, `STRIPE_WEBHOOK_SECRET=${stripeWebhookSecret}`);
+      } else {
+        envContent += `\nSTRIPE_WEBHOOK_SECRET=${stripeWebhookSecret}`;
+      }
+    }
+    fs.writeFileSync(envPath, envContent);
+    
+    // Runtime'da da güncelle
+    process.env.STRIPE_SECRET_KEY = stripeSecretKey;
+    if (stripeWebhookSecret) process.env.STRIPE_WEBHOOK_SECRET = stripeWebhookSecret;
+    
+    console.log('[Admin] Stripe keys updated.');
+    res.json({ success: true, message: 'Stripe anahtarları güncellendi.' });
+  } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Genel istatistikler (auth gerektirmiyor)
+app.get('/api/stats', async (req, res) => {
+  try {
+    const containers = await docker.listContainers({
+      filters: { label: ['cs-web-game=true'] }
+    });
+    const running = containers.filter(c => c.State === 'running');
+    let totalPlayers = 0;
+    for (const c of running) {
+      const portData = c.Ports?.find(p => p.PrivatePort === 27015 && p.Type === 'udp');
+      if (portData?.PublicPort) {
+        const a2s = await queryA2S('127.0.0.1', portData.PublicPort).catch(() => null);
+        if (a2s) totalPlayers += a2s.players || 0;
+      }
+    }
+    res.json({ success: true, activeServers: running.length, totalServers: containers.length, totalPlayers });
+  } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+
+
 app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
+
   try {
     const { id } = req.params;
     const { rconPassword, startMoney, gravity, roundTime, c4Timer, adminName, adminPassword } = req.body;

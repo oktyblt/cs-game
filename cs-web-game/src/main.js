@@ -2210,7 +2210,7 @@ if (btnBuyPremium) {
     btn.disabled = true;
 
     try {
-      if (user.email === 'tusevonline@gmail.com') {
+      if (isUserPremium()) {
         const sName = prompt("Sunucu Adı Girin:", "bymTL Özel Sunucu") || "bymTL Özel Sunucu";
         const sMap = prompt("Harita Seçin (de_dust2, de_inferno vb.):", "de_dust2") || "de_dust2";
         
@@ -2283,10 +2283,10 @@ if (btnQuickJoin) {
       const servers = data.servers || [];
 
       // Seçili haritayla eşleşen aktif sunucu ara
-      let target = servers.find(s => s.map === currentMap && s.online);
+      let target = servers.find(s => s.map === currentMap && s.state === 'running');
       if (!target) {
         // Harita yoksa herhangi bir aktif sunucuya katıl
-        target = servers.find(s => s.online);
+        target = servers.find(s => s.state === 'running');
       }
 
       if (target) {
@@ -2901,32 +2901,104 @@ if ($('btn-amx-save')) {
   });
 }
 
-// Admin Panel Mock Listeners (eski)
+// ── Sidebar Admin Panel Butonları (Gerçek RCON) ─────────────────────────────
 const btnAdminChangeMap = $('btn-admin-changemap');
 const btnAdminSetPass = $('btn-admin-setpass');
 const btnAdminRestart = $('btn-admin-restart');
 const btnAdminStop = $('btn-admin-stop');
 
+// Helper: aktif container ID bul
+async function getActiveContainerId() {
+  try {
+    const res = await fetch(`${API_URL}/api/servers`);
+    const data = await res.json();
+    // Çalışan sunuculardan ilkini döndür (resmi olmayan, eğer varsa kendi sunucusu)
+    const activeServers = (data.servers || []).filter(s => s.state === 'running');
+    return activeServers.length > 0 ? activeServers[0].id : null;
+  } catch(e) { return null; }
+}
+
 if (btnAdminChangeMap) {
-  btnAdminChangeMap.addEventListener('click', () => {
-    const map = $('admin-map-select').value;
-    notify(`RCON komutu gönderildi: map ${map}`, 'info');
+  btnAdminChangeMap.addEventListener('click', async () => {
+    const mapSelect = $('admin-map-select');
+    const map = mapSelect ? mapSelect.value : 'de_dust2';
+    const rconPass = await window.customPrompt('RCON Şifresi girin:', 'RCON Gerekli');
+    if (!rconPass) return;
+    const containerId = await getActiveContainerId();
+    if (!containerId) { notify('Aktif sunucu bulunamadı!', 'error'); return; }
+    try {
+      const token = await getSessionToken();
+      const r = await fetch(`${API_URL}/api/servers/${containerId}/command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ rconPassword: rconPass, command: `changelevel ${map}` })
+      });
+      const d = await r.json();
+      if (d.success) notify(`Harita değiştirildi: ${map}`, 'success');
+      else notify('RCON hatası: ' + d.error, 'error');
+    } catch(e) { notify('Bağlantı hatası!', 'error'); }
   });
 }
+
 if (btnAdminSetPass) {
-  btnAdminSetPass.addEventListener('click', () => {
-    const pass = $('admin-rcon-pass').value;
-    notify(`Sunucu şifresi ayarlandı: ${pass ? pass : '(Şifresiz)'}`, 'info');
+  btnAdminSetPass.addEventListener('click', async () => {
+    const passInput = $('admin-rcon-pass');
+    const pass = passInput ? passInput.value : '';
+    const rconPass = await window.customPrompt('Mevcut RCON Şifresi girin:', 'RCON Gerekli');
+    if (!rconPass) return;
+    const containerId = await getActiveContainerId();
+    if (!containerId) { notify('Aktif sunucu bulunamadı!', 'error'); return; }
+    try {
+      const token = await getSessionToken();
+      const cmd = pass ? `sv_password "${pass}"` : 'sv_password ""';
+      const r = await fetch(`${API_URL}/api/servers/${containerId}/command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ rconPassword: rconPass, command: cmd })
+      });
+      const d = await r.json();
+      if (d.success) notify(`Sunucu şifresi ayarlandı: ${pass ? pass : '(Şifresiz)'}`, 'success');
+      else notify('RCON hatası: ' + d.error, 'error');
+    } catch(e) { notify('Bağlantı hatası!', 'error'); }
   });
 }
+
 if (btnAdminRestart) {
-  btnAdminRestart.addEventListener('click', () => {
-    notify('Sunucu yeniden başlatılıyor...', 'warn');
+  btnAdminRestart.addEventListener('click', async () => {
+    if (!await window.customConfirm('Sunucu yeniden başlatılsın mı?', 'ONAY')) return;
+    const rconPass = await window.customPrompt('RCON Şifresi girin:', 'RCON Gerekli');
+    if (!rconPass) return;
+    const containerId = await getActiveContainerId();
+    if (!containerId) { notify('Aktif sunucu bulunamadı!', 'error'); return; }
+    try {
+      const token = await getSessionToken();
+      const r = await fetch(`${API_URL}/api/servers/${containerId}/restart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+      });
+      const d = await r.json();
+      if (d.success) notify('Sunucu yeniden başlatılıyor...', 'warn');
+      else notify('Yeniden başlatma hatası: ' + d.error, 'error');
+    } catch(e) { notify('Bağlantı hatası!', 'error'); }
   });
 }
+
 if (btnAdminStop) {
-  btnAdminStop.addEventListener('click', () => {
-    notify('Sunucu kapatıldı!', 'error');
+  btnAdminStop.addEventListener('click', async () => {
+    if (!await window.customConfirm('Sunucuyu durdurmak istediğine emin misin? Bu işlem geri alınamaz!', 'DİKKAT')) return;
+    const containerId = await getActiveContainerId();
+    if (!containerId) { notify('Aktif sunucu bulunamadı!', 'error'); return; }
+    try {
+      const token = await getSessionToken();
+      const adminTok = sessionStorage.getItem('cs_admin_token');
+      const r = await fetch(`${API_URL}/api/admin/servers/${containerId}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-token': adminTok || '', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
+      });
+      const d = await r.json();
+      if (d.success) { notify('Sunucu kapatıldı!', 'error'); loadServerList(); }
+      else notify('Kapatma hatası: ' + d.error, 'error');
+    } catch(e) { notify('Bağlantı hatası!', 'error'); }
   });
 }
 
@@ -3103,14 +3175,30 @@ initAuth();
 
 const btnAdminSaveStripe = $('btn-admin-save-stripe');
 if (btnAdminSaveStripe) {
-  btnAdminSaveStripe.addEventListener('click', () => {
+  btnAdminSaveStripe.addEventListener('click', async () => {
     const secret = $('admin-stripe-secret').value;
     const webhook = $('admin-stripe-webhook').value;
-    if(!secret) return notify('Lütfen geçerli bir anahtar girin', 'error');
-    // Save locally for test or send to backend
-    localStorage.setItem('cs_stripe_secret', secret);
-    localStorage.setItem('cs_stripe_webhook', webhook);
-    notify('Stripe ayarları kaydedildi. (Backend\'e iletiliyor...)', 'success');
+    if (!secret) return notify('Lütfen geçerli bir anahtar girin', 'error');
+    const adminTok = sessionStorage.getItem('cs_admin_token');
+    if (!adminTok) return notify('Admin girişi yapmalısınız!', 'error');
+    try {
+      // Backend'de env'e kaydetmek için admin endpoint
+      const r = await fetch(`${API_URL}/api/admin/stripe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminTok },
+        body: JSON.stringify({ stripeSecretKey: secret, stripeWebhookSecret: webhook })
+      });
+      const d = await r.json();
+      if (d.success) {
+        notify('Stripe ayarları backend\'e kaydedildi!', 'success');
+      } else {
+        // Backend endpoint yoksa veya hata döndürdüyse sadece session’a yaz
+        sessionStorage.setItem('cs_stripe_secret', secret);
+        notify('Stripe kaydedildi (yerel session). Backend hatası: ' + (d.error || '?'), 'warn');
+      }
+    } catch(e) {
+      notify('Bağlantı hatası: ' + e.message, 'error');
+    }
   });
 }
 
@@ -3160,10 +3248,38 @@ if (btnAdminSaveStripe) {
         const loginModal = document.getElementById('login-modal');
         if (loginModal) loginModal.style.display = 'flex';
         window.customAlert('Sunucu kiralayabilmek için önce üye girişi yapmalısınız.', 'BİLGİ');
+      } else if (isUserPremium()) {
+        // VIP kullanıcı için doğrudan sunucu oluşturma ekranına yönlendir
+        const modal = document.getElementById('premium-modal');
+        if (modal) modal.style.display = 'flex';
+        // Premium modalında btn-buy-premium'a otomatik tıkla
+        setTimeout(() => {
+          const buyBtn = document.getElementById('btn-buy-premium');
+          if (buyBtn) buyBtn.click();
+        }, 100);
       } else {
         const modal = document.getElementById('premium-modal');
         if (modal) modal.style.display = 'flex';
       }
     });
   }
+
+  // ── Online Oyuncu Sayıcısı ────────────────────────────────────
+  async function updateOnlineCounter() {
+    try {
+      const res = await fetch(`${API_URL}/api/stats`);
+      const data = await res.json();
+      if (!data.success) return;
+      
+      const counterEl = document.getElementById('online-player-count');
+      const serverCountEl = document.getElementById('online-server-count');
+      if (counterEl) counterEl.textContent = data.totalPlayers ?? 0;
+      if (serverCountEl) serverCountEl.textContent = data.activeServers ?? 0;
+    } catch(e) { /* sessiz hata */ }
+  }
+
+  // Sayfa açılınca ve her 30 saniyede güncelle
+  updateOnlineCounter();
+  setInterval(updateOnlineCounter, 30000);
+
 })();
