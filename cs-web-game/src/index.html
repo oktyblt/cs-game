@@ -293,39 +293,56 @@
         </div>
         <!-- Content -->
         <div style="padding:15px; overflow-y:auto; flex:1; font-family:'Inter', sans-serif; font-size:0.85rem;">
-          <!-- Tek tablo, çoklu tbody — kolon hizaları garantili -->
-          <table style="width:100%; border-collapse:collapse; color:#ddd; table-layout:fixed;">
-            <colgroup>
-              <col style="width:52%">
-              <col style="width:16%">
-              <col style="width:16%">
-              <col style="width:16%">
-            </colgroup>
-            <thead>
-              <tr style="color:#888; font-size:0.68rem; text-transform:uppercase; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08);">
-                <th style="padding:6px 10px;">İsim</th>
-                <th style="padding:6px 10px; text-align:center;">Skor</th>
-                <th style="padding:6px 10px; text-align:center;">Ölüm</th>
-                <th style="padding:6px 10px; text-align:center;">Ping</th>
-              </tr>
-            </thead>
-            <!-- CT başlık -->
-            <tbody>
-              <tr><td colspan="4" style="padding:7px 12px 4px; background:rgba(99,134,186,0.18); border-left:4px solid #6386ba; color:#6386ba; font-weight:700; font-size:0.8rem; letter-spacing:0.05em;">🔵 Anti-Teröristler</td></tr>
-            </tbody>
-            <!-- CT oyuncular -->
-            <tbody id="sb-ct-list"></tbody>
-            <!-- T başlık -->
-            <tbody>
-              <tr><td colspan="4" style="padding:10px 12px 4px; background:rgba(186,99,99,0.18); border-left:4px solid #ba6363; color:#ba6363; font-weight:700; font-size:0.8rem; letter-spacing:0.05em;">🔴 Teröristler</td></tr>
-            </tbody>
-            <!-- T oyuncular -->
-            <tbody id="sb-t-list"></tbody>
-          </table>
+          <!-- CT Section -->
+          <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(99, 134, 186, 0.2); border-radius:6px; margin-bottom:8px; border-left:4px solid #6386ba;">
+              <div style="color:#6386ba; font-weight:bold; font-size:1rem;">Anti-Teröristler</div>
+            </div>
+            <table style="width:100%; border-collapse:collapse; color:#ddd; table-layout:fixed;">
+              <colgroup>
+                <col style="width:50%">
+                <col style="width:16%">
+                <col style="width:16%">
+                <col style="width:18%">
+              </colgroup>
+              <thead>
+                <tr style="color:#888; font-size:0.7rem; text-transform:uppercase; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <th style="padding:8px 10px;">İsim</th>
+                  <th style="padding:8px 10px; text-align:center;">Skor</th>
+                  <th style="padding:8px 10px; text-align:center;">Ölüm</th>
+                  <th style="padding:8px 10px; text-align:center;">Ping</th>
+                </tr>
+              </thead>
+              <tbody id="sb-ct-list"></tbody>
+            </table>
+          </div>
+          <!-- T Section -->
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(186, 99, 99, 0.2); border-radius:6px; margin-bottom:8px; border-left:4px solid #ba6363;">
+              <div style="color:#ba6363; font-weight:bold; font-size:1rem;">Teröristler</div>
+            </div>
+            <table style="width:100%; border-collapse:collapse; color:#ddd; table-layout:fixed;">
+              <colgroup>
+                <col style="width:50%">
+                <col style="width:16%">
+                <col style="width:16%">
+                <col style="width:18%">
+              </colgroup>
+              <thead>
+                <tr style="color:#888; font-size:0.7rem; text-transform:uppercase; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <th style="padding:8px 10px;">İsim</th>
+                  <th style="padding:8px 10px; text-align:center;">Skor</th>
+                  <th style="padding:8px 10px; text-align:center;">Ölüm</th>
+                  <th style="padding:8px 10px; text-align:center;">Ping</th>
+                </tr>
+              </thead>
+              <tbody id="sb-t-list"></tbody>
+            </table>
+          </div>
           <!-- Spectators -->
-          <div id="sb-spec-container" style="display:none; margin-top:14px;">
-            <div style="color:#888; font-size:0.78rem; margin-bottom:5px; padding-left:5px;">👁 İzleyiciler:</div>
-            <div id="sb-spec-list" style="color:#bbb; font-size:0.78rem; padding-left:5px; line-height:1.5;"></div>
+          <div id="sb-spec-container" style="display:none; margin-top:20px;">
+            <div style="color:#888; font-size:0.8rem; margin-bottom:6px; padding-left:5px;">İzleyiciler:</div>
+            <div id="sb-spec-list" style="color:#bbb; font-size:0.8rem; padding-left:5px; line-height:1.4;"></div>
           </div>
         </div>
       </div>
