@@ -1522,8 +1522,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         '+cl_updaterate', '30',
         '+cl_cmdrate', '30',
         '+rate', '25000',
-        '+ex_interp', '0.05',
-        '+fps_max', '100',
+        '+ex_interp', '0.1',
+        '+fps_max', '60',
+        '+cl_nopred', '1',
         // In-game console error overlay'i kapat
         '+sensitivity', '3',
         '+zoom_sensitivity_ratio', '1.2',
@@ -2084,9 +2085,6 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         if (!isHost && connectPort && connectPort !== 'listen' && connectPort !== true) {
           console.log('[DEBUG] Assetler yüklendi, uzak sunucuya bağlanılıyor...');
           if (typeof addConsoleLog === 'function') addConsoleLog('Assetler tamamlandı. Sunucuya bağlanılıyor...', 'ok');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
 
@@ -2120,11 +2118,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     if (btnReconnect) {
       btnReconnect.addEventListener('click', () => {
         if (reconnectOverlay) reconnectOverlay.classList.remove('show');
-        // Motora yeniden bağlan komutu gönder
         if (xash && engineRunning) {
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
       });
@@ -2143,10 +2137,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           if (xash && engineRunning) {
             console.log('[Map Change] Auto-reconnect tetiklendi, sunucuya yeniden bağlanılıyor...');
             if (typeof addConsoleLog === 'function') addConsoleLog('Harita değişti — sunucuya yeniden bağlanılıyor...', 'ok');
-            executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('connect 10.0.0.1:27015');
+            executeEngineCommand('connect 10.0.0.1:27015');
             if (reconnectOverlay) reconnectOverlay.classList.remove('show');
           }
         }, 3000);
