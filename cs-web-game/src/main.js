@@ -3252,7 +3252,7 @@ if ($('btn-rcon-send')) {
     if (!password) { notify('RCON Şifresi gerekli!', 'error'); return; }
     if (!command) return;
 
-    out.textContent += `\n] ${command}\nİşleniyor...`;
+    out.textContent += `\n] ${command}`;
     $('rcon-command-input').value = '';
 
     try {
@@ -3267,9 +3267,10 @@ if ($('btn-rcon-send')) {
       });
       const data = await res.json();
       if (data.success) {
-        out.textContent += `\n${data.response || 'OK'}`;
+        const clean = stripCS(data.response);
+        out.textContent += clean ? `\n${clean}` : '\n✓ OK';
       } else {
-        out.textContent += `\nHATA: ${data.error}`;
+        out.textContent += `\nHATA: ${stripCS(data.error)}`;
       }
     } catch (e) {
       out.textContent += `\nBağlantı hatası!`;
@@ -3278,13 +3279,23 @@ if ($('btn-rcon-send')) {
   });
 }
 
+// ── CS RENK KODU TEMİZLEYİCİ ──────────────────────────────────────────────
+function stripCS(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/\^[0-9]/g, '')           // CS renk kodları: ^0-^9
+    .replace(/\x1b\[[0-9;]*m/g, '')    // ANSI renk kodları
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Kontrol karakterleri
+    .trim();
+}
+
 // ── ORTAK RCON YARDIMCI FONKSİYON ─────────────────────────────────────────
 async function sendRcon(command, successMsg) {
   const password = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
   const out = $('rcon-console-output');
   if (!password) { notify('Önce RCON şifresini girin!', 'error'); return false; }
   if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return false; }
-  if (out) out.textContent += `\n] ${command}\nİşleniyor...`;
+  if (out) out.textContent += `\n] ${command}`;
   try {
     const token = await getSessionToken();
     const r = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/command`, {
@@ -3294,12 +3305,14 @@ async function sendRcon(command, successMsg) {
     });
     const d = await r.json();
     if (d.success) {
-      if (out) out.textContent += `\n${d.response || 'OK'}`;
+      const clean = stripCS(d.response);
+      if (out && clean) out.textContent += `\n${clean}`;
+      else if (out) out.textContent += `\n✓ OK`;
       if (successMsg) notify(successMsg, 'success');
       if (out) out.scrollTop = out.scrollHeight;
       return true;
     } else {
-      if (out) out.textContent += `\nHATA: ${d.error}`;
+      if (out) out.textContent += `\nHATA: ${stripCS(d.error)}`;
       notify('RCON hatası: ' + d.error, 'error');
       if (out) out.scrollTop = out.scrollHeight;
       return false;
