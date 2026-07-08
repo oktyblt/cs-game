@@ -344,13 +344,26 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  // [4] Tab: tarayıcı focus döngüsünü engelle, engine SDL üzerinden Tab'ı alır
+  // [4] Tab: tarayıcı focus döngüsünü engelle + scoreboard'u göster
   if (e.key === 'Tab') {
     if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
-      e.preventDefault(); // browser focus change yok — stopPropagation YOK, engine alır
+      e.preventDefault();
+      // Scoreboard'u JS tarafında direkt aç (C++ sinyali bekleme)
+      const sb = document.getElementById('custom-scoreboard');
+      if (sb && typeof engineRunning !== 'undefined' && engineRunning) {
+        sb.style.display = 'flex';
+      }
     }
   }
 }, true); // capture:true — engine'den önce çalışır
+
+// Tab bırakıldığında scoreboard'u kapat
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'Tab') {
+    const sb = document.getElementById('custom-scoreboard');
+    if (sb) sb.style.display = 'none';
+  }
+}, true);
 
 // ----------------------------------------
 // --- BROWSERCS TEXT MENU HANDLERS ---
