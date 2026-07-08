@@ -300,11 +300,10 @@ window.addEventListener('error', (event) => {
 window.addEventListener('keydown', (e) => {
   const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
 
-  // [1] input/textarea: tüm tuşlar engine'e gitmesin (Esc hariç)
+  // [1] input/textarea: bu handler'da işlem yapma, event input elementine gitsin (Enter çalışsın)
   if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
     if (e.key !== 'Escape') {
-      e.stopPropagation();
-      return;
+      return; // stopPropagation YOK — console input Enter'ı alabilsin
     }
   }
 
