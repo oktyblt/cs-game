@@ -294,7 +294,7 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// ─── Keyboard Intercept (minimal, no DOM queries on keydown) ─────────────────
+// ─── Keyboard Intercept (minimal) ───────────────────────────────────────
 window.addEventListener('keydown', (e) => {
   const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
 
@@ -306,7 +306,13 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  // [2] Tilde/backtick: konsol aç/kapat
+  // [2] Oyun çalışırken tüm tuşlarda tarayıcı default'unu engelle
+  // macOS accent picker, tab focus, kısayollar vs.
+  if (typeof engineRunning !== 'undefined' && engineRunning) {
+    e.preventDefault();
+  }
+
+  // [3] Tilde/backtick: konsol aç/kapat
   if (e.key === '`' || e.key === '~' || e.key === 'é' || e.code === 'Backquote') {
     e.stopPropagation();
     e.preventDefault();
@@ -325,13 +331,11 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  // [3] Tab: tarayıcı focus döngüsünü engelle, engine SDL üzerinden Tab'ı alır
+  // [4] Tab: tarayıcı focus döngüsünü engelle
   if (e.key === 'Tab') {
-    if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
-      e.preventDefault();
-    }
+    e.preventDefault();
   }
-}, true); // capture:true — sadece console toggle ve Tab için
+}, true);
 
 
 // Fix for typing in console input (stop event from bubbling to Emscripten)
@@ -731,7 +735,8 @@ class Xash3DWebSocket extends Xash3D {
                 
                 this.packetCountRecv++;
                 if (this.packetCountRecv <= 20) {
-                    console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı.`);
+                    // Per-paket log devre dışı — oyun performansı için
+                    // console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı.`);
                 }
 
                 const srcIp = this.isHost ? [10, 0, 0, 2] : [10, 0, 0, 1];
@@ -832,7 +837,8 @@ class Xash3DWebSocket extends Xash3D {
         this.packetCountSend++;
         if (this.packetCountSend <= 20) {
             const dest = ip ? ip.join('.') : '?';
-            console.log(`[Ağ Log - Gönderilen #${this.packetCountSend}] ${packet.data.byteLength} byte → ${dest}:${packet.port}`);
+            // Per-paket gönderme log devre dışı
+            // console.log(`[Ağ Log - Gönderilen #${this.packetCountSend}] ${packet.data.byteLength} byte → ${dest}:${packet.port}`);
             addConsoleLog(`[Ağ] Paket #${this.packetCountSend} gönderiliyor: ${packet.data.byteLength} byte`, 'ok');
         }
 
