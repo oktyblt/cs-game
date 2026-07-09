@@ -4258,3 +4258,33 @@ window._execMatchCfgWithPass = async function(svPassword) {
     } else { location.reload(); }
   });
 })();
+
+// ================================================================
+// MODAL INPUT KEYBOARD FIX
+// Engine/WASM keyboard capture handlers steal keys from inputs.
+// This window capture-phase listener runs first and blocks propagation
+// when a modal input is focused, so typing works correctly.
+// ================================================================
+(function() {
+  var MODAL_IDS = ['match-pass-modal', 'esc-pause-menu', 'kick-overlay'];
+  function isInsideModal(el) {
+    if (!el) return false;
+    for (var i = 0; i < MODAL_IDS.length; i++) {
+      var m = document.getElementById(MODAL_IDS[i]);
+      if (m && m.contains(el)) return true;
+    }
+    return false;
+  }
+  function modalKeyGuard(e) {
+    var active = document.activeElement;
+    if (!active) return;
+    var tag = active.tagName ? active.tagName.toLowerCase() : '';
+    if ((tag === 'input' || tag === 'textarea') && isInsideModal(active)) {
+      e.stopImmediatePropagation();
+      if (e.key !== 'Escape') e.stopPropagation();
+    }
+  }
+  window.addEventListener('keydown',  modalKeyGuard, { capture: true });
+  window.addEventListener('keyup',    modalKeyGuard, { capture: true });
+  window.addEventListener('keypress', modalKeyGuard, { capture: true });
+})();
