@@ -2356,14 +2356,88 @@
           </div>
         </div>
 
-        <!-- Reconnect overlay -->
+        <!-- Reconnect overlay (updated with kick reason) -->
         <div id="reconnect-overlay">
           <div class="reconnect-icon">🔌</div>
-          <div class="reconnect-title">BAĞLANTI KESİLDİ</div>
-          <div class="reconnect-msg">Sunucu bağlantısı koptu</div>
+          <div class="reconnect-title" id="reconnect-title">BAĞLANTI KESİLDİ</div>
+          <div class="reconnect-msg" id="reconnect-msg">Sunucu bağlantısı koptu</div>
           <button id="btn-reconnect">🔄 YENİDEN BAĞLAN</button>
           <button class="toolbar-btn danger" onclick="location.reload()"
             style="margin-top:0.3rem;padding:0.45rem 1.5rem;">Sayfayı Yenile</button>
+        </div>
+
+        <!-- Kick / Disconnect reason overlay -->
+        <div id="kick-overlay" style="display:none;position:absolute;inset:0;z-index:8500;background:rgba(0,0,0,0.93);align-items:center;justify-content:center;flex-direction:column;font-family:var(--font-hud);">
+          <style>
+            #kick-overlay.show { display:flex !important; }
+            #kick-panel { text-align:center; max-width:380px; padding:2rem; }
+            #kick-icon { font-size:3rem; margin-bottom:1rem; }
+            #kick-title { font-size:1.3rem; font-weight:700; color:#e74c3c; letter-spacing:0.1em; margin-bottom:0.5rem; }
+            #kick-reason { font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:1.5rem; line-height:1.5; }
+            #btn-kick-reconnect { background:linear-gradient(135deg,rgba(46,204,113,0.3),rgba(39,174,96,0.2)); border:1px solid #2ecc71; color:#2ecc71; font-family:var(--font-hud); font-size:0.75rem; font-weight:700; letter-spacing:0.1em; padding:0.6rem 1.8rem; border-radius:4px; cursor:pointer; transition:all 0.2s; margin-bottom:0.5rem; width:100%; }
+            #btn-kick-reconnect:hover { background:rgba(46,204,113,0.25); }
+            #btn-kick-reload { background:transparent; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); font-family:var(--font-hud); font-size:0.7rem; letter-spacing:0.08em; padding:0.4rem 1.2rem; border-radius:4px; cursor:pointer; transition:all 0.2s; width:100%; }
+            #btn-kick-reload:hover { border-color:rgba(255,255,255,0.4); color:rgba(255,255,255,0.7); }
+          </style>
+          <div id="kick-panel">
+            <div id="kick-icon">⛔</div>
+            <div id="kick-title">SUNUCUDAN ATILDINIZ</div>
+            <div id="kick-reason">Uzun süre hareketsizlik veya sunucu kararı nedeniyle bağlantınız kesildi.</div>
+            <button id="btn-kick-reconnect">🔄 TEKRAR BAĞLAN</button>
+            <button id="btn-kick-reload" onclick="location.reload()">↩ Ana Menüye Dön</button>
+          </div>
+        </div>
+
+        <!-- ESC Pause Menu -->
+        <div id="esc-pause-menu" style="display:none;position:absolute;inset:0;z-index:8000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;font-family:var(--font-hud);">
+          <style>
+            #esc-pause-menu.show { display:flex !important; }
+            #esc-panel { background:linear-gradient(145deg,rgba(6,10,18,0.97),rgba(10,18,30,0.95)); border:1px solid rgba(255,204,0,0.2); border-top:3px solid var(--cs-yellow,#ffcc00); border-radius:8px; padding:2rem 2.5rem; min-width:260px; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,0.8); }
+            #esc-panel h2 { font-size:1.1rem; color:var(--cs-yellow,#ffcc00); letter-spacing:0.15em; margin:0 0 0.3rem; }
+            #esc-panel .esc-sub { font-size:0.65rem; color:rgba(255,255,255,0.3); letter-spacing:0.1em; margin-bottom:1.5rem; }
+            .esc-btn { display:block; width:100%; padding:0.55rem 1rem; margin-bottom:0.5rem; border-radius:4px; font-family:var(--font-hud); font-size:0.72rem; font-weight:700; letter-spacing:0.1em; cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
+            #esc-btn-resume { background:linear-gradient(135deg,rgba(255,204,0,0.2),rgba(255,150,0,0.1)); border:1px solid var(--cs-yellow,#ffcc00); color:var(--cs-yellow,#ffcc00); }
+            #esc-btn-resume:hover { background:rgba(255,204,0,0.25); }
+            #esc-btn-settings { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.7); }
+            #esc-btn-settings:hover { border-color:rgba(255,255,255,0.35); color:#fff; }
+            #esc-btn-disconnect { background:rgba(231,76,60,0.08); border:1px solid rgba(231,76,60,0.35); color:rgba(231,76,60,0.8); margin-top:0.8rem; }
+            #esc-btn-disconnect:hover { background:rgba(231,76,60,0.18); color:#e74c3c; }
+          </style>
+          <div id="esc-panel">
+            <h2>⏸ OYUN DURAKLATILDI</h2>
+            <div class="esc-sub">COUNTER-STRIKE 1.5 · BROWSERCS.COM</div>
+            <button class="esc-btn" id="esc-btn-resume">▶ OYUNA DEVAM ET</button>
+            <button class="esc-btn" id="esc-btn-settings">⚙ AYARLAR</button>
+            <button class="esc-btn" id="esc-btn-disconnect">✕ SUNUCUDAN ÇIK</button>
+          </div>
+        </div>
+
+        <!-- Match Mode Password Modal -->
+        <div id="match-pass-modal" style="display:none;position:absolute;inset:0;z-index:9500;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;font-family:var(--font-hud);">
+          <style>
+            #match-pass-modal.show { display:flex !important; }
+            #match-pass-panel { background:linear-gradient(145deg,rgba(6,10,18,0.98),rgba(10,18,30,0.97)); border:1px solid rgba(255,204,0,0.25); border-top:3px solid var(--cs-yellow,#ffcc00); border-radius:8px; padding:1.5rem 2rem; min-width:300px; max-width:90vw; box-shadow:0 24px 64px rgba(0,0,0,0.85); }
+            #match-pass-panel h3 { font-size:0.95rem; color:var(--cs-yellow,#ffcc00); letter-spacing:0.1em; margin:0 0 0.3rem; }
+            #match-pass-panel p { font-size:0.72rem; color:rgba(255,255,255,0.5); margin:0 0 1rem; }
+            #match-pass-input { width:100%; box-sizing:border-box; background:rgba(255,255,255,0.06); border:1px solid rgba(255,204,0,0.25); color:#fff; font-family:var(--font-hud); font-size:0.8rem; padding:0.5rem 0.7rem; border-radius:4px; margin-bottom:0.75rem; display:none; }
+            #match-pass-input:focus { outline:none; border-color:var(--cs-yellow,#ffcc00); }
+            .match-pass-row { display:flex; gap:0.5rem; }
+            #match-pass-yes { flex:1; padding:0.45rem; background:linear-gradient(135deg,rgba(20,80,20,0.8),rgba(30,120,30,0.6)); border:1px solid #2ecc71; color:#2ecc71; border-radius:4px; font-family:var(--font-hud); font-size:0.65rem; font-weight:700; letter-spacing:0.08em; cursor:pointer; transition:all 0.2s; }
+            #match-pass-no { flex:1; padding:0.45rem; background:transparent; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); border-radius:4px; font-family:var(--font-hud); font-size:0.65rem; font-weight:700; letter-spacing:0.08em; cursor:pointer; transition:all 0.2s; }
+            #match-pass-yes:hover { background:rgba(46,204,113,0.25); }
+            #match-pass-no:hover { border-color:rgba(255,255,255,0.4); color:#fff; }
+            #match-pass-confirm { width:100%; margin-top:0.5rem; padding:0.45rem; background:linear-gradient(135deg,rgba(20,80,20,0.8),rgba(30,120,30,0.6)); border:1px solid #2ecc71; color:#2ecc71; border-radius:4px; font-family:var(--font-hud); font-size:0.65rem; font-weight:700; letter-spacing:0.08em; cursor:pointer; display:none; }
+          </style>
+          <div id="match-pass-panel">
+            <h3>⚔ 5v5 MAÇ MODU</h3>
+            <p>Sunucu için şifre belirlemek istiyor musunuz?</p>
+            <div class="match-pass-row" id="match-pass-choice-row">
+              <button id="match-pass-yes">✓ EVET, ŞİFRE BELİRLE</button>
+              <button id="match-pass-no">✕ HAYIR, ŞİFRESİZ</button>
+            </div>
+            <input type="text" id="match-pass-input" placeholder="Sunucu şifresini girin..." maxlength="24" />
+            <button id="match-pass-confirm">⚔ MAÇ MODUNU BAŞLAT</button>
+          </div>
         </div>
 
         <!-- Loading overlay -->

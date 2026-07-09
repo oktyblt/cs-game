@@ -4034,3 +4034,215 @@ if (btnAdminSaveStripe) {
   setInterval(updateOnlineCounter, 30000);
 
 })();
+
+
+// ================================================================
+// MATCH MODE PASSWORD MODAL - override existing btn-match-mode
+// ================================================================
+(function overrideMatchModeBtn() {
+  const origBtn = document.getElementById('btn-match-mode');
+  if (!origBtn) return;
+  // Remove all old listeners by cloning
+  const newBtn = origBtn.cloneNode(true);
+  origBtn.parentNode.replaceChild(newBtn, origBtn);
+
+  newBtn.addEventListener('click', () => {
+    const rconPass = document.getElementById('rcon-auth-pass') ? document.getElementById('rcon-auth-pass').value : '';
+    if (!rconPass) { if (typeof notify === 'function') notify('RCON sekmesinde sifrenizi girin!', 'error'); return; }
+    if (typeof currentSettingsServerId === 'undefined' || !currentSettingsServerId) {
+      if (typeof notify === 'function') notify('Sunucu ID bulunamadi!', 'error'); return;
+    }
+    const modal      = document.getElementById('match-pass-modal');
+    const choiceRow  = document.getElementById('match-pass-choice-row');
+    const passInput  = document.getElementById('match-pass-input');
+    const confirmBtn = document.getElementById('match-pass-confirm');
+    if (!modal) return;
+    choiceRow.style.display = 'flex';
+    passInput.style.display = 'none';
+    passInput.value = '';
+    confirmBtn.style.display = 'none';
+    modal.classList.add('show');
+  });
+
+  // YES - show password field
+  const passYes = document.getElementById('match-pass-yes');
+  if (passYes) passYes.addEventListener('click', () => {
+    document.getElementById('match-pass-choice-row').style.display = 'none';
+    const pi = document.getElementById('match-pass-input');
+    pi.style.display = 'block'; pi.focus();
+    document.getElementById('match-pass-confirm').style.display = 'block';
+  });
+
+  // NO - proceed without password
+  const passNo = document.getElementById('match-pass-no');
+  if (passNo) passNo.addEventListener('click', async () => {
+    document.getElementById('match-pass-modal').classList.remove('show');
+    await window._execMatchCfgWithPass('');
+  });
+
+  // CONFIRM with password
+  const passConf = document.getElementById('match-pass-confirm');
+  if (passConf) passConf.addEventListener('click', async () => {
+    const pw = (document.getElementById('match-pass-input').value || '').trim();
+    document.getElementById('match-pass-modal').classList.remove('show');
+    await window._execMatchCfgWithPass(pw);
+  });
+
+  // Enter key
+  const passInp = document.getElementById('match-pass-input');
+  if (passInp) passInp.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    const pw = (passInp.value || '').trim();
+    document.getElementById('match-pass-modal').classList.remove('show');
+    await window._execMatchCfgWithPass(pw);
+  });
+})();
+
+window._execMatchCfgWithPass = async function(svPassword) {
+  const btn = document.getElementById('btn-match-mode');
+  if (btn) { btn.textContent = 'MATCH.CFG YAZILIYOR...'; btn.disabled = true; }
+
+  const lines = [
+    '// CS 1.5 Clan Match Config - BrowserCS',
+    'hostname "CS 1.5 Clan Match Server"',
+    'sv_password "' + svPassword + '"',
+    'sv_cheats 0', 'sv_lan 0', 'sv_pausable 1',
+    'sv_voiceenable 1', 'sv_alltalk 0',
+    'sv_gravity 800', 'sv_maxspeed 320',
+    'sv_airaccelerate 10', 'sv_aim 0',
+    'mp_friendlyfire 1', 'mp_autoteambalance 0',
+    'mp_limitteams 0', 'mp_autokick 0',
+    'mp_tkpunish 0', 'mp_startmoney 800',
+    'mp_buytime 0.25', 'mp_freezetime 6',
+    'mp_roundtime 5', 'mp_c4timer 35',
+    'mp_timelimit 0', 'mp_maxrounds 15',
+    'mp_winlimit 0', 'mp_flashlight 1',
+    'mp_footsteps 1', 'mp_fadetoblack 0',
+    'mp_forcechasecam 2', 'allow_spectators 1',
+    'log on', 'mp_logmessages 1', 'mp_logdetail 3',
+    'say "== CLAN MATCH CFG LOADED =="',
+    'say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"',
+    'sv_restartround 3'
+  ];
+  const matchCfgContent = lines.join('\n') + '\n';
+
+  try {
+    const token = typeof getSessionToken === 'function' ? await getSessionToken() : null;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const writeRes = await fetch(API_URL + '/api/servers/' + currentSettingsServerId + '/write-cfg', {
+      method: 'POST', headers, body: JSON.stringify({ filename: 'match', content: matchCfgContent })
+    });
+    const writeData = await writeRes.json();
+    if (!writeData.success) throw new Error(writeData.error || 'CFG yazilamiyor');
+    const execOk = await sendRcon('exec match.cfg', null);
+    if (execOk && typeof notify === 'function') {
+      notify(svPassword ? ('Mac modu aktif! Sifre: ' + svPassword) : '5v5 Mac CFG yuklendi!', 'success');
+    }
+  } catch (e) {
+    if (typeof notify === 'function') notify('Match CFG hatasi: ' + e.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'MAC MODU'; }
+};
+
+// ================================================================
+// ESC PAUSE MENU
+// ================================================================
+(function initEscPauseMenu() {
+  const escMenu    = document.getElementById('esc-pause-menu');
+  const btnResume  = document.getElementById('esc-btn-resume');
+  const btnEscSet  = document.getElementById('esc-btn-settings');
+  const btnDisconn = document.getElementById('esc-btn-disconnect');
+  const gCanvas    = document.getElementById('canvas');
+  if (!escMenu || !gCanvas) return;
+
+  document.addEventListener('pointerlockchange', () => {
+    if (typeof engineRunning === 'undefined' || !engineRunning) return;
+    if (document.pointerLockElement === gCanvas) {
+      escMenu.classList.remove('show');
+    } else {
+      setTimeout(() => {
+        const kickEl  = document.getElementById('kick-overlay');
+        const reconEl = document.getElementById('reconnect-overlay');
+        const kickOpen  = kickEl  && kickEl.classList.contains('show');
+        const reconOpen = reconEl && reconEl.classList.contains('show');
+        if (!kickOpen && !reconOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
+          escMenu.classList.add('show');
+        }
+      }, 80);
+    }
+  });
+
+  if (btnResume) btnResume.addEventListener('click', () => {
+    escMenu.classList.remove('show');
+    try { gCanvas.requestPointerLock(); } catch(e) {}
+    gCanvas.focus();
+  });
+
+  if (btnEscSet) btnEscSet.addEventListener('click', () => {
+    escMenu.classList.remove('show');
+    const sb = document.getElementById('btn-open-settings');
+    if (sb) sb.click();
+  });
+
+  if (btnDisconn) btnDisconn.addEventListener('click', () => {
+    if (confirm('Sunucudan cikmak istediginize emin misiniz?')) location.reload();
+  });
+})();
+
+// ================================================================
+// KICK / DISCONNECT OVERLAY
+// ================================================================
+(function initKickDetection() {
+  const kickOverlay  = document.getElementById('kick-overlay');
+  const kickReasonEl = document.getElementById('kick-reason');
+  const kickTitleEl  = document.getElementById('kick-title');
+  const kickIconEl   = document.getElementById('kick-icon');
+  const btnKickRecon = document.getElementById('btn-kick-reconnect');
+  if (!kickOverlay) return;
+
+  const KICK_PATTERNS = [
+    { r: /you have been kicked/i,     title: 'SUNUCUDAN ATILDINIZ', reason: 'Yonetici tarafindan sunucudan atildiniz.' },
+    { r: /kicked by server/i,         title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
+    { r: /idle.*kick|afk.*kick/i,     title: 'HAREKETSIZLIK',       reason: 'Uzun sure hareketsizlik nedeniyle sunucudan otomatik atildiniz.' },
+    { r: /connection to server lost/i,title: 'BAGLANTI KESILDI',    reason: 'Sunucu baglantisi beklenmedik sekilde kapandi.' },
+    { r: /server is full/i,           title: 'SUNUCU DOLU',         reason: 'Sunucuda yer kalmadigi icin baglantiniz reddedildi.' },
+    { r: /bad password/i,             title: 'HATALI SIFRE',        reason: 'Sunucu sifresi hatali.' },
+    { r: /disconnect:/i,              title: 'BAGLANTI KESILDI',    reason: 'Sunucu baglantisi kesildi.' },
+  ];
+
+  window._showKickOverlay = function(title, reason) {
+    if (kickTitleEl)  kickTitleEl.textContent  = title;
+    if (kickReasonEl) kickReasonEl.textContent = reason;
+    if (kickIconEl)   kickIconEl.textContent   = title.includes('SIFRE') ? '🔒' : title.includes('DOLU') ? '🚫' : '⛔';
+    kickOverlay.classList.add('show');
+    const ep = document.getElementById('esc-pause-menu');
+    if (ep) ep.classList.remove('show');
+  };
+
+  // Wrap addConsoleLog to detect kick messages
+  if (typeof window.addConsoleLog === 'function') {
+    const _origAdd = window.addConsoleLog;
+    window.addConsoleLog = function(msg, type) {
+      _origAdd(msg, type);
+      if (typeof engineRunning === 'undefined' || !engineRunning || !msg) return;
+      const lower = msg.toLowerCase();
+      for (const p of KICK_PATTERNS) {
+        if (p.r.test(lower)) {
+          setTimeout(function() { window._showKickOverlay(p.title, p.reason); }, 500);
+          break;
+        }
+      }
+    };
+  }
+
+  if (btnKickRecon) btnKickRecon.addEventListener('click', () => {
+    kickOverlay.classList.remove('show');
+    if (typeof xash !== 'undefined' && typeof engineRunning !== 'undefined' && engineRunning) {
+      if (typeof executeEngineCommand === 'function') {
+        executeEngineCommand('setinfo _vgui_menus 0');
+        executeEngineCommand('connect 10.0.0.1:27015');
+      }
+    } else { location.reload(); }
+  });
+})();
