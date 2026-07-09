@@ -2080,8 +2080,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
             try {
               const jsonStr = log.split('[BROWSERCS_SCOREBOARD]')[1].trim();
               const payload = JSON.parse(jsonStr);
+              // serverName boş gelirse join sırasında sakladığımız ismi kullan
+              const resolvedServerName = payload.serverName
+                || (window._motdServerMeta && window._motdServerMeta.serverName)
+                || 'BrowserCS';
               if (window.updateBrowserCSScoreboard) {
-                window.updateBrowserCSScoreboard(JSON.stringify(payload.players), payload.serverName, payload.localPlayerId);
+                window.updateBrowserCSScoreboard(JSON.stringify(payload.players), resolvedServerName, payload.localPlayerId);
               }
             } catch (e) {
               console.error('Scoreboard parse error', e);
@@ -2670,10 +2674,12 @@ if (btnQuickJoin) {
           const guestNick = await window.openGuestNameModal(target.port, target.map);
           if (!guestNick) { btnQuickJoin.disabled = false; btnQuickJoin.textContent = '▶ SUNUCUYA KATIL'; return; }
         }
+        window._motdServerMeta = { serverName: target.name, mapName: target.map };
         window.connectToServer(target.port, target.map, false);
       } else {
         // Hiç sunucu yoksa — varsayılan port 27015'e bağlan
         notify(`${currentMap} için sunucu bulunamadı. Varsayılan porta bağlanılıyor...`, 'warn');
+        window._motdServerMeta = { serverName: 'BrowserCS Official', mapName: currentMap };
         window.connectToServer(27015, currentMap, false);
       }
     } catch (e) {
