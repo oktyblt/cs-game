@@ -3875,21 +3875,17 @@ window.dismissWelcomeMOTD = function () {
 
 window.connectToServer = async function (port, mapName, isHost = false) {
   if (engineRunning) {
-    // Engine zaten calisiyor (kullanici CS menusunde).
-    // Yeni sunucuya baglanmak icin direkt komut gonder.
+    // WebRTC relay kapanmis olabilir. En guvenilir cozum:
+    // baglanti bilgisini sessionStorage'a kaydet + sayfayi yenile.
     if (!isHost && port) {
-      if (typeof notify === 'function') notify('Sunucuya yeniden bağlanılıyor...', 'ok');
-      executeEngineCommand('setinfo _vgui_menus 0');
-      // Sifre varsa once gonder
       const pw = window._pendingServerPassword || sessionStorage.getItem('_csLastPw_' + port);
-      if (pw) {
-        executeEngineCommand('password "' + pw + '"');
-        window._pendingServerPassword = null;
-      }
-      executeEngineCommand('connect 10.0.0.1:27015');
-      // Kapat butonu ve server browser'i gizle
-      const fb = document.getElementById('full-server-browser');
-      if (fb) fb.classList.remove('active');
+      sessionStorage.setItem('_csAutoConnect', JSON.stringify({
+        port: port,
+        map: mapName || 'de_dust2',
+        password: pw || ''
+      }));
+      if (typeof notify === 'function') notify('Sunucuya bağlanmak için yeniden yükleniyor...', 'ok');
+      setTimeout(function() { window.location.reload(); }, 800);
     } else {
       window.customAlert('Oyun zaten açık! Lütfen sayfayı yenileyip tekrar deneyin.');
     }
@@ -3978,6 +3974,25 @@ window.connectToServer = async function (port, mapName, isHost = false) {
 // --- INIT ---
 runSplash();
 initAuth();
+
+// ── AUTO-CONNECT: sayfa yenilendikten sonra bekleyen baglanti varsa otomatik baglan ──
+(function checkAutoConnect() {
+  var raw = sessionStorage.getItem('_csAutoConnect');
+  if (!raw) return;
+  try {
+    var info = JSON.parse(raw);
+    sessionStorage.removeItem('_csAutoConnect');
+    if (!info.port) return;
+    // Auth y&#252;klenmesini bekle (1.5sn), sonra baglan
+    setTimeout(function() {
+      if (info.password) {
+        window._pendingServerPassword = info.password;
+        sessionStorage.setItem('_csLastPw_' + info.port, info.password);
+      }
+      window.connectToServer(info.port, info.map || 'de_dust2', false);
+    }, 1500);
+  } catch(e) { sessionStorage.removeItem('_csAutoConnect'); }
+})();
 
 const btnAdminSaveStripe = $('btn-admin-save-stripe');
 if (btnAdminSaveStripe) {
