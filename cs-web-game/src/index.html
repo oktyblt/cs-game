@@ -2250,7 +2250,7 @@
             @keyframes motd-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.94); } }
             @keyframes motd-bar { from { width:100%; } to { width:0%; } }
             @keyframes motd-scan { 0%,100% { background-position:0 0; } 50% { background-position:0 4px; } }
-            #welcome-motd.visible  { display:flex !important; pointer-events:all; }
+            #welcome-motd.visible  { display:flex !important; pointer-events:all !important; }
             #welcome-motd.hiding   { animation:motd-out 0.4s ease forwards; }
             #motd-panel {
               background: linear-gradient(145deg, rgba(6,10,16,0.98) 0%, rgba(10,18,28,0.97) 100%);
