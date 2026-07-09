@@ -379,17 +379,27 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
 
     const makeRow = (p) => {
       const isLocal = p.id === localPlayerId || p.local;
-      const name = isLocal ? `★ ${p.name}` : p.name;
+      const isDead = p.isDead === 1;
+      let name = p.name;
+      if (isLocal) name = `★ ${name}`;
+      if (isDead) name = `☠ ${name}`;
+      
       const bg = isLocal ? 'background:rgba(255,200,0,0.08);' : '';
-      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${bg}">
-        <td style="padding:6px 10px; font-weight:${isLocal ? '700' : '400'}; color:${isLocal ? '#ffd700' : '#eee'};">${name}</td>
+      const opacity = isDead ? 'opacity: 0.5;' : 'opacity: 1;';
+      const color = isDead ? '#aaa' : (isLocal ? '#ffd700' : '#eee');
+
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${bg} ${opacity}">
+        <td style="padding:6px 10px; font-weight:${isLocal ? '700' : '400'}; color:${color};">${name}</td>
         <td style="padding:6px 10px; text-align:center; color:#4caf50;">${p.frags ?? 0}</td>
         <td style="padding:6px 10px; text-align:center; color:#ef5350;">${p.deaths ?? 0}</td>
         <td style="padding:6px 10px; text-align:center; color:#90caf9;">${p.ping ?? 0}</td>
       </tr>`;
     };
 
-    const cts = players.filter(p => p.team && (p.team.toLowerCase().includes('ct') || p.team === 'TERRORIST' ? false : p.team.toLowerCase() === 'ct'));
+    const sortFn = (a, b) => {
+      if ((b.frags ?? 0) !== (a.frags ?? 0)) return (b.frags ?? 0) - (a.frags ?? 0);
+      return (a.deaths ?? 0) - (b.deaths ?? 0);
+    };
     const ts = players.filter(p => p.team && p.team.toLowerCase() === 'terrorist');
     const specs = players.filter(p => !p.team || p.team === 'unassigned' || p.team === 'spectator');
 
@@ -397,15 +407,16 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
     const ctPlayers = players.filter(p => {
       const t = (p.team || '').toLowerCase();
       return t === 'ct' || t === 'counter-terrorist' || t === 'counterterrorist';
-    });
+    }).sort(sortFn);
     const tPlayers = players.filter(p => {
       const t = (p.team || '').toLowerCase();
       return t === 'terrorist' || t === 't';
-    });
+    }).sort(sortFn);
+    
     const specPlayers = players.filter(p => {
       const t = (p.team || '').toLowerCase();
       return !ctPlayers.includes(p) && !tPlayers.includes(p);
-    });
+    }).sort(sortFn);
 
     sbCT.innerHTML = ctPlayers.length ? ctPlayers.map(makeRow).join('') :
       '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
@@ -3476,7 +3487,14 @@ if ($('btn-cfg-save')) {
     if ($('cfg-autokick')) cmds.push(`mp_autokick ${$('cfg-autokick').value}`);
     if ($('cfg-tkpunish')) cmds.push(`mp_tkpunish ${$('cfg-tkpunish').value}`);
     if ($('cfg-svcheats')) cmds.push(`sv_cheats ${$('cfg-svcheats').value}`);
-    if (get('cfg-ybquota')) cmds.push(`yb_quota ${get('cfg-ybquota')}`);
+    const ybQuota = get('cfg-ybquota');
+    if (ybQuota !== '') {
+      cmds.push(`yb_quota ${ybQuota}`);
+      if (ybQuota === '0') {
+        cmds.push('yb kickall');
+        cmds.push('yapb kickall');
+      }
+    }
     if (get('cfg-ybdiff')) cmds.push(`yb_difficulty ${get('cfg-ybdiff')}`);
     const svPass = get('cfg-sv-password');
     cmds.push(svPass ? `sv_password "${svPass}"` : 'sv_password ""');
