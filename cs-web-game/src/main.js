@@ -3812,9 +3812,9 @@ window.showWelcomeMOTD = function(serverName, mapName) {
   // Progress bar animasyonu
   const bar = document.getElementById('motd-progress-bar');
   const cd  = document.getElementById('motd-countdown');
-  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '0%'; }, 30); }
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(() => { bar.style.transition = 'width 15s linear'; bar.style.width = '0%'; }, 30); }
   // Countdown
-  let sec = 7;
+  let sec = 15;
   if (cd) cd.textContent = `${sec} sn`;
   clearInterval(_motdTimer);
   _motdTimer = setInterval(() => {
