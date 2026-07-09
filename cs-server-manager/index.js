@@ -835,6 +835,30 @@ app.post('/api/servers/:id/write-cfg', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/servers/:port/verify-password — şifre doğrula (actual password'ü açığa çıkarmaz)
+app.post('/api/servers/:port/verify-password', express.json(), async (req, res) => {
+  try {
+    const port = parseInt(req.params.port);
+    const { password } = req.body;
+    if (!port || isNaN(port)) return res.status(400).json({ success: false, error: 'Geçersiz port.' });
+
+    const pwFile = `/home/ubuntu/server_configs/${port}/server_password.txt`;
+    if (!fs.existsSync(pwFile)) {
+      // Şifre dosyası yok = şifresiz sunucu, her şifre geçerli
+      return res.json({ success: true, valid: true });
+    }
+    const storedPw = fs.readFileSync(pwFile, 'utf8').trim();
+    if (!storedPw) {
+      // Boş şifre = şifresiz
+      return res.json({ success: true, valid: true });
+    }
+    const valid = (password || '') === storedPw;
+    res.json({ success: true, valid });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.post('/api/servers/:id/settings', requireAuth, async (req, res) => {
 
 
