@@ -4310,6 +4310,13 @@ window.openServerJoinPasswordModal = function(port, serverName) {
     var cancel  = document.getElementById('sjp-cancel');
     if (!modal) { resolve(null); return; }
 
+    // Ebeveyn gizliyse (game-wrapper display:none) modal gorunmez.
+    // Guvence icin body'ye tasiyoruz - position:fixed ile tam ekran kaplar.
+    if (modal.parentElement !== document.body) {
+      modal.style.position = 'fixed';
+      document.body.appendChild(modal);
+    }
+
     var attempts = 0;
     var maxAttempts = 3;
 
