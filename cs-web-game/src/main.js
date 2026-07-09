@@ -2576,9 +2576,7 @@ if (btnBuyPremium) {
     const user = getCurrentUser();
     if (!user) {
       if (premiumModal) premiumModal.style.display = 'none';
-      const loginModal = document.getElementById('login-modal');
-      if (loginModal) loginModal.style.display = 'flex';
-      notify('Premium almak için önce üye girişi yapmalısınız!', 'error');
+      window.openAuthGate('Premium sunucu almak i\u00e7in kay\u0131t olman\u0131z veya giri\u015f yapman\u0131z gerekmektedir.');
       return;
     }
 
@@ -3703,9 +3701,7 @@ if (btnRefreshServers) {
 if (btnCreateServer) {
   btnCreateServer.addEventListener('click', async () => {
     if (!getCurrentUser()) {
-      const loginModal = document.getElementById('login-modal');
-      if (loginModal) loginModal.style.display = 'flex';
-      notify('Sunucu satın almak için önce üye girişi yapmalısınız!', 'error');
+      window.openAuthGate('\u00d6zel sunucu olu\u015fturmak i\u00e7in kay\u0131t olman\u0131z veya giri\u015f yapman\u0131z gerekmektedir.');
       return;
     }
     if (!isUserPremium()) {
@@ -4433,5 +4429,40 @@ window.openServerJoinPasswordModal = function(port, serverName) {
     if (meta.serverId && typeof openServerSettings === 'function') {
       openServerSettings(meta.serverId);
     }
+  });
+})();
+
+// ================================================================
+// AUTH GATE: shows when unauthenticated user tries premium action
+// ================================================================
+window.openAuthGate = function(msgOverride) {
+  var modal = document.getElementById('auth-gate-modal');
+  var msgEl = document.getElementById('auth-gate-msg');
+  if (!modal) {
+    // Fallback: just open login modal
+    var lm = document.getElementById('login-modal');
+    if (lm) lm.style.display = 'flex';
+    return;
+  }
+  if (msgEl && msgOverride) msgEl.textContent = msgOverride;
+  modal.style.display = 'flex';
+};
+
+(function() {
+  var gateModal    = document.getElementById('auth-gate-modal');
+  var loginBtn     = document.getElementById('auth-gate-login');
+  var registerBtn  = document.getElementById('auth-gate-register');
+  var loginModal   = document.getElementById('login-modal');
+  var registerModal= document.getElementById('register-modal');
+  if (!gateModal) return;
+
+  if (loginBtn) loginBtn.addEventListener('click', function() {
+    gateModal.style.display = 'none';
+    if (loginModal) loginModal.style.display = 'flex';
+  });
+
+  if (registerBtn) registerBtn.addEventListener('click', function() {
+    gateModal.style.display = 'none';
+    if (registerModal) registerModal.style.display = 'flex';
   });
 })();

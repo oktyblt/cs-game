@@ -2557,6 +2557,19 @@
   <script type="module" src="/main.js?v=31"></script>
 
 
+  <!-- AUTH GATE MODAL: shows when unauthenticated user tries a premium action -->
+  <div id="auth-gate-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);z-index:5000;align-items:center;justify-content:center;">
+    <div style="background:linear-gradient(145deg,rgba(8,12,22,0.98),rgba(12,20,34,0.97));border:1px solid rgba(255,204,0,0.2);border-top:3px solid var(--cs-yellow,#ffcc00);border-radius:8px;width:340px;max-width:92vw;padding:2rem 1.8rem;box-shadow:0 24px 64px rgba(0,0,0,0.9);font-family:var(--font-hud);position:relative;">
+      <button onclick="document.getElementById('auth-gate-modal').style.display='none'" style="position:absolute;top:0.7rem;right:0.8rem;background:transparent;border:none;color:rgba(255,255,255,0.35);font-size:1.1rem;cursor:pointer;line-height:1;">✕</button>
+      <div style="font-size:2rem;text-align:center;margin-bottom:0.8rem;">🔑</div>
+      <h2 id="auth-gate-title" style="font-size:0.95rem;font-weight:700;letter-spacing:0.1em;color:var(--cs-yellow,#ffcc00);text-align:center;margin-bottom:0.4rem;">ÜYELİK GEREKLİ</h2>
+      <p id="auth-gate-msg" style="font-size:0.72rem;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:1.6rem;line-height:1.5;letter-spacing:0.03em;">Bu özelliği kullanmak için kayıt olmanız veya giriş yapmanız gerekmektedir.</p>
+      <button id="auth-gate-login" style="display:block;width:100%;padding:0.6rem;margin-bottom:0.5rem;background:linear-gradient(135deg,rgba(255,204,0,0.2),rgba(255,150,0,0.1));border:1px solid var(--cs-yellow,#ffcc00);color:var(--cs-yellow,#ffcc00);border-radius:4px;font-family:var(--font-hud);font-size:0.72rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;">🔐 GİRİŞ YAP</button>
+      <button id="auth-gate-register" style="display:block;width:100%;padding:0.6rem;margin-bottom:0.8rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);border-radius:4px;font-family:var(--font-hud);font-size:0.72rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;">✨ KAYIT OL</button>
+      <p style="font-size:0.6rem;color:rgba(255,255,255,0.2);text-align:center;letter-spacing:0.05em;">Ücretsiz kayıt olarak özel sunucu açabilirsiniz.</p>
+    </div>
+  </div>
+
   <!-- AUTH MODALS -->
   <div id="login-modal"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:4000;align-items:center;justify-content:center;">
