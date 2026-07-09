@@ -4508,3 +4508,44 @@ window.openAuthGate = function (msgOverride) {
     if (registerModal) registerModal.style.display = 'flex';
   });
 })();
+
+// ================================================================
+// CS MENU BACKGROUND OVERLAY: hide when player connects in-game
+// ================================================================
+(function() {
+  var menuBg = document.getElementById('cs-menu-bg');
+  if (!menuBg) return;
+
+  function hideMenuBg() {
+    if (menuBg) { menuBg.style.opacity = '0'; setTimeout(function() { menuBg.style.display = 'none'; }, 650); }
+  }
+  function showMenuBg() {
+    if (menuBg) { menuBg.style.display = 'block'; setTimeout(function() { menuBg.style.opacity = '1'; }, 10); }
+  }
+
+  // Hide when game connects (player enters a server)
+  window.addEventListener('xash3d-connected', hideMenuBg);
+  window.addEventListener('xash3d-ingame', hideMenuBg);
+
+  // Show again when player goes back to menu (disconnected)
+  window.addEventListener('xash3d-ws-closed', function() {
+    setTimeout(showMenuBg, 1000);
+  });
+  window.addEventListener('xash3d-menu', showMenuBg);
+
+  // Also hide when engine starts loading (loading overlay is shown)
+  var origInit = window.initEngine;
+  document.addEventListener('DOMContentLoaded', function() {
+    var loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+      var obs = new MutationObserver(function() {
+        if (loadingOverlay.classList.contains('active')) hideMenuBg();
+      });
+      obs.observe(loadingOverlay, { attributes: true, attributeFilter: ['class'] });
+    }
+  });
+
+  // Expose for manual control
+  window.hideMenuBackground = hideMenuBg;
+  window.showMenuBackground = showMenuBg;
+})();

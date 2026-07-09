@@ -2207,6 +2207,32 @@
         </div>
         <canvas id="canvas" width="1024" height="768" tabindex="0"></canvas>
 
+        <!-- Custom BROWSERCS menu background - shown over canvas when in CS menu state -->
+        <div id="cs-menu-bg" style="
+          position:absolute;
+          inset:0;
+          z-index:10;
+          background: url('/browsercs-bg.png') center/cover no-repeat, #0a0e14;
+          pointer-events:none;
+          transition: opacity 0.6s ease;
+          opacity:1;
+        ">
+          <!-- BROWSERCS branding overlay on top of background -->
+          <div style="
+            position:absolute;
+            top:0; left:0; right:0; bottom:0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 40%, rgba(0,0,0,0.7) 100%);
+          "></div>
+          <div style="
+            position:absolute;
+            bottom:1rem; right:1rem;
+            font-family:var(--font-hud,'monospace');
+            font-size:0.6rem;
+            color:rgba(255,255,255,0.25);
+            letter-spacing:0.08em;
+          ">cs16-client build 9804 &nbsp;|&nbsp; Counter-Strike 1.5 &nbsp;browsercs.com</div>
+        </div>
+
         <!-- Engine version string cover overlay -->
         <div id="engine-version-cover" style="
           position:absolute;
