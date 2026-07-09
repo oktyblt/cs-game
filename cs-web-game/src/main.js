@@ -454,6 +454,20 @@ window._openTextMenu = function (validSlots, textStr) {
           const slotNum = parseInt(match[1]);
           const slotText = match[2];
 
+          // ── BROWSERCS 1.5 FIX: Hide CS 1.6 weapons from the buy menu ──
+          const lowerText = slotText.toLowerCase();
+          if (lowerText.includes('famas') || 
+              lowerText.includes('galil') || 
+              lowerText.includes('clarion') || 
+              lowerText.includes('defender') || 
+              lowerText.includes('shield')) {
+            // Unset the valid slot bit so keyboard shortcuts also ignore it
+            const isZ = (slotNum === 0);
+            const bitC = isZ ? (1 << 9) : (1 << (slotNum - 1));
+            window.textMenuSlots &= ~bitC; 
+            continue; // Skip rendering this item
+          }
+
           const btn = document.createElement('div');
           btn.className = 'textmenu-item';
           btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
