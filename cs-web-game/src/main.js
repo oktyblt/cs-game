@@ -2919,7 +2919,7 @@ async function loadServerList() {
                   if (vData.valid) break; // dogru sifre
                   attempts++;
                   if (attempts >= 3) { alert('\u274c 3 yanl\u0131\u015f deneme. Eri\u015fim reddedildi.'); return; }
-                } catch(err) {
+                } catch (err) {
                   // API hatas\u0131 - yine de baglan (best-effort)
                   break;
                 }
@@ -3236,10 +3236,10 @@ window.openServerSettings = async function (id, serverObj) {
   const sv = serverObj || {};
   const fillFields = (src) => {
     if ($('rcon-auth-pass') && src.rcon_password) $('rcon-auth-pass').value = src.rcon_password;
-    if ($('cfg-rcon-pass')  && src.rcon_password) $('cfg-rcon-pass').value  = src.rcon_password;
-    if ($('cfg-startmoney') && src.start_money)   $('cfg-startmoney').value = src.start_money;
-    if ($('cfg-gravity')    && src.gravity)       $('cfg-gravity').value    = src.gravity;
-    if ($('cfg-roundtime')  && src.round_time)    $('cfg-roundtime').value  = src.round_time;
+    if ($('cfg-rcon-pass') && src.rcon_password) $('cfg-rcon-pass').value = src.rcon_password;
+    if ($('cfg-startmoney') && src.start_money) $('cfg-startmoney').value = src.start_money;
+    if ($('cfg-gravity') && src.gravity) $('cfg-gravity').value = src.gravity;
+    if ($('cfg-roundtime') && src.round_time) $('cfg-roundtime').value = src.round_time;
   };
   fillFields(sv);
 
@@ -3260,7 +3260,7 @@ window.openServerSettings = async function (id, serverObj) {
         }
       }
     }
-  } catch(e) { /* sessiz */ }
+  } catch (e) { /* sessiz */ }
 };
 
 if (btnSettingsClose) {
@@ -3285,17 +3285,17 @@ if (serverSettingsModal) {
 }
 
 // Tab Switching
-const _allSettingsTabs  = [tabRcon, tabGeneral, tabAmx].filter(Boolean);
+const _allSettingsTabs = [tabRcon, tabGeneral, tabAmx].filter(Boolean);
 const _allSettingsViews = [settingsRconView, settingsGeneralView, settingsAmxView].filter(Boolean);
 function switchTab(activeBtn, activeView) {
-  _allSettingsTabs.forEach(t  => { t.classList.remove('active'); t.style.borderBottom = 'none'; });
+  _allSettingsTabs.forEach(t => { t.classList.remove('active'); t.style.borderBottom = 'none'; });
   _allSettingsViews.forEach(v => { v.style.display = 'none'; });
-  if (activeBtn)  { activeBtn.classList.add('active'); activeBtn.style.borderBottom = '2px solid var(--cs-yellow)'; }
+  if (activeBtn) { activeBtn.classList.add('active'); activeBtn.style.borderBottom = '2px solid var(--cs-yellow)'; }
   if (activeView) { activeView.style.display = 'flex'; }
 }
-if (tabRcon)    tabRcon.addEventListener('click',    () => switchTab(tabRcon,    settingsRconView));
+if (tabRcon) tabRcon.addEventListener('click', () => switchTab(tabRcon, settingsRconView));
 if (tabGeneral) tabGeneral.addEventListener('click', () => switchTab(tabGeneral, settingsGeneralView));
-if (tabAmx)     tabAmx.addEventListener('click',     () => switchTab(tabAmx,     settingsAmxView));
+if (tabAmx) tabAmx.addEventListener('click', () => switchTab(tabAmx, settingsAmxView));
 
 // RCON SEND
 if ($('btn-rcon-send')) {
@@ -3436,20 +3436,20 @@ if ($('btn-cfg-save')) {
     btn.textContent = 'UYGULANIY0R...';
     const get = id => $(id) ? $(id).value.trim() : '';
     const cmds = [];
-    if (get('cfg-startmoney'))     cmds.push(`mp_startmoney ${get('cfg-startmoney')}`);
-    if (get('cfg-roundtime'))      cmds.push(`mp_roundtime ${get('cfg-roundtime')}`);
-    if (get('cfg-freezetime'))     cmds.push(`mp_freezetime ${get('cfg-freezetime')}`);
-    if (get('cfg-c4timer'))        cmds.push(`mp_c4timer ${get('cfg-c4timer')}`);
-    if (get('cfg-buytime'))        cmds.push(`mp_buytime ${get('cfg-buytime')}`);
-    if (get('cfg-gravity'))        cmds.push(`sv_gravity ${get('cfg-gravity')}`);
-    if (get('cfg-maxrounds'))      cmds.push(`mp_maxrounds ${get('cfg-maxrounds')}`);
-    if (get('cfg-timelimit'))      cmds.push(`mp_timelimit ${get('cfg-timelimit')}`);
-    if (get('cfg-limitteams'))     cmds.push(`mp_limitteams ${get('cfg-limitteams')}`);
-    if ($('cfg-friendlyfire'))     cmds.push(`mp_friendlyfire ${$('cfg-friendlyfire').value}`);
-    if ($('cfg-autoteambalance'))  cmds.push(`mp_autoteambalance ${$('cfg-autoteambalance').value}`);
-    if ($('cfg-autokick'))         cmds.push(`mp_autokick ${$('cfg-autokick').value}`);
-    if ($('cfg-tkpunish'))         cmds.push(`mp_tkpunish ${$('cfg-tkpunish').value}`);
-    if ($('cfg-svcheats'))         cmds.push(`sv_cheats ${$('cfg-svcheats').value}`);
+    if (get('cfg-startmoney')) cmds.push(`mp_startmoney ${get('cfg-startmoney')}`);
+    if (get('cfg-roundtime')) cmds.push(`mp_roundtime ${get('cfg-roundtime')}`);
+    if (get('cfg-freezetime')) cmds.push(`mp_freezetime ${get('cfg-freezetime')}`);
+    if (get('cfg-c4timer')) cmds.push(`mp_c4timer ${get('cfg-c4timer')}`);
+    if (get('cfg-buytime')) cmds.push(`mp_buytime ${get('cfg-buytime')}`);
+    if (get('cfg-gravity')) cmds.push(`sv_gravity ${get('cfg-gravity')}`);
+    if (get('cfg-maxrounds')) cmds.push(`mp_maxrounds ${get('cfg-maxrounds')}`);
+    if (get('cfg-timelimit')) cmds.push(`mp_timelimit ${get('cfg-timelimit')}`);
+    if (get('cfg-limitteams')) cmds.push(`mp_limitteams ${get('cfg-limitteams')}`);
+    if ($('cfg-friendlyfire')) cmds.push(`mp_friendlyfire ${$('cfg-friendlyfire').value}`);
+    if ($('cfg-autoteambalance')) cmds.push(`mp_autoteambalance ${$('cfg-autoteambalance').value}`);
+    if ($('cfg-autokick')) cmds.push(`mp_autokick ${$('cfg-autokick').value}`);
+    if ($('cfg-tkpunish')) cmds.push(`mp_tkpunish ${$('cfg-tkpunish').value}`);
+    if ($('cfg-svcheats')) cmds.push(`sv_cheats ${$('cfg-svcheats').value}`);
     const svPass = get('cfg-sv-password');
     cmds.push(svPass ? `sv_password "${svPass}"` : 'sv_password ""');
     const newRcon = get('cfg-rcon-pass');
@@ -3547,10 +3547,10 @@ if ($('btn-normal-mode')) {
 
     // DB'deki kayıtlı ayarları kullan (varsa), yoksa pub default'ları
     const startMoney = $('cfg-startmoney')?.value || '16000';
-    const roundTime  = $('cfg-roundtime')?.value  || '5';
+    const roundTime = $('cfg-roundtime')?.value || '5';
     const freezeTime = $('cfg-freezetime')?.value || '6';
-    const gravity    = $('cfg-gravity')?.value    || '800';
-    const timelimit  = $('cfg-timelimit')?.value  || '30';
+    const gravity = $('cfg-gravity')?.value || '800';
+    const timelimit = $('cfg-timelimit')?.value || '30';
 
     const normalCfgContent = `// CS 1.5 Normal Pub Config - BrowserCS
 sv_cheats 0
@@ -3838,20 +3838,20 @@ async function runSplash() {
 }
 // ── WELCOME MOTD OVERLAY ───────────────────────────────────────────────────
 let _motdTimer = null;
-window.showWelcomeMOTD = function(serverName, mapName) {
+window.showWelcomeMOTD = function (serverName, mapName) {
   const overlay = document.getElementById('welcome-motd');
   if (!overlay) return;
   // Alanları doldur
   const svEl = document.getElementById('motd-server-name');
   const mapEl = document.getElementById('motd-map-name');
-  if (svEl)  svEl.textContent  = serverName || 'BrowserCS Official';
-  if (mapEl) mapEl.textContent = mapName    || '—';
+  if (svEl) svEl.textContent = serverName || 'BrowserCS Official';
+  if (mapEl) mapEl.textContent = mapName || '—';
   // Göster
   overlay.classList.remove('hiding');
   overlay.classList.add('visible');
   // Progress bar animasyonu
   const bar = document.getElementById('motd-progress-bar');
-  const cd  = document.getElementById('motd-countdown');
+  const cd = document.getElementById('motd-countdown');
   if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(() => { bar.style.transition = 'width 15s linear'; bar.style.width = '0%'; }, 30); }
   // Countdown
   let sec = 15;
@@ -3863,7 +3863,7 @@ window.showWelcomeMOTD = function(serverName, mapName) {
     if (sec <= 0) { clearInterval(_motdTimer); window.dismissWelcomeMOTD(); }
   }, 1000);
 };
-window.dismissWelcomeMOTD = function() {
+window.dismissWelcomeMOTD = function () {
   clearInterval(_motdTimer);
   const overlay = document.getElementById('welcome-motd');
   if (!overlay) return;
@@ -3906,12 +3906,12 @@ window.connectToServer = async function (port, mapName, isHost = false) {
   // ── Toolbar: kullanıcı adı + sunucu adı + VIP "Yönet" butonu ───────────────
   const toolbarUserInfo = $('toolbar-user-info');
   const toolbarUsername = $('toolbar-username');
-  const btnGameManage   = $('btn-game-manage');
-  const toolbarSvName   = $('toolbar-server-name');
+  const btnGameManage = $('btn-game-manage');
+  const toolbarSvName = $('toolbar-server-name');
 
   if (toolbarUserInfo && toolbarUsername) {
     const currentUsername = getCurrentUsername();
-    const currentUsr      = getCurrentUser();
+    const currentUsr = getCurrentUser();
     if (currentUsername && currentUsr) {
       toolbarUsername.textContent = '👤 ' + currentUsername;
       toolbarUserInfo.style.display = 'flex';
@@ -3919,7 +3919,7 @@ window.connectToServer = async function (port, mapName, isHost = false) {
       // VIP kullanıcı mı? Bu porta sahip sunucu var mı?
       if (isUserPremium()) {
         try {
-          const srvRes  = await fetch(`${API_URL}/api/servers`);
+          const srvRes = await fetch(`${API_URL}/api/servers`);
           const srvData = await srvRes.json();
           const myServer = (srvData.servers || []).find(s =>
             s.port == port && s.owner_id && s.owner_id === currentUsr.id
@@ -4088,9 +4088,9 @@ if (btnAdminSaveStripe) {
     if (typeof currentSettingsServerId === 'undefined' || !currentSettingsServerId) {
       if (typeof notify === 'function') notify('Sunucu ID bulunamadi!', 'error'); return;
     }
-    const modal      = document.getElementById('match-pass-modal');
-    const choiceRow  = document.getElementById('match-pass-choice-row');
-    const passInput  = document.getElementById('match-pass-input');
+    const modal = document.getElementById('match-pass-modal');
+    const choiceRow = document.getElementById('match-pass-choice-row');
+    const passInput = document.getElementById('match-pass-input');
     const confirmBtn = document.getElementById('match-pass-confirm');
     if (!modal) return;
     choiceRow.style.display = 'flex';
@@ -4134,7 +4134,7 @@ if (btnAdminSaveStripe) {
   });
 })();
 
-window._execMatchCfgWithPass = async function(svPassword) {
+window._execMatchCfgWithPass = async function (svPassword) {
   const btn = document.getElementById('btn-match-mode');
   if (btn) { btn.textContent = 'MATCH.CFG YAZILIYOR...'; btn.disabled = true; }
 
@@ -4185,11 +4185,11 @@ window._execMatchCfgWithPass = async function(svPassword) {
 // ESC PAUSE MENU
 // ================================================================
 (function initEscPauseMenu() {
-  const escMenu    = document.getElementById('esc-pause-menu');
-  const btnResume  = document.getElementById('esc-btn-resume');
-  const btnEscSet  = document.getElementById('esc-btn-settings');
+  const escMenu = document.getElementById('esc-pause-menu');
+  const btnResume = document.getElementById('esc-btn-resume');
+  const btnEscSet = document.getElementById('esc-btn-settings');
   const btnDisconn = document.getElementById('esc-btn-disconnect');
-  const gCanvas    = document.getElementById('canvas');
+  const gCanvas = document.getElementById('canvas');
   if (!escMenu || !gCanvas) return;
 
   document.addEventListener('pointerlockchange', () => {
@@ -4198,9 +4198,9 @@ window._execMatchCfgWithPass = async function(svPassword) {
       escMenu.classList.remove('show');
     } else {
       setTimeout(() => {
-        const kickEl  = document.getElementById('kick-overlay');
+        const kickEl = document.getElementById('kick-overlay');
         const reconEl = document.getElementById('reconnect-overlay');
-        const kickOpen  = kickEl  && kickEl.classList.contains('show');
+        const kickOpen = kickEl && kickEl.classList.contains('show');
         const reconOpen = reconEl && reconEl.classList.contains('show');
         if (!kickOpen && !reconOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
           escMenu.classList.add('show');
@@ -4211,7 +4211,7 @@ window._execMatchCfgWithPass = async function(svPassword) {
 
   if (btnResume) btnResume.addEventListener('click', () => {
     escMenu.classList.remove('show');
-    try { gCanvas.requestPointerLock(); } catch(e) {}
+    try { gCanvas.requestPointerLock(); } catch (e) { }
     gCanvas.focus();
   });
 
@@ -4230,27 +4230,27 @@ window._execMatchCfgWithPass = async function(svPassword) {
 // KICK / DISCONNECT OVERLAY
 // ================================================================
 (function initKickDetection() {
-  const kickOverlay  = document.getElementById('kick-overlay');
+  const kickOverlay = document.getElementById('kick-overlay');
   const kickReasonEl = document.getElementById('kick-reason');
-  const kickTitleEl  = document.getElementById('kick-title');
-  const kickIconEl   = document.getElementById('kick-icon');
+  const kickTitleEl = document.getElementById('kick-title');
+  const kickIconEl = document.getElementById('kick-icon');
   const btnKickRecon = document.getElementById('btn-kick-reconnect');
   if (!kickOverlay) return;
 
   const KICK_PATTERNS = [
-    { r: /you have been kicked/i,     title: 'SUNUCUDAN ATILDINIZ', reason: 'Yonetici tarafindan sunucudan atildiniz.' },
-    { r: /kicked by server/i,         title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
-    { r: /idle.*kick|afk.*kick/i,     title: 'HAREKETSIZLIK',       reason: 'Uzun sure hareketsizlik nedeniyle sunucudan otomatik atildiniz.' },
-    { r: /connection to server lost/i,title: 'BAGLANTI KESILDI',    reason: 'Sunucu baglantisi beklenmedik sekilde kapandi.' },
-    { r: /server is full/i,           title: 'SUNUCU DOLU',         reason: 'Sunucuda yer kalmadigi icin baglantiniz reddedildi.' },
-    { r: /bad password/i,             title: 'HATALI SIFRE',        reason: 'Sunucu sifresi hatali.' },
-    { r: /disconnect:/i,              title: 'BAGLANTI KESILDI',    reason: 'Sunucu baglantisi kesildi.' },
+    { r: /you have been kicked/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Yonetici tarafindan sunucudan atildiniz.' },
+    { r: /kicked by server/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
+    { r: /idle.*kick|afk.*kick/i, title: 'HAREKETSIZLIK', reason: 'Uzun sure hareketsizlik nedeniyle sunucudan otomatik atildiniz.' },
+    { r: /connection to server lost/i, title: 'BAGLANTI KESILDI', reason: 'Sunucu baglantisi beklenmedik sekilde kapandi.' },
+    { r: /server is full/i, title: 'SUNUCU DOLU', reason: 'Sunucuda yer kalmadigi icin baglantiniz reddedildi.' },
+    { r: /bad password/i, title: 'HATALI SIFRE', reason: 'Sunucu sifresi hatali.' },
+    { r: /disconnect:/i, title: 'BAGLANTI KESILDI', reason: 'Sunucu baglantisi kesildi.' },
   ];
 
-  window._showKickOverlay = function(title, reason) {
-    if (kickTitleEl)  kickTitleEl.textContent  = title;
+  window._showKickOverlay = function (title, reason) {
+    if (kickTitleEl) kickTitleEl.textContent = title;
     if (kickReasonEl) kickReasonEl.textContent = reason;
-    if (kickIconEl)   kickIconEl.textContent   = title.includes('SIFRE') ? '🔒' : title.includes('DOLU') ? '🚫' : '⛔';
+    if (kickIconEl) kickIconEl.textContent = title.includes('SIFRE') ? '🔒' : title.includes('DOLU') ? '🚫' : '⛔';
     kickOverlay.classList.add('show');
     const ep = document.getElementById('esc-pause-menu');
     if (ep) ep.classList.remove('show');
@@ -4259,13 +4259,13 @@ window._execMatchCfgWithPass = async function(svPassword) {
   // Wrap addConsoleLog to detect kick messages
   if (typeof window.addConsoleLog === 'function') {
     const _origAdd = window.addConsoleLog;
-    window.addConsoleLog = function(msg, type) {
+    window.addConsoleLog = function (msg, type) {
       _origAdd(msg, type);
       if (typeof engineRunning === 'undefined' || !engineRunning || !msg) return;
       const lower = msg.toLowerCase();
       for (const p of KICK_PATTERNS) {
         if (p.r.test(lower)) {
-          setTimeout(function() { window._showKickOverlay(p.title, p.reason); }, 500);
+          setTimeout(function () { window._showKickOverlay(p.title, p.reason); }, 500);
           break;
         }
       }
@@ -4289,7 +4289,7 @@ window._execMatchCfgWithPass = async function(svPassword) {
 // This window capture-phase listener runs first and blocks propagation
 // when a modal input is focused, so typing works correctly.
 // ================================================================
-(function() {
+(function () {
   var MODAL_IDS = ['match-pass-modal', 'esc-pause-menu', 'kick-overlay'];
   function isInsideModal(el) {
     if (!el) return false;
@@ -4308,7 +4308,7 @@ window._execMatchCfgWithPass = async function(svPassword) {
       if (e.key !== 'Escape') e.stopPropagation();
     }
   }
-  window.addEventListener('keydown',  modalKeyGuard, { capture: true });
-  window.addEventListener('keyup',    modalKeyGuard, { capture: true });
+  window.addEventListener('keydown', modalKeyGuard, { capture: true });
+  window.addEventListener('keyup', modalKeyGuard, { capture: true });
   window.addEventListener('keypress', modalKeyGuard, { capture: true });
 })();
