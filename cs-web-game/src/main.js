@@ -3462,6 +3462,8 @@ if ($('btn-cfg-save')) {
     if ($('cfg-autokick')) cmds.push(`mp_autokick ${$('cfg-autokick').value}`);
     if ($('cfg-tkpunish')) cmds.push(`mp_tkpunish ${$('cfg-tkpunish').value}`);
     if ($('cfg-svcheats')) cmds.push(`sv_cheats ${$('cfg-svcheats').value}`);
+    if (get('cfg-ybquota')) cmds.push(`yb_quota ${get('cfg-ybquota')}`);
+    if (get('cfg-ybdiff')) cmds.push(`yb_difficulty ${get('cfg-ybdiff')}`);
     const svPass = get('cfg-sv-password');
     cmds.push(svPass ? `sv_password "${svPass}"` : 'sv_password ""');
     const newRcon = get('cfg-rcon-pass');
