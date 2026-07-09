@@ -422,6 +422,15 @@ app.get('/api/servers', async (req, res) => {
         }
       }
 
+      // Mod dosyasını oku (match veya normal)
+      let serverMode = 'normal';
+      try {
+        const modeFile = `/home/ubuntu/server_configs/${port}/mode.txt`;
+        if (fs.existsSync(modeFile)) {
+          serverMode = fs.readFileSync(modeFile, 'utf8').trim();
+        }
+      } catch (e) { /* sessiz */ }
+
       return {
         id: c.Id,
         name: c.Labels.serverName,
@@ -430,8 +439,9 @@ app.get('/api/servers', async (req, res) => {
         maxplayers: maxPlayers,
         port: port,
         isOfficial: isOfficial,
-        owner_id: c.Labels.owner_id || null,   // Sunucu sahibini frontend'e bildir (Yönet butonu için)
-        state: c.State
+        owner_id: c.Labels.owner_id || null,
+        state: c.State,
+        mode: serverMode
       };
     }));
 
@@ -771,10 +781,40 @@ app.post('/api/servers/:id/write-cfg', requireAuth, async (req, res) => {
     if (!content) return res.status(400).json({ success: false, error: 'İçerik gerekli.' });
 
     // /home/ubuntu/cstrike → tüm containerlarda /opt/xashds/cstrike olarak mount'lı
-    // exec match.cfg bu dizinden okur
     const cfgPath = path.join('/home/ubuntu/cstrike', `${filename}.cfg`);
     fs.writeFileSync(cfgPath, content, 'utf8');
     console.log(`[write-cfg] ${cfgPath} yazıldı`);
+
+    // Mod takibi: match.cfg → mode=match, normal.cfg → mode=normal
+    if (filename === 'match' || filename === 'normal') {
+      // Port'u bul
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        let port = null;
+        if (isUUID) {
+          const authHeader = req.headers.authorization;
+          const token = authHeader ? authHeader.split(' ')[1] : null;
+          if (token) {
+            const userSb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: `Bearer ${token}` } } });
+            const { data } = await userSb.from('purchased_servers').select('port').eq('id', id).single();
+            port = data?.port;
+          }
+        } else {
+          const ctrs = await docker.listContainers({ filters: { label: [`cs-web-game=true`] } });
+          const c = ctrs.find(c => c.Id.startsWith(id));
+          port = c?.Ports?.find(p => p.PrivatePort === 27015)?.PublicPort;
+        }
+        if (port) {
+          const modeDir = `/home/ubuntu/server_configs/${port}`;
+          fs.mkdirSync(modeDir, { recursive: true });
+          fs.writeFileSync(path.join(modeDir, 'mode.txt'), filename, 'utf8');
+          console.log(`[write-cfg] mode.txt → ${filename} (port ${port})`);
+        }
+      } catch (modeErr) {
+        console.warn('[write-cfg] mode.txt yazılamadı:', modeErr.message);
+      }
+    }
+
     res.json({ success: true, path: cfgPath });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
