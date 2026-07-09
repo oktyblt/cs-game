@@ -2254,6 +2254,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('setinfo _vgui_menus 0');
+          
+          const pw = window._pendingServerPassword || sessionStorage.getItem('_csLastPw_' + connectPort);
+          if (pw) {
+            executeEngineCommand('password "' + pw + '"');
+            window._pendingServerPassword = null;
+          }
           executeEngineCommand('connect 10.0.0.1:27015');
         }
 
@@ -2324,6 +2330,8 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
             executeEngineCommand('setinfo _vgui_menus 0');
             executeEngineCommand('setinfo _vgui_menus 0');
             executeEngineCommand('setinfo _vgui_menus 0');
+            const storedPw = sessionStorage.getItem('_csLastPw_' + (_activeConnectPort || ''));
+            if (storedPw) executeEngineCommand('password "' + storedPw + '"');
             executeEngineCommand('connect 10.0.0.1:27015');
             if (reconnectOverlay) reconnectOverlay.classList.remove('show');
           }
