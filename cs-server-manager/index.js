@@ -198,6 +198,15 @@ sv_fileconsistency 0
     console.error("Failed to inject FastDL settings:", err);
   }
 
+  // MOTD'u bosalt (HTML overlay kullaniyoruz, in-game MOTD kapatildi)
+  try {
+    const motdExec = await container.exec({
+      Cmd: ['sh', '-c', 'echo -n "" > /opt/xashds/cstrike/motd.txt'],
+      AttachStdout: true, AttachStderr: true
+    });
+    await motdExec.start();
+  } catch (err) { /* sessiz */ }
+
   return container;
 }
 
@@ -761,33 +770,12 @@ app.post('/api/servers/:id/write-cfg', requireAuth, async (req, res) => {
     }
     if (!content) return res.status(400).json({ success: false, error: 'İçerik gerekli.' });
 
-    const authHeader = req.headers.authorization;
-    const token = authHeader ? authHeader.split(' ')[1] : null;
-    if (!token) return res.status(401).json({ success: false, error: 'Authorization gerekli.' });
-    const userSb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
-
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    let port = null;
-
-    if (isUUID) {
-      const { data } = await userSb.from('purchased_servers').select('port, owner_id').eq('id', id).single();
-      if (!data) return res.status(404).json({ success: false, error: 'Sunucu bulunamadı.' });
-      if (data.owner_id !== req.user.id) return res.status(403).json({ success: false, error: 'Yetki yok.' });
-      port = data.port;
-    } else {
-      const containers = await docker.listContainers({ filters: { label: [`cs-web-game=true`, `owner_id=${req.user.id}`] } });
-      const c = containers.find(c => c.Id.startsWith(id)) || containers[0];
-      if (!c) return res.status(404).json({ success: false, error: 'Container bulunamadı.' });
-      port = c.Ports.find(p => p.PrivatePort === 27015)?.PublicPort;
-      if (!port) return res.status(400).json({ success: false, error: 'Port bulunamadı.' });
-    }
-
-    const configDir = `/home/ubuntu/server_configs/${port}`;
-    fs.mkdirSync(configDir, { recursive: true });
-    fs.writeFileSync(path.join(configDir, `${filename}.cfg`), content, 'utf8');
-    res.json({ success: true, path: `${configDir}/${filename}.cfg` });
+    // /home/ubuntu/cstrike → tüm containerlarda /opt/xashds/cstrike olarak mount'lı
+    // exec match.cfg bu dizinden okur
+    const cfgPath = path.join('/home/ubuntu/cstrike', `${filename}.cfg`);
+    fs.writeFileSync(cfgPath, content, 'utf8');
+    console.log(`[write-cfg] ${cfgPath} yazıldı`);
+    res.json({ success: true, path: cfgPath });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
