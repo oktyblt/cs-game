@@ -2896,13 +2896,37 @@ async function loadServerList() {
           card.querySelector('.btn-join-room').addEventListener('click', async () => {
             window._motdServerMeta = { serverName: server.name, mapName: server.map };
 
-            // Sifre gerekiyorsa once sor
+            // Sifre gerekiyorsa dogrula
             if (server.hasPassword) {
-              const pw = prompt('Bu sunucu sifre korumalı. Sunucu şifresini girin:');
-              if (pw === null) return; // iptal
+              let pw = null;
+              let attempts = 0;
+              while (attempts < 3) {
+                pw = prompt(attempts === 0
+                  ? 'Bu sunucu sifre korumal\u0131.\nSunucu \u015fifresini girin:'
+                  : '\u274c Yanl\u0131\u015f \u015fifre! Tekrar deneyin:');
+                if (pw === null) return; // iptal
+                if (pw.trim() === '') {
+                  alert('\u26a0 \u015eifre bo\u015f olamaz!'); attempts++; continue;
+                }
+                // Server'da dogrula
+                try {
+                  const vRes = await fetch(API_URL + '/api/servers/' + server.port + '/verify-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pw })
+                  });
+                  const vData = await vRes.json();
+                  if (vData.valid) break; // dogru sifre
+                  attempts++;
+                  if (attempts >= 3) { alert('\u274c 3 yanl\u0131\u015f deneme. Eri\u015fim reddedildi.'); return; }
+                } catch(err) {
+                  // API hatas\u0131 - yine de baglan (best-effort)
+                  break;
+                }
+              }
               // Engine'e sifre gonder
               if (typeof executeEngineCommand === 'function') {
-                executeEngineCommand('password "' + pw + '"');
+                executeEngineCommand('password "' + (pw || '') + '"');
               }
             }
 
