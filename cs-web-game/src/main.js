@@ -2696,9 +2696,7 @@ btnLaunch.addEventListener('click', async () => {
   if (!currentMap) { notify('Önce bir harita seçin!', 'error'); return; }
 
   if (!getCurrentUser()) {
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) loginModal.style.display = 'flex';
-    notify('Oda kurmak için önce üye girişi yapmalısınız!', 'error');
+    window.openAuthGate('Oda kurmak i\u00e7in kay\u0131t olman\u0131z veya giri\u015f yapman\u0131z gerekmektedir.');
     return;
   }
 
@@ -3494,7 +3492,6 @@ mp_logmessages 1
 mp_logdetail 3
 say "== CLAN MATCH CFG LOADED =="
 say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"
-sv_restartround 3
 `;
 
     try {
@@ -3565,7 +3562,6 @@ sv_password ""
 log off
 say "== NORMAL MOD AKTIF =="
 say "FF:OFF | MONEY:${startMoney} | ROUND:${roundTime}dk | TIME:${timelimit}dk"
-sv_restartround 3
 `;
 
     try {
@@ -4016,9 +4012,7 @@ if (btnAdminSaveStripe) {
     btnSidebarBuyServer.addEventListener('click', () => {
       const user = getCurrentUser();
       if (!user) {
-        const loginModal = document.getElementById('login-modal');
-        if (loginModal) loginModal.style.display = 'flex';
-        window.customAlert('Sunucu kiralayabilmek için önce üye girişi yapmalısınız.', 'BİLGİ');
+        window.openAuthGate('Sunucu kiralamak i\u00e7in kay\u0131t olman\u0131z veya giri\u015f yapman\u0131z gerekmektedir.');
       } else if (isUserPremium()) {
         // VIP kullanıcı için doğrudan sunucu oluşturma ekranına yönlendir
         const modal = document.getElementById('premium-modal');
@@ -4141,8 +4135,7 @@ window._execMatchCfgWithPass = async function (svPassword) {
     'mp_forcechasecam 2', 'allow_spectators 1',
     'log on', 'mp_logmessages 1', 'mp_logdetail 3',
     'say "== CLAN MATCH CFG LOADED =="',
-    'say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"',
-    'sv_restartround 3'
+    'say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"'
   ];
   const matchCfgContent = lines.join('\n') + '\n';
 
