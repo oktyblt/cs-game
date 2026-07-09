@@ -2868,8 +2868,8 @@ async function loadServerList() {
           const card = document.createElement('div');
           card.className = 'server-card-box anim-fade-in';
           const modeBadge = server.mode === 'match'
-            ? `<span style="position:absolute;top:6px;right:6px;z-index:3;background:rgba(220,30,30,0.92);color:#fff;font-family:var(--font-hud);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,80,80,0.5);text-transform:uppercase;">⚔ MAÇ MODU</span>`
-            : `<span style="position:absolute;top:6px;right:6px;z-index:3;background:rgba(20,140,60,0.85);color:#fff;font-family:var(--font-hud);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;border:1px solid rgba(50,200,100,0.4);text-transform:uppercase;">🟢 NORMAL</span>`;
+            ? `<span style="position:absolute;bottom:6px;left:6px;z-index:3;background:rgba(220,30,30,0.92);color:#fff;font-family:var(--font-hud);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,80,80,0.5);text-transform:uppercase;">⚔ MAÇ MODU</span>`
+            : `<span style="position:absolute;bottom:6px;left:6px;z-index:3;background:rgba(20,140,60,0.85);color:#fff;font-family:var(--font-hud);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;border:1px solid rgba(50,200,100,0.4);text-transform:uppercase;">🟢 NORMAL</span>`;
           card.innerHTML = `
             <div class="server-card-thumb" style="position: relative;">
               <img crossorigin="anonymous" src="${mapImgUrl}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
