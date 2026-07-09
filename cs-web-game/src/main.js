@@ -2300,6 +2300,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('setinfo _vgui_menus 0');
           executeEngineCommand('setinfo _vgui_menus 0');
+          // Reconnect: önceki şifre sessionStorage'da varsa tekrar gönder
+          const storedPw = sessionStorage.getItem('_csLastPw_' + (typeof connectPort !== 'undefined' ? connectPort : ''));
+          if (storedPw) executeEngineCommand('password "' + storedPw + '"');
           executeEngineCommand('connect 10.0.0.1:27015');
         }
       });
@@ -2668,6 +2671,13 @@ if (btnQuickJoin) {
 
       if (target) {
         notify(`"${target.name}" sunucusuna bağlanıyor...`, 'success');
+        // Sifre gerekiyorsa once sor
+        if (target.hasPassword) {
+          const pw = await window.openServerJoinPasswordModal(target.port, target.name);
+          if (pw === null) { btnQuickJoin.disabled = false; btnQuickJoin.textContent = '▶ SUNUCUYA KATIL'; return; }
+          window._pendingServerPassword = pw;
+          sessionStorage.setItem('_csLastPw_' + target.port, pw);
+        }
         if (!getCurrentUser()) {
           const guestNick = await window.openGuestNameModal(target.port, target.map);
           if (!guestNick) { btnQuickJoin.disabled = false; btnQuickJoin.textContent = '▶ SUNUCUYA KATIL'; return; }
@@ -2696,7 +2706,9 @@ btnLaunch.addEventListener('click', async () => {
   if (!currentMap) { notify('Önce bir harita seçin!', 'error'); return; }
 
   if (!getCurrentUser()) {
-    window.openAuthGate('Oda kurmak i\u00e7in kay\u0131t olman\u0131z veya giri\u015f yapman\u0131z gerekmektedir.');
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) loginModal.style.display = 'flex';
+    notify('Oda kurmak için önce üye girişi yapmalısınız!', 'error');
     return;
   }
 
@@ -2859,6 +2871,14 @@ async function loadServerList() {
             </div>
           `;
           div.addEventListener('click', async () => {
+            window._motdServerMeta = { serverName: server.name || server.displayName, mapName: server.map, serverId: server.id, owner_id: server.owner_id };
+            // Sifre gerekiyorsa modal aç
+            if (server.hasPassword) {
+              const pw = await window.openServerJoinPasswordModal(server.port, server.name || server.displayName);
+              if (pw === null) return;
+              window._pendingServerPassword = pw;
+              sessionStorage.setItem('_csLastPw_' + server.port, pw);
+            }
             if (!getCurrentUser()) {
               const guestNick = await window.openGuestNameModal(server.port, server.map);
               if (!guestNick) return;
@@ -3492,6 +3512,7 @@ mp_logmessages 1
 mp_logdetail 3
 say "== CLAN MATCH CFG LOADED =="
 say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"
+sv_restartround 3
 `;
 
     try {
@@ -3562,6 +3583,7 @@ sv_password ""
 log off
 say "== NORMAL MOD AKTIF =="
 say "FF:OFF | MONEY:${startMoney} | ROUND:${roundTime}dk | TIME:${timelimit}dk"
+sv_restartround 3
 `;
 
     try {
@@ -4012,7 +4034,9 @@ if (btnAdminSaveStripe) {
     btnSidebarBuyServer.addEventListener('click', () => {
       const user = getCurrentUser();
       if (!user) {
-        window.openAuthGate('Sunucu kiralamak i\u00e7in kay\u0131t olman\u0131z veya giri\u015f yapman\u0131z gerekmektedir.');
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) loginModal.style.display = 'flex';
+        window.customAlert('Sunucu kiralayabilmek için önce üye girişi yapmalısınız.', 'BİLGİ');
       } else if (isUserPremium()) {
         // VIP kullanıcı için doğrudan sunucu oluşturma ekranına yönlendir
         const modal = document.getElementById('premium-modal');
@@ -4135,7 +4159,8 @@ window._execMatchCfgWithPass = async function (svPassword) {
     'mp_forcechasecam 2', 'allow_spectators 1',
     'log on', 'mp_logmessages 1', 'mp_logdetail 3',
     'say "== CLAN MATCH CFG LOADED =="',
-    'say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"'
+    'say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"',
+    'sv_restartround 3'
   ];
   const matchCfgContent = lines.join('\n') + '\n';
 
@@ -4293,14 +4318,14 @@ window._execMatchCfgWithPass = async function (svPassword) {
 // ================================================================
 // THEMED SERVER JOIN PASSWORD MODAL
 // ================================================================
-window.openServerJoinPasswordModal = function(port, serverName) {
-  return new Promise(function(resolve) {
-    var modal   = document.getElementById('server-join-pass-modal');
-    var input   = document.getElementById('sjp-input');
-    var errEl   = document.getElementById('sjp-error');
-    var attEl   = document.getElementById('sjp-attempts');
+window.openServerJoinPasswordModal = function (port, serverName) {
+  return new Promise(function (resolve) {
+    var modal = document.getElementById('server-join-pass-modal');
+    var input = document.getElementById('sjp-input');
+    var errEl = document.getElementById('sjp-error');
+    var attEl = document.getElementById('sjp-attempts');
     var confirm = document.getElementById('sjp-confirm');
-    var cancel  = document.getElementById('sjp-cancel');
+    var cancel = document.getElementById('sjp-cancel');
     if (!modal) { resolve(null); return; }
 
     // Ebeveyn gizliyse (game-wrapper display:none) modal gorunmez.
@@ -4323,7 +4348,7 @@ window.openServerJoinPasswordModal = function(port, serverName) {
     function showError(msg) {
       errEl.textContent = msg;
       input.classList.add('error');
-      setTimeout(function() { input.classList.remove('error'); }, 400);
+      setTimeout(function () { input.classList.remove('error'); }, 400);
     }
 
     function updateAttempts() {
@@ -4350,7 +4375,7 @@ window.openServerJoinPasswordModal = function(port, serverName) {
           resolve(pw);
           return;
         }
-      } catch(e) {
+      } catch (e) {
         // API error - allow through
         modal.classList.remove('show');
         cleanup();
@@ -4362,7 +4387,7 @@ window.openServerJoinPasswordModal = function(port, serverName) {
       updateAttempts();
       if (attempts >= maxAttempts) {
         showError('3 yanlis deneme! Erisim reddedildi.');
-        setTimeout(function() {
+        setTimeout(function () {
           modal.classList.remove('show');
           cleanup();
           resolve(null);
@@ -4396,20 +4421,20 @@ window.openServerJoinPasswordModal = function(port, serverName) {
     cancel.addEventListener('click', onCancel);
     input.addEventListener('keydown', onKeydown);
     modal.classList.add('show');
-    setTimeout(function() { input.focus(); }, 80);
+    setTimeout(function () { input.focus(); }, 80);
   });
 };
 
 // ================================================================
 // ESC PAUSE MENU: show Yonet button for server owner (premium)
 // ================================================================
-(function() {
+(function () {
   var btnManage = document.getElementById('esc-btn-manage');
-  var escMenu   = document.getElementById('esc-pause-menu');
+  var escMenu = document.getElementById('esc-pause-menu');
   if (!btnManage || !escMenu) return;
 
   // Show/hide Yonet button when ESC menu opens
-  var obs = new MutationObserver(function() {
+  var obs = new MutationObserver(function () {
     if (escMenu.classList.contains('show')) {
       var meta = window._motdServerMeta || {};
       var user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
@@ -4423,7 +4448,7 @@ window.openServerJoinPasswordModal = function(port, serverName) {
   });
   obs.observe(escMenu, { attributes: true, attributeFilter: ['class'] });
 
-  btnManage.addEventListener('click', function() {
+  btnManage.addEventListener('click', function () {
     escMenu.classList.remove('show');
     var meta = window._motdServerMeta || {};
     if (meta.serverId && typeof openServerSettings === 'function') {
@@ -4435,7 +4460,7 @@ window.openServerJoinPasswordModal = function(port, serverName) {
 // ================================================================
 // AUTH GATE: shows when unauthenticated user tries premium action
 // ================================================================
-window.openAuthGate = function(msgOverride) {
+window.openAuthGate = function (msgOverride) {
   var modal = document.getElementById('auth-gate-modal');
   var msgEl = document.getElementById('auth-gate-msg');
   if (!modal) {
@@ -4448,20 +4473,20 @@ window.openAuthGate = function(msgOverride) {
   modal.style.display = 'flex';
 };
 
-(function() {
-  var gateModal    = document.getElementById('auth-gate-modal');
-  var loginBtn     = document.getElementById('auth-gate-login');
-  var registerBtn  = document.getElementById('auth-gate-register');
-  var loginModal   = document.getElementById('login-modal');
-  var registerModal= document.getElementById('register-modal');
+(function () {
+  var gateModal = document.getElementById('auth-gate-modal');
+  var loginBtn = document.getElementById('auth-gate-login');
+  var registerBtn = document.getElementById('auth-gate-register');
+  var loginModal = document.getElementById('login-modal');
+  var registerModal = document.getElementById('register-modal');
   if (!gateModal) return;
 
-  if (loginBtn) loginBtn.addEventListener('click', function() {
+  if (loginBtn) loginBtn.addEventListener('click', function () {
     gateModal.style.display = 'none';
     if (loginModal) loginModal.style.display = 'flex';
   });
 
-  if (registerBtn) registerBtn.addEventListener('click', function() {
+  if (registerBtn) registerBtn.addEventListener('click', function () {
     gateModal.style.display = 'none';
     if (registerModal) registerModal.style.display = 'flex';
   });
