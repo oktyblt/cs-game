@@ -2876,12 +2876,13 @@ async function loadServerList() {
               <span class="server-badge-live" style="z-index:2;">${server.badgeText}</span>
               <span class="server-thumb-map-text" style="z-index:2;">${server.map}</span>
               ${modeBadge}
+              ${server.hasPassword ? `<span style="position:absolute;top:6px;right:36px;z-index:3;background:rgba(0,0,0,0.75);color:#ffcc00;font-size:0.85rem;padding:2px 5px;border-radius:3px;" title="Sifre gerekli">\uD83D\uDD12</span>` : ''}
             </div>
             <div class="server-card-body">
               <div class="server-card-name">${server.displayName}</div>
               <div class="server-card-meta">
-                <span>🗺️ ${server.map}</span>
-                <span>👤 ${server.playersCount}/${server.maxplayers} Oyuncu</span>
+                <span>\uD83D\uDDFA\uFE0F ${server.map}</span>
+                <span>\uD83D\uDC64 ${server.playersCount}/${server.maxplayers} Oyuncu${server.hasPassword ? ' \uD83D\uDD12' : ''}</span>
               </div>
               <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${server.displayHost}</b></div>
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
@@ -2894,6 +2895,17 @@ async function loadServerList() {
           `;
           card.querySelector('.btn-join-room').addEventListener('click', async () => {
             window._motdServerMeta = { serverName: server.name, mapName: server.map };
+
+            // Sifre gerekiyorsa once sor
+            if (server.hasPassword) {
+              const pw = prompt('Bu sunucu sifre korumalı. Sunucu şifresini girin:');
+              if (pw === null) return; // iptal
+              // Engine'e sifre gonder
+              if (typeof executeEngineCommand === 'function') {
+                executeEngineCommand('password "' + pw + '"');
+              }
+            }
+
             if (!getCurrentUser()) {
               const guestNick = await window.openGuestNameModal(server.port, server.map);
               if (!guestNick) return;
