@@ -2400,6 +2400,8 @@
             #esc-btn-resume:hover { background:rgba(255,204,0,0.25); }
             #esc-btn-settings { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.7); }
             #esc-btn-settings:hover { border-color:rgba(255,255,255,0.35); color:#fff; }
+            #esc-btn-manage { background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.35); color:rgba(46,204,113,0.9); display:none; }
+            #esc-btn-manage:hover { background:rgba(46,204,113,0.18); color:#2ecc71; }
             #esc-btn-disconnect { background:rgba(231,76,60,0.08); border:1px solid rgba(231,76,60,0.35); color:rgba(231,76,60,0.8); margin-top:0.8rem; }
             #esc-btn-disconnect:hover { background:rgba(231,76,60,0.18); color:#e74c3c; }
           </style>
@@ -2408,6 +2410,7 @@
             <div class="esc-sub">COUNTER-STRIKE 1.5 · BROWSERCS.COM</div>
             <button class="esc-btn" id="esc-btn-resume">▶ OYUNA DEVAM ET</button>
             <button class="esc-btn" id="esc-btn-settings">⚙ AYARLAR</button>
+            <button class="esc-btn" id="esc-btn-manage">🛠 SUNUCUYU YÖNET</button>
             <button class="esc-btn" id="esc-btn-disconnect">✕ SUNUCUDAN ÇIK</button>
           </div>
         </div>
@@ -2437,6 +2440,38 @@
             </div>
             <input type="text" id="match-pass-input" placeholder="Sunucu şifresini girin..." maxlength="24" />
             <button id="match-pass-confirm">⚔ MAÇ MODUNU BAŞLAT</button>
+          </div>
+        </div>
+
+        <!-- Server Join Password Modal -->
+        <div id="server-join-pass-modal" style="display:none;position:absolute;inset:0;z-index:9600;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;font-family:var(--font-hud);">
+          <style>
+            #server-join-pass-modal.show { display:flex !important; }
+            #sjp-panel { background:linear-gradient(145deg,rgba(6,10,18,0.98),rgba(10,18,30,0.97)); border:1px solid rgba(255,204,0,0.25); border-top:3px solid #e74c3c; border-radius:8px; padding:1.8rem 2rem; min-width:310px; max-width:90vw; box-shadow:0 24px 64px rgba(0,0,0,0.9); }
+            #sjp-icon { font-size:2.2rem; margin-bottom:0.6rem; display:block; text-align:center; }
+            #sjp-title { font-size:1rem; font-weight:700; color:#e74c3c; letter-spacing:0.12em; text-align:center; margin-bottom:0.2rem; }
+            #sjp-subtitle { font-size:0.7rem; color:rgba(255,255,255,0.4); letter-spacing:0.08em; text-align:center; margin-bottom:1.2rem; }
+            #sjp-server-name { color:rgba(255,255,255,0.7); font-size:0.75rem; }
+            #sjp-input { width:100%; box-sizing:border-box; background:rgba(255,255,255,0.06); border:1px solid rgba(231,76,60,0.3); color:#fff; font-family:var(--font-hud); font-size:0.85rem; padding:0.55rem 0.8rem; border-radius:4px; margin-bottom:0.4rem; letter-spacing:0.05em; }
+            #sjp-input:focus { outline:none; border-color:#e74c3c; box-shadow:0 0 0 2px rgba(231,76,60,0.15); }
+            #sjp-input.error { border-color:#e74c3c; animation:shake 0.3s ease; }
+            @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+            #sjp-error { font-size:0.65rem; color:#e74c3c; min-height:1rem; margin-bottom:0.8rem; letter-spacing:0.05em; text-align:center; }
+            #sjp-attempts { font-size:0.6rem; color:rgba(255,255,255,0.3); text-align:center; margin-bottom:0.6rem; }
+            #sjp-confirm { width:100%; padding:0.55rem; background:linear-gradient(135deg,rgba(231,76,60,0.25),rgba(192,57,43,0.2)); border:1px solid #e74c3c; color:#e74c3c; border-radius:4px; font-family:var(--font-hud); font-size:0.7rem; font-weight:700; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; margin-bottom:0.4rem; }
+            #sjp-confirm:hover { background:rgba(231,76,60,0.3); color:#fff; }
+            #sjp-cancel { width:100%; padding:0.4rem; background:transparent; border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.4); border-radius:4px; font-family:var(--font-hud); font-size:0.65rem; letter-spacing:0.08em; cursor:pointer; transition:all 0.2s; }
+            #sjp-cancel:hover { border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.7); }
+          </style>
+          <div id="sjp-panel">
+            <span id="sjp-icon">🔒</span>
+            <div id="sjp-title">ŞİFRELİ SUNUCU</div>
+            <div id="sjp-subtitle">Bu sunucuya erişmek için şifre gereklidir</div>
+            <input type="password" id="sjp-input" placeholder="Sunucu şifresini girin..." maxlength="24" autocomplete="off" />
+            <div id="sjp-error"></div>
+            <div id="sjp-attempts"></div>
+            <button id="sjp-confirm">🔓 BAĞLAN</button>
+            <button id="sjp-cancel">✕ İPTAL</button>
           </div>
         </div>
 

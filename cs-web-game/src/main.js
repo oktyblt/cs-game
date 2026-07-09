@@ -2842,6 +2842,12 @@ async function loadServerList() {
           div.style.padding = '0.6rem';
           div.style.marginBottom = '0.6rem';
           div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+          const miniModePill = server.mode === 'match'
+            ? '<span style="background:rgba(220,30,30,0.2);border:1px solid rgba(220,30,30,0.5);color:#ff6b6b;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">⚔ MAÇ</span>'
+            : '<span style="background:rgba(20,140,60,0.18);border:1px solid rgba(50,200,100,0.4);color:#4dbb7a;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">🟢 NORMAL</span>';
+          const miniLockPill = server.hasPassword
+            ? '<span style="background:rgba(255,204,0,0.15);border:1px solid rgba(255,204,0,0.4);color:#ffcc00;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">🔒 ŞİFRELİ</span>'
+            : '';
           div.innerHTML = `
             <div style="position: relative; width: 100%; height: 80px; overflow: hidden; border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: var(--bg-deep);">
               <img crossorigin="anonymous" src="${mapImgUrl}" alt="Server" style="position:absolute; inset:0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
@@ -2851,7 +2857,10 @@ async function loadServerList() {
                 👤 ${server.playersCount}/${server.maxplayers}
               </div>
             </div>
-            <div style="font-weight: bold; color: var(--text-bright); text-align: center; margin-top: 8px; font-size: 0.85rem;">${server.displayName}</div>
+            <div style="font-weight: bold; color: var(--text-bright); text-align: center; margin-top: 6px; font-size: 0.85rem;">${server.displayName}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px;">
+              ${miniModePill}${miniLockPill}
+            </div>
           `;
           div.addEventListener('click', async () => {
             if (!getCurrentUser()) {
@@ -2867,22 +2876,27 @@ async function loadServerList() {
         } else {
           const card = document.createElement('div');
           card.className = 'server-card-box anim-fade-in';
-          const modeBadge = server.mode === 'match'
-            ? `<span style="position:absolute;bottom:6px;left:6px;z-index:3;background:rgba(220,30,30,0.92);color:#fff;font-family:var(--font-hud);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,80,80,0.5);text-transform:uppercase;">⚔ MAÇ MODU</span>`
-            : `<span style="position:absolute;bottom:6px;left:6px;z-index:3;background:rgba(20,140,60,0.85);color:#fff;font-family:var(--font-hud);font-size:0.58rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;border:1px solid rgba(50,200,100,0.4);text-transform:uppercase;">🟢 NORMAL</span>`;
+          // Mode pill: match=red, normal=green
+          const modePill = server.mode === 'match'
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(220,30,30,0.18);border:1px solid rgba(220,30,30,0.5);color:#ff6b6b;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">⚔ MAÇ MODU</span>`
+            : `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(20,140,60,0.15);border:1px solid rgba(50,200,100,0.35);color:#4dbb7a;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">🟢 NORMAL</span>`;
+          const lockPill = server.hasPassword
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,204,0,0.12);border:1px solid rgba(255,204,0,0.35);color:#ffcc00;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">🔒 ŞİFRELİ</span>`
+            : '';
           card.innerHTML = `
             <div class="server-card-thumb" style="position: relative;">
               <img crossorigin="anonymous" src="${mapImgUrl}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
               <span class="server-badge-live" style="z-index:2;">${server.badgeText}</span>
               <span class="server-thumb-map-text" style="z-index:2;">${server.map}</span>
-              ${modeBadge}
-              ${server.hasPassword ? `<span style="position:absolute;top:6px;right:36px;z-index:3;background:rgba(0,0,0,0.75);color:#ffcc00;font-size:0.85rem;padding:2px 5px;border-radius:3px;" title="Sifre gerekli">\uD83D\uDD12</span>` : ''}
             </div>
             <div class="server-card-body">
               <div class="server-card-name">${server.displayName}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px;">
+                ${modePill}${lockPill}
+              </div>
               <div class="server-card-meta">
-                <span>\uD83D\uDDFA\uFE0F ${server.map}</span>
-                <span>\uD83D\uDC64 ${server.playersCount}/${server.maxplayers} Oyuncu${server.hasPassword ? ' \uD83D\uDD12' : ''}</span>
+                <span>🗺️ ${server.map}</span>
+                <span>👤 ${server.playersCount}/${server.maxplayers} Oyuncu</span>
               </div>
               <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${server.displayHost}</b></div>
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
@@ -2894,40 +2908,14 @@ async function loadServerList() {
             </div>
           `;
           card.querySelector('.btn-join-room').addEventListener('click', async () => {
-            window._motdServerMeta = { serverName: server.name, mapName: server.map };
+            window._motdServerMeta = { serverName: server.name, mapName: server.map, serverId: server.id, owner_id: server.owner_id };
 
-            // Sifre gerekiyorsa dogrula
+            // Sifre gerekiyorsa temali modal goster
             if (server.hasPassword) {
-              let pw = null;
-              let attempts = 0;
-              while (attempts < 3) {
-                pw = prompt(attempts === 0
-                  ? 'Bu sunucu sifre korumal\u0131.\nSunucu \u015fifresini girin:'
-                  : '\u274c Yanl\u0131\u015f \u015fifre! Tekrar deneyin:');
-                if (pw === null) return; // iptal
-                if (pw.trim() === '') {
-                  alert('\u26a0 \u015eifre bo\u015f olamaz!'); attempts++; continue;
-                }
-                // Server'da dogrula
-                try {
-                  const vRes = await fetch(API_URL + '/api/servers/' + server.port + '/verify-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: pw })
-                  });
-                  const vData = await vRes.json();
-                  if (vData.valid) break; // dogru sifre
-                  attempts++;
-                  if (attempts >= 3) { alert('\u274c 3 yanl\u0131\u015f deneme. Eri\u015fim reddedildi.'); return; }
-                } catch (err) {
-                  // API hatas\u0131 - yine de baglan (best-effort)
-                  break;
-                }
-              }
-              // Engine'e sifre gonder
-              if (typeof executeEngineCommand === 'function') {
-                executeEngineCommand('password "' + (pw || '') + '"');
-              }
+              const pw = await window.openServerJoinPasswordModal(server.port, server.name);
+              if (pw === null) return; // iptal veya 3 yanlis deneme
+              // Engine hazir olunca inject edilecek
+              window._pendingServerPassword = pw;
             }
 
             if (!getCurrentUser()) {
@@ -4311,4 +4299,139 @@ window._execMatchCfgWithPass = async function (svPassword) {
   window.addEventListener('keydown', modalKeyGuard, { capture: true });
   window.addEventListener('keyup', modalKeyGuard, { capture: true });
   window.addEventListener('keypress', modalKeyGuard, { capture: true });
+})();
+
+// ================================================================
+// THEMED SERVER JOIN PASSWORD MODAL
+// ================================================================
+window.openServerJoinPasswordModal = function(port, serverName) {
+  return new Promise(function(resolve) {
+    var modal   = document.getElementById('server-join-pass-modal');
+    var input   = document.getElementById('sjp-input');
+    var errEl   = document.getElementById('sjp-error');
+    var attEl   = document.getElementById('sjp-attempts');
+    var confirm = document.getElementById('sjp-confirm');
+    var cancel  = document.getElementById('sjp-cancel');
+    if (!modal) { resolve(null); return; }
+
+    var attempts = 0;
+    var maxAttempts = 3;
+
+    function resetUI() {
+      input.value = '';
+      errEl.textContent = '';
+      attEl.textContent = '';
+      input.classList.remove('error');
+    }
+
+    function showError(msg) {
+      errEl.textContent = msg;
+      input.classList.add('error');
+      setTimeout(function() { input.classList.remove('error'); }, 400);
+    }
+
+    function updateAttempts() {
+      if (attempts > 0) {
+        attEl.textContent = attempts + '/' + maxAttempts + ' yanlis deneme';
+      }
+    }
+
+    async function tryConfirm() {
+      var pw = (input.value || '').trim();
+      if (!pw) { showError('Sifre bos olamaz!'); input.focus(); return; }
+
+      // Verify against server
+      try {
+        var vRes = await fetch(API_URL + '/api/servers/' + port + '/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+        var vData = await vRes.json();
+        if (vData.valid) {
+          modal.classList.remove('show');
+          cleanup();
+          resolve(pw);
+          return;
+        }
+      } catch(e) {
+        // API error - allow through
+        modal.classList.remove('show');
+        cleanup();
+        resolve(pw);
+        return;
+      }
+
+      attempts++;
+      updateAttempts();
+      if (attempts >= maxAttempts) {
+        showError('3 yanlis deneme! Erisim reddedildi.');
+        setTimeout(function() {
+          modal.classList.remove('show');
+          cleanup();
+          resolve(null);
+        }, 1500);
+        return;
+      }
+      showError('Yanlis sifre! Tekrar deneyin.');
+      input.value = '';
+      input.focus();
+    }
+
+    function cleanup() {
+      confirm.removeEventListener('click', tryConfirm);
+      cancel.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKeydown);
+    }
+
+    function onCancel() {
+      modal.classList.remove('show');
+      cleanup();
+      resolve(null);
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Enter') { e.preventDefault(); tryConfirm(); }
+      if (e.key === 'Escape') { onCancel(); }
+    }
+
+    resetUI();
+    confirm.addEventListener('click', tryConfirm);
+    cancel.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKeydown);
+    modal.classList.add('show');
+    setTimeout(function() { input.focus(); }, 80);
+  });
+};
+
+// ================================================================
+// ESC PAUSE MENU: show Yonet button for server owner (premium)
+// ================================================================
+(function() {
+  var btnManage = document.getElementById('esc-btn-manage');
+  var escMenu   = document.getElementById('esc-pause-menu');
+  if (!btnManage || !escMenu) return;
+
+  // Show/hide Yonet button when ESC menu opens
+  var obs = new MutationObserver(function() {
+    if (escMenu.classList.contains('show')) {
+      var meta = window._motdServerMeta || {};
+      var user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+      var isPremium = typeof isUserPremium === 'function' ? isUserPremium() : false;
+      if (user && isPremium && meta.owner_id && meta.owner_id === user.id && meta.serverId) {
+        btnManage.style.display = 'block';
+      } else {
+        btnManage.style.display = 'none';
+      }
+    }
+  });
+  obs.observe(escMenu, { attributes: true, attributeFilter: ['class'] });
+
+  btnManage.addEventListener('click', function() {
+    escMenu.classList.remove('show');
+    var meta = window._motdServerMeta || {};
+    if (meta.serverId && typeof openServerSettings === 'function') {
+      openServerSettings(meta.serverId);
+    }
+  });
 })();
