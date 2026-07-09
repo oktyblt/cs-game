@@ -424,10 +424,17 @@ app.get('/api/servers', async (req, res) => {
 
       // Mod dosyasını oku (match veya normal)
       let serverMode = 'normal';
+      let hasPassword = false;
       try {
         const modeFile = `/home/ubuntu/server_configs/${port}/mode.txt`;
         if (fs.existsSync(modeFile)) {
           serverMode = fs.readFileSync(modeFile, 'utf8').trim();
+        }
+        // Şifre var mı? (actual password'ü açığa çıkarmıyoruz)
+        const pwFile = `/home/ubuntu/server_configs/${port}/server_password.txt`;
+        if (fs.existsSync(pwFile)) {
+          const pw = fs.readFileSync(pwFile, 'utf8').trim();
+          hasPassword = pw.length > 0;
         }
       } catch (e) { /* sessiz */ }
 
@@ -441,7 +448,8 @@ app.get('/api/servers', async (req, res) => {
         isOfficial: isOfficial,
         owner_id: c.Labels.owner_id || null,
         state: c.State,
-        mode: serverMode
+        mode: serverMode,
+        hasPassword
       };
     }));
 
@@ -809,6 +817,12 @@ app.post('/api/servers/:id/write-cfg', requireAuth, async (req, res) => {
           fs.mkdirSync(modeDir, { recursive: true });
           fs.writeFileSync(path.join(modeDir, 'mode.txt'), filename, 'utf8');
           console.log(`[write-cfg] mode.txt → ${filename} (port ${port})`);
+
+          // Şifreyi çıkar ve server_password.txt'e kaydet
+          const pwMatch = content.match(/sv_password\s+"([^"]*)"/);
+          const svPw = pwMatch ? pwMatch[1] : '';
+          fs.writeFileSync(path.join(modeDir, 'server_password.txt'), svPw, 'utf8');
+          console.log(`[write-cfg] server_password.txt → ${svPw ? '(set)' : '(empty)'} (port ${port})`);
         }
       } catch (modeErr) {
         console.warn('[write-cfg] mode.txt yazılamadı:', modeErr.message);
