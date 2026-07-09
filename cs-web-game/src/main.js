@@ -3875,7 +3875,24 @@ window.dismissWelcomeMOTD = function () {
 
 window.connectToServer = async function (port, mapName, isHost = false) {
   if (engineRunning) {
-    window.customAlert("Oyun zaten açık! Lütfen sayfayı yenileyip tekrar deneyin.");
+    // Engine zaten calisiyor (kullanici CS menusunde).
+    // Yeni sunucuya baglanmak icin direkt komut gonder.
+    if (!isHost && port) {
+      if (typeof notify === 'function') notify('Sunucuya yeniden bağlanılıyor...', 'ok');
+      executeEngineCommand('setinfo _vgui_menus 0');
+      // Sifre varsa once gonder
+      const pw = window._pendingServerPassword || sessionStorage.getItem('_csLastPw_' + port);
+      if (pw) {
+        executeEngineCommand('password "' + pw + '"');
+        window._pendingServerPassword = null;
+      }
+      executeEngineCommand('connect 10.0.0.1:27015');
+      // Kapat butonu ve server browser'i gizle
+      const fb = document.getElementById('full-server-browser');
+      if (fb) fb.classList.remove('active');
+    } else {
+      window.customAlert('Oyun zaten açık! Lütfen sayfayı yenileyip tekrar deneyin.');
+    }
     return;
   }
 
