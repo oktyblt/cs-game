@@ -1559,7 +1559,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v42.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v34.wasm'),
       cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm'),
       cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
@@ -1732,7 +1732,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       libraries: {
         menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
         client: '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32_v42.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1742,7 +1742,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
         'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
         'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
-        'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v42.wasm',
+        'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
       },
 
