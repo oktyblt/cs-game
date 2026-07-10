@@ -379,7 +379,7 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
 
     const makeRow = (p) => {
       const isLocal = p.id === localPlayerId || p.local;
-      const isDead = p.isDead === 1;
+      const isDead = p.dead === 1;
       let name = p.name;
       if (isLocal) name = `★ ${name}`;
       if (isDead) name = `☠ ${name}`;
@@ -422,6 +422,12 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
       '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
     sbT.innerHTML = tPlayers.length ? tPlayers.map(makeRow).join('') :
       '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
+    
+    // Update team counts
+    const ctCountEl = document.getElementById('sb-ct-count');
+    const tCountEl = document.getElementById('sb-t-count');
+    if (ctCountEl) ctCountEl.textContent = `(${ctPlayers.length} Oyuncu)`;
+    if (tCountEl) tCountEl.textContent = `(${tPlayers.length} Oyuncu)`;
 
     if (specPlayers.length > 0) {
       sbSpecContainer.style.display = 'block';
@@ -1580,9 +1586,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v21.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v30.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm'),
+      cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v33.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v33.wasm'),
+      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v33.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
@@ -1749,9 +1755,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       },
 
       libraries: {
-        menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v30.wasm',
-        server: '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
+        menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v33.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v33.wasm',
+        server: '/wasm/dlls/cs_emscripten_wasm32_v33.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
         }
@@ -1759,10 +1765,10 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v28.wasm',
-        'cl_dlls/client_emscripten_wasm32_v30.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v30.wasm',
-        'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
-        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
+        'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v33.wasm',
+        'cl_dlls/client_emscripten_wasm32_v33.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v33.wasm',
+        'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v33.wasm',
+        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v33.wasm',
       },
 
       module: {
@@ -2042,7 +2048,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
           // DLL dosyaları
           em.FS.writeFile('/cstrike/dlls/cs_emscripten_wasm32.wasm', csServerBuffer);
-          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v30.wasm', csClientBuffer);
+          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32_v33.wasm', csClientBuffer);
           em.FS.writeFile('/cstrike/cl_dlls/menu_emscripten_wasm32.wasm', csMenuBuffer);
 
           em.FS.writeFile('/filesystem_stdio.wasm', fsBuffer);
@@ -2158,7 +2164,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                     // Clean color codes before regex match
                     line = line.replace(/\\[ywrdb]/g, '').trim();
 
-                    const match = line.match(/^(\d+)\.\s*(.*)/);
+                    const match = line.match(/^(\d+)[.)\-\s]+\s*(.*)/);
                     if (match) {
                       const slotNum = parseInt(match[1]);
                       const slotText = match[2];
