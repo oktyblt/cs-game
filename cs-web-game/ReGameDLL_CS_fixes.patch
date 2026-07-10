@@ -159,7 +159,7 @@ index 1d04cc9..940f08f 100644
  
  	m_flVelocityModifier = 1;
 diff --git a/regamedll/dlls/sound.cpp b/regamedll/dlls/sound.cpp
-index 25e930e..1bcc625 100644
+index 25e930e..8a239b6 100644
 --- a/regamedll/dlls/sound.cpp
 +++ b/regamedll/dlls/sound.cpp
 @@ -1,5 +1,21 @@
@@ -202,7 +202,7 @@ index 25e930e..1bcc625 100644
  				// only!
  
  				//CLIENT_COMMAND(pentPlayer, "room_type %f", m_flRoomtype);
-+#ifndef CLIENT_WEAPONS
++#ifndef __EMSCRIPTEN__
 +				if (!IsValidRealClient(pentPlayer))
 +					goto env_sound_Think_slow;
 +
