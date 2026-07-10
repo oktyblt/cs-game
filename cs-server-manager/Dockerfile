@@ -1,14 +1,25 @@
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y --no-install-recommends     libsdl2-2.0-0:i386 libc6:i386 libgcc-s1:i386 libstdc++6:i386     && rm -rf /var/lib/apt/lists/*
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libc6:i386 libncurses5:i386 libstdc++6:i386 curl wget unzip zip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/xashds
+# Burada xash3d-fwgs (hlds uyumlu) linux sürümü ve cstrike modülünü indireceğiz.
+# Ancak şimdilik bu sadece bir iskelettir. Gerçek dosyaların kopyalanması gerekir.
+WORKDIR /opt/xash3d
 
-RUN echo '#!/bin/bash\ncd /opt/xashds && exec ./xash -dedicated -game cstrike +map "${MAP:-de_dust2}" +maxplayers "${MAXPLAYERS:-16}" +hostname "${HOSTNAME:-CS Browser Server}" +sv_lan 1 +port "${PORT:-27015}"' > /opt/xashds/start.sh && chmod +x /opt/xashds/start.sh
+# CS 1.5 dosyalarınızı bu dizine kopyalayın
+# COPY ./valve /opt/xash3d/valve
+# COPY ./cstrike /opt/xash3d/cstrike
+# COPY ./xash3d /opt/xash3d/xash3d
 
-EXPOSE 27015/udp
-EXPOSE 27015/tcp
+# Start script
+RUN echo '#!/bin/bash\n\
+./xash3d -dedicated +map $MAP +maxplayers $MAXPLAYERS +hostname "$HOSTNAME" +port $PORT\n\
+' > /opt/xash3d/start.sh && chmod +x /opt/xash3d/start.sh
 
-CMD ["/opt/xashds/start.sh"]
+CMD ["/opt/xash3d/start.sh"]
