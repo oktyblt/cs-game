@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /*?*
+Disallow: /*modal=*
+Disallow: /*server=*
+
+Sitemap: https://browsercs.com/sitemap.xml

@@ -40,6 +40,15 @@ export default defineConfig({
     outDir:  path.resolve(__dirname, 'dist'),
     target:  'esnext',
     assetsInlineLimit: 0, // WASM dosyaları inline edilmesin
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'src/index.html'),
+        oyna: path.resolve(__dirname, 'src/oyna/index.html'),
+        sunucular: path.resolve(__dirname, 'src/sunucular/index.html'),
+        sunucuKirala: path.resolve(__dirname, 'src/sunucu-kirala/index.html'),
+        haritaDust2: path.resolve(__dirname, 'src/haritalar/de-dust2/index.html'),
+      }
+    }
   },
 
   // WASM dosyaları için MIME tipi

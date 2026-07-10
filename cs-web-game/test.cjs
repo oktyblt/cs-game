@@ -12,9 +12,9 @@ const { chromium } = require('playwright');
 
   console.log('Clicking join button...');
   await page.evaluate(() => {
-    const btn = document.querySelector('.btn-join-room');
+    const btn = document.querySelector('#btn-launch');
     if (btn) btn.click();
-    else console.log('btn-join-room not found!');
+    else console.log('btn-launch not found!');
   });
 
   await page.waitForTimeout(2000);

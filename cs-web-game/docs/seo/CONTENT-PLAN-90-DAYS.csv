@@ -1,0 +1,8 @@
+Hafta,Başlık,Primary Keyword,Secondary Keyword,Intent,Hedef URL,İçerik Formatı,H2 Yapısı,CTA,Internal Links,Tahmini Efor,Ticari Değer
+1,CS 1.5 İndirmeden Tarayıcıda Nasıl Oynanır?,indirmeden cs oyna,tarayıcıdan cs oyna,Bilgi,/blog/indirmeden-cs-oyna,Rehber,"Giriş, Gereksinimler, Nasıl Girilir?, Oyna",Oyna,/oyna; /sunucular,Düşük,Yüksek
+1,CS 1.5 Kontrolleri ve Ayarları,cs 1.5 kontrolleri,cs 1.5 tuşları,Bilgi,/blog/cs-1-5-kontrolleri,Tablo/Liste,"Hareket, Silah Alma, İletişim",Oyna,/oyna,Düşük,Orta
+2,CS 1.5 Özel Sunucu Kurma Rehberi,cs server kurma,cs 1.5 sunucu,Bilgi/Ticari,/blog/cs-server-kurma,Adım Adım,"Neden Özel Sunucu?, Nasıl Kurulur?, Fiyatlar",Sunucu Kirala,/sunucu-kirala,Orta,Çok Yüksek
+2,CS 1.5 vs CS 1.6: Hangi Sürüm Daha İyi?,cs 1.5 ve cs 1.6 farkları,eski cs sürümleri,Bilgi,/blog/cs-1-5-ve-cs-1-6-farklari,Karşılaştırma,"Fizik Farkları, Silahlar, Topluluk",Oyna,/oyna,Orta,Orta
+3,En Popüler CS 1.5 Haritaları ve Taktikleri,cs 1.5 haritaları,de dust2 oyna,Bilgi,/blog/en-populer-cs-1-5-haritalari,Liste,"Dust2, Inferno, Assault, Taktikler",Haritaları Gör,/haritalar/de-dust2,Yüksek,Yüksek
+3,Tarayıcı Oyunlarında FPS Artırma ve Ping Düşürme,cs ping düşürme,cs fps artırma,Sorun Giderme,/blog/cs-ping-dusurme,Rehber,"Ağ Ayarları, Tarayıcı Hızlandırma",Oyna,/oyna,Orta,Yüksek
+4,Arkadaşlarla 5v5 CS Maçı Nasıl Atılır?,arkadaşlarla cs oyna,cs 5v5 server,Bilgi/Sosyal,/blog/arkadaslarla-cs-oyna,Rehber,"Özel Oda Kurma, Şifre Belirleme",Oda Kur,/sunucu-kirala; /oyna,Orta,Çok Yüksek

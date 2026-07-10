@@ -1,0 +1,7 @@
+URL,Primary Keyword,Secondary Keywords,Intent,H1,CTA,Internal Links
+/,indirmeden cs oyna,"browser cs, tarayıcıdan cs oyna",Bilgi/Navigational,Tarayıcıdan İndirmeden CS 1.5 Oyna,Hemen Oyna,/oyna; /sunucular
+/oyna,counter strike 1.5 oyna,"cs 1.5 oyna, cs online",Oyun,Counter-Strike 1.5 Online Oyna,Sunuculara Katıl,/sunucular; /sunucu-kirala
+/sunucu-kirala,cs 1.5 sunucu kiralama,"cs server kiralama, özel cs sunucusu",Ticari,CS 1.5 Sunucu Kirala & Yönet,Paketleri İncele,/oyna; /
+/sunucular,cs 1.5 sunucu,"cs server listesi, aktif cs sunucuları",Bilgi/Navigational,Aktif CS 1.5 Sunucuları,Oyna,/oyna; /sunucu-kirala
+/haritalar/de-dust2,de dust2 oyna,"dust2 online, cs 1.5 dust2",Oyun,de_dust2 Haritasını Tarayıcıda Oyna,Dust2 Oyna,/haritalar; /oyna
+/ozel-sunucu,arkadaşlarla cs oyna,"cs özel oda, şifreli cs sunucusu",Oyun/Sosyal,Arkadaşlarınla Özel CS 1.5 Sunucusu Kur,Sunucu Kur,/sunucu-kirala; /oyna

@@ -349,9 +349,16 @@ window.addEventListener('keyup', (e) => {
 }, true);
 
 // ─── SCOREBOARD GÜNCELLEME (C++ → JS) ────────────────────────────────────────
-window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlayerId) {
+window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlayerId, teamsJson) {
   try {
     const players = JSON.parse(playersJson);
+    let teams = [];
+    if (teamsJson) {
+      try {
+        teams = JSON.parse(teamsJson);
+      } catch (e) {}
+    }
+
     const sbServerName = document.getElementById('sb-server-name');
     const sbCT = document.getElementById('sb-ct-list');
     const sbT = document.getElementById('sb-t-list');
@@ -384,14 +391,12 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
       if ((b.frags ?? 0) !== (a.frags ?? 0)) return (b.frags ?? 0) - (a.frags ?? 0);
       return (a.deaths ?? 0) - (b.deaths ?? 0);
     };
-    const ts = players.filter(p => p.team && p.team.toLowerCase() === 'terrorist');
-    const specs = players.filter(p => !p.team || p.team === 'unassigned' || p.team === 'spectator');
 
-    // Daha güvenli team detection
     const ctPlayers = players.filter(p => {
       const t = (p.team || '').toLowerCase();
       return t === 'ct' || t === 'counter-terrorist' || t === 'counterterrorist';
     }).sort(sortFn);
+    
     const tPlayers = players.filter(p => {
       const t = (p.team || '').toLowerCase();
       return t === 'terrorist' || t === 't';
@@ -407,11 +412,21 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
     sbT.innerHTML = tPlayers.length ? tPlayers.map(makeRow).join('') :
       '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
     
-    // Update team counts
+    // Update team counts and scores
     const ctCountEl = document.getElementById('sb-ct-count');
     const tCountEl = document.getElementById('sb-t-count');
+    const ctScoreEl = document.getElementById('sb-ct-score');
+    const tScoreEl = document.getElementById('sb-t-score');
+
     if (ctCountEl) ctCountEl.textContent = `(${ctPlayers.length} Oyuncu)`;
     if (tCountEl) tCountEl.textContent = `(${tPlayers.length} Oyuncu)`;
+
+    if (teams && teams.length > 0) {
+      const ctTeam = teams.find(t => t.name && t.name.toUpperCase() === 'CT');
+      const tTeam = teams.find(t => t.name && t.name.toUpperCase() === 'TERRORIST');
+      if (ctScoreEl && ctTeam) ctScoreEl.textContent = ctTeam.score;
+      if (tScoreEl && tTeam) tScoreEl.textContent = tTeam.score;
+    }
 
     if (specPlayers.length > 0) {
       sbSpecContainer.style.display = 'block';
@@ -428,7 +443,6 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
 // --- BROWSERCS TEXT MENU HANDLERS ---
 window._openTextMenu = function (validSlots, textStr) {
   try {
-    document.exitPointerLock(); // Free mouse for the menu
     window.textMenuSlots = validSlots;
     const tm = document.getElementById('custom-textmenu');
     const tmTitle = document.getElementById('textmenu-title');
@@ -1546,7 +1560,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
       cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v34.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v55.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm'),
       cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
@@ -1677,6 +1691,8 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       '+rate', '100000',
       '+ex_interp', '0.01',
       '+fps_max', '100',
+      '+setinfo', '_vgui_menus', '0',
+      '+setinfo', 'vgui_menus', '0',
       // In-game console error overlay'i kapat
       '+sensitivity', '3',
       '+zoom_sensitivity_ratio', '1.2',
@@ -1715,7 +1731,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       libraries: {
         menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v55.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
         server: '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
@@ -1725,9 +1741,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
         'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v55.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
         'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
-        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
+        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
       },
 
       module: {
@@ -4587,3 +4603,37 @@ window.toggleSniperScope = function(isOpen) {
 // --- BROWSERCS: Text Menu Keyboard Shortcuts Removed ---
 // The text menu relies completely on the engine's native key handlers now.
 // This prevents the "double press" bug where JS intercepted keys.
+
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.querySelector("canvas");
+  if (!canvas) return;
+
+  document.addEventListener("pointerlockchange", () => {
+    console.log(
+      "[Browser] Pointer lock:",
+      document.pointerLockElement === canvas
+        ? "aktif"
+        : "kapandı"
+    );
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    console.log(
+      "[Browser] Fullscreen:",
+      document.fullscreenElement
+        ? "aktif"
+        : "kapandı"
+    );
+  });
+
+  canvas.addEventListener("click", async () => {
+    canvas.focus();
+    if (document.pointerLockElement !== canvas) {
+      try {
+        await canvas.requestPointerLock();
+      } catch (error) {
+        console.warn("Pointer lock alınamadı:", error);
+      }
+    }
+  });
+});
