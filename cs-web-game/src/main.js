@@ -1743,7 +1743,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
         'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
         'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
         'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
-        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
+        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
       },
 
       module: {
