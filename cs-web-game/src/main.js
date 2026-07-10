@@ -326,22 +326,6 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  // [3] Text menu açıkken 0-9: engine'e gitmesin, JS handle eder
-  const tm = document.getElementById('custom-textmenu');
-  if (tm && tm.style.display !== 'none' && window.textMenuSlots) {
-    if (e.key >= '0' && e.key <= '9') {
-      e.stopPropagation();
-      e.preventDefault();
-      const slotNum = parseInt(e.key);
-      const isZero = (slotNum === 0);
-      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-      if ((window.textMenuSlots & bitCheck) !== 0) {
-        if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
-        tm.style.display = 'none';
-      }
-      return;
-    }
-  }
 
   // [4] Tab: tarayıcı focus döngüsünü engelle + scoreboard'u göster
   if (e.key === 'Tab') {
@@ -492,12 +476,14 @@ window._openTextMenu = function (validSlots, textStr) {
           // Check if slot is valid
           const isZero = (slotNum === 0);
           const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-          if ((window.textMenuSlots & bitCheck) !== 0) {
-            btn.onclick = () => {
-              if (window.executeEngineCommand) window.executeEngineCommand(`browsercs_menuselect ${slotNum}`);
-              tm.style.display = 'none';
-            };
-          } else {
+          
+          btn.onclick = () => {
+              if ((window.textMenuSlots & bitCheck) !== 0) {
+                if (window.executeEngineCommand) window.executeEngineCommand(`menuselect ${slotNum}`);
+              }
+          };
+
+          if ((window.textMenuSlots & bitCheck) === 0) {
             btn.style.opacity = '0.4';
             btn.style.cursor = 'not-allowed';
           }
@@ -505,6 +491,7 @@ window._openTextMenu = function (validSlots, textStr) {
         } else {
           // Non-selectable text line
           const div = document.createElement('div');
+          div.className = 'menu-item';
           div.style.color = 'var(--text-dim)';
           div.style.fontSize = '0.7rem';
           div.style.padding = '0.2rem 0';
@@ -1146,34 +1133,6 @@ const tabMaps = $('tab-maps');
 const tabServers = $('tab-servers');
 const tabAdmin = $('tab-admin');
 
-// === AWP Scope CSS Overlay ===
-const scopeOverlay = document.createElement('div');
-scopeOverlay.id = 'scope-overlay';
-scopeOverlay.style.cssText = [
-  'position:fixed',
-  'inset:0',
-  'z-index:9999',
-  'pointer-events:none',
-  'display:none',
-  // Siyah maske + yuvarlak şeffaf delik — CS 1.6 ölçeği (ekran yüksekliğinin %80'si)
-  'background:radial-gradient(circle closest-side at 50% 50%, transparent 80%, rgba(0,0,0,0.97) 81%)',
-].join(';');
-// Crosshair çizgiler için overlay içi SVG
-scopeOverlay.innerHTML = `
-<svg style="position:absolute;inset:0;width:100%;height:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">
-  <!-- Yatay çizgi -->
-  <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="black" stroke-width="1" opacity="0.9"/>
-  <!-- Dikey çizgi -->
-  <line x1="50%" y1="0%" x2="50%" y2="100%" stroke="black" stroke-width="1" opacity="0.9"/>
-  <!-- Merkez kırmızı nokta -->
-  <circle cx="50%" cy="50%" r="2" fill="red"/>
-</svg>`;
-document.body.appendChild(scopeOverlay);
-
-// WASM scope sinyali — sniperscope.cpp'den EM_ASM ile çağrılır
-window._setScopeVisible = function (visible) {
-  scopeOverlay.style.display = visible ? 'block' : 'none';
-};
 
 const serverList = $('server-list');
 const btnCreateServer = $('btn-create-server');
@@ -1587,7 +1546,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
       cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v34.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v34.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v55.wasm'),
       cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
@@ -1756,7 +1715,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       libraries: {
         menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v34.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v55.wasm',
         server: '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
@@ -1766,7 +1725,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
         'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v34.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v55.wasm',
         'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
       },
@@ -4284,7 +4243,11 @@ window._execMatchCfgWithPass = async function (svPassword) {
         const reconEl = document.getElementById('reconnect-overlay');
         const kickOpen = kickEl && kickEl.classList.contains('show');
         const reconOpen = reconEl && reconEl.classList.contains('show');
-        if (!kickOpen && !reconOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
+        const tm = document.getElementById('custom-textmenu');
+        const tmOpen = tm && tm.style.display !== 'none';
+        const sb = document.getElementById('custom-scoreboard');
+        const sbOpen = sb && sb.style.display !== 'none';
+        if (!kickOpen && !reconOpen && !tmOpen && !sbOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
           escMenu.classList.add('show');
         }
       }, 80);
@@ -4613,17 +4576,14 @@ window.openAuthGate = function (msgOverride) {
   window.showMenuBackground = showMenuBg;
 })();
 
-// --- BROWSERCS: Text Menu Keyboard Shortcuts ---
-window.addEventListener('keydown', function(e) {
-  const tm = document.getElementById('custom-textmenu');
-  if (tm && tm.style.display !== 'none' && e.key >= '0' && e.key <= '9') {
-    const slotNum = parseInt(e.key);
-    const isZero = (slotNum === 0);
-    const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-    if ((window.textMenuSlots & bitCheck) !== 0) {
-      if (window.executeEngineCommand) window.executeEngineCommand(`menuselect ${slotNum}`);
-      tm.style.display = 'none';
-    }
+// --- BROWSERCS: Sniper Scope JS Overlay ---
+window.toggleSniperScope = function(isOpen) {
+  const scope = document.getElementById('custom-sniperscope');
+  if (scope) {
+    scope.style.display = isOpen ? 'block' : 'none';
   }
-});
+};
 
+// --- BROWSERCS: Text Menu Keyboard Shortcuts Removed ---
+// The text menu relies completely on the engine's native key handlers now.
+// This prevents the "double press" bug where JS intercepted keys.
