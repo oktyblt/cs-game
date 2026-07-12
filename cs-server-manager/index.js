@@ -138,7 +138,7 @@ mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
 `;
-  fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent.trim());
+  fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent);
 
   let usersIniContent = ``;
   if (serverSettings.admin_name) {
@@ -979,7 +979,7 @@ mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
 `;
-    fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent.trim());
+    fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent);
 
     let usersIniContent = ``;
     if (s_admin) {
@@ -1035,7 +1035,7 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
 
 // Start official servers on startup
 async function startOfficialServers() {
-  const officialMaps = ['de_dust2', 'de_dust', 'de_inferno', 'de_aztec', 'fy_iceworld'];
+  const officialMaps = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld'];
   let startingPort = 27015;
 
   try {
