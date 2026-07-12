@@ -189,8 +189,9 @@ sv_fileconsistency 0
   await container.start();
   
   try {
+    const mapCycleCmd = isOfficial ? ` && echo '${map}' > cstrike/mapcycle.txt` : '';
     const exec = await container.exec({
-      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\n' >> cstrike/server.cfg && echo '${map}' > cstrike/mapcycle.txt`],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\n' >> cstrike/server.cfg${mapCycleCmd}`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
@@ -1016,8 +1017,10 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
     
     try {
       const currentMap = info.Config.Labels.mapName || 'de_dust2';
+      const isOfficialContainer = info.Config.Labels.isOfficial === 'true';
+      const mapCycleCmd = isOfficialContainer ? ` && echo '${currentMap}' > cstrike/mapcycle.txt` : '';
       const exec = await container.exec({
-        Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\n' >> cstrike/server.cfg && echo '${currentMap}' > cstrike/mapcycle.txt`],
+        Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\n' >> cstrike/server.cfg${mapCycleCmd}`],
         AttachStdout: true, AttachStderr: true
       });
       await exec.start();

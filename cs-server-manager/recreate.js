@@ -58,7 +58,7 @@ async function run() {
     await container.start();
     
     const exec = await container.exec({
-      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\nsv_lan 1\\nsys_ticrate 100\\nrcon_password "browsercs"\\n' >> cstrike/server.cfg && echo '${map}' > cstrike/mapcycle.txt`],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\nsv_lan 1\\nsys_ticrate 100\\nrcon_password "browsercs"\\n' >> cstrike/server.cfg`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
