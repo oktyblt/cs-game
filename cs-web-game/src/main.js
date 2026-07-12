@@ -3094,7 +3094,7 @@ async function checkAdminRole() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  if (window.location.pathname === '/csadmin') {
+  if (window.location.search.includes('admin=1') || window.location.hash === '#csadmin') {
     // Önce rol kontrolü yap
     const isAdmin = await checkAdminRole();
     if (!isAdmin) {
@@ -3102,7 +3102,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       sessionStorage.removeItem('cs_admin_token');
       adminToken = null;
       notify('Bu sayfaya erişim yetkiniz yok!', 'error');
-      setTimeout(() => { window.location.pathname = '/'; }, 1500);
+      setTimeout(() => { window.location.href = '/oyna'; }, 1500);
       return;
     }
     if (adminToken) {
