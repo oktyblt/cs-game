@@ -421,7 +421,11 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
     if (ctCountEl) ctCountEl.textContent = `(${ctPlayers.length} Oyuncu)`;
     if (tCountEl) tCountEl.textContent = `(${tPlayers.length} Oyuncu)`;
 
-    if (teams && teams.length > 0) {
+    const totalPlayerFrags = players.reduce((sum, p) => sum + Math.abs(p.frags || 0) + Math.abs(p.deaths || 0), 0);
+    if (players.length > 0 && totalPlayerFrags === 0) {
+      if (ctScoreEl) ctScoreEl.textContent = '0';
+      if (tScoreEl) tScoreEl.textContent = '0';
+    } else if (teams && teams.length > 0) {
       const ctTeam = teams.find(t => t.name && t.name.toUpperCase() === 'CT');
       const tTeam = teams.find(t => t.name && t.name.toUpperCase() === 'TERRORIST');
       if (ctScoreEl && ctTeam) ctScoreEl.textContent = ctTeam.score;
@@ -1191,6 +1195,7 @@ function setEngineStatus(msg, state = 'orange') {
 
 function addConsoleLog(msg, cls = '') {
   // DOM elementinin hazır olup olmadığını kontrol et (Erken log yönlendirmesinde çökmeyi önler)
+
   try {
     if (typeof consoleLog === 'undefined' || !consoleLog) {
       originalLog.apply(console, [`[Erken Log] ${msg}`]);
@@ -1205,6 +1210,7 @@ function addConsoleLog(msg, cls = '') {
     originalError.apply(console, ['addConsoleLog hatası:', e]);
   }
 }
+
 
 // Güvenli konsol komutu çalıştırma yardımcısı (Doğrudan WASM _Cmd_ExecuteString çağrısı yapar)
 window.executeEngineCommand = function executeEngineCommand(cmd) {
@@ -1555,12 +1561,12 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       csServerRes, csClientRes, csMenuRes,
       fsRes, glRes,
       vDeltaRes, vRcRes, cDeltaRes, cCfgRes, serverCfgRes, cmdMenuRes,
-      dotSprBuffer, animglowSprBuffer, richoSprBuffer, shellchromeSprBuffer, crosshairsSprBuffer
+      dotSprBuffer, animglowSprBuffer, richoSprBuffer, shellchromeSprBuffer, crosshairsSprBuffer, radioSprBuffer
     ] = await Promise.all([
       cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
       cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
       cachedFetch('/wasm/dlls/cs_emscripten_wasm32_v34.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm'),
+      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v65.wasm'),
       cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm'),
       cachedFetch('/wasm/filesystem_stdio.wasm'),
       cachedFetch('/wasm/libref_webgl2.wasm'),
@@ -1574,7 +1580,8 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/animglow01.spr`),
       safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/richo1.spr`),
       safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/shellchrome.spr`),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/crosshairs.spr`)
+      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/crosshairs.spr`),
+      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/radio.spr`)
     ]);
 
     addLoadingLog(`✓ Sprite'lar yüklendi (Fallbacks aktif)`);
@@ -1731,7 +1738,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
       libraries: {
         menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
+        client: '/wasm/cl_dlls/client_emscripten_wasm32_v65.wasm',
         server: '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         render: {
           gl4es: '/wasm/libref_webgl2.wasm'
@@ -1741,7 +1748,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       filesMap: {
         'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
         'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v62.wasm',
+        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v65.wasm',
         'dlls/cs_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v34.wasm',
         'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/cs_emscripten_wasm32_v21.wasm',
       },
@@ -1991,6 +1998,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           em.FS.writeFile('/cstrike/sprites/richo1.spr', richoSprBuffer);
           em.FS.writeFile('/cstrike/sprites/shellchrome.spr', shellchromeSprBuffer);
           em.FS.writeFile('/cstrike/sprites/crosshairs.spr', crosshairsSprBuffer);
+          em.FS.writeFile('/cstrike/sprites/radio.spr', radioSprBuffer);
           // valve/sprites dizinine de yaz (bazı CS sürümleri oradan okur)
           try { em.FS.mkdir('/valve/sprites'); } catch (e) { }
           em.FS.writeFile('/valve/sprites/dot.spr', dotSprBuffer);
@@ -2006,7 +2014,6 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
             '/cstrike/sprites/gas_puff_01.spr',
             '/cstrike/sprites/voiceicon.spr',
             '/cstrike/sprites/radaropaque.spr',
-            '/cstrike/sprites/radio.spr',
             '/cstrike/sprites/sniper_scope.spr'
           ];
           missingSprites.forEach(path => em.FS.writeFile(path, dummySprBuffer));
@@ -2185,6 +2192,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
             addConsoleLog('🛒 ' + log, 'warn');
             return;
           }
+
           // İZLEM: Disconnect/kick sebebini bul
           if (log.includes('Disconnect') || log.includes('disconnect') ||
             log.includes('CRC') || log.includes('differ') ||
@@ -4332,7 +4340,6 @@ window._execMatchCfgWithPass = async function (svPassword) {
       }
     };
   }
-
   if (btnKickRecon) btnKickRecon.addEventListener('click', () => {
     kickOverlay.classList.remove('show');
     if (typeof xash !== 'undefined' && typeof engineRunning !== 'undefined' && engineRunning) {
