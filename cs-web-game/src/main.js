@@ -1286,6 +1286,336 @@ window.executeEngineCommand = function executeEngineCommand(cmd) {
   }
 }
 
+const BrowserCSReconnect = (() => {
+  const MAX_ATTEMPTS = 5;
+  const RETRY_DELAYS = [
+    1000,
+    2000,
+    3000,
+    5000,
+    8000
+  ];
+
+  let reconnecting = false;
+  let attempt = 0;
+  let retryTimer = null;
+  let lastReason = "";
+
+  const overlay =
+    document.getElementById("reconnect-overlay");
+
+  const titleEl =
+    document.getElementById("reconnect-title");
+
+  const messageEl =
+    document.getElementById("reconnect-message");
+
+  const attemptEl =
+    document.getElementById("reconnect-attempt");
+
+  const retryNowButton =
+    document.getElementById("btn-reconnect-now");
+
+  const reloadButton =
+    document.getElementById("btn-reload-game");
+
+  function setText(element, value) {
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  function showOverlay(reason) {
+    lastReason =
+      reason || "Sunucu bağlantısı kesildi.";
+
+    document.body.classList.add(
+      "browsercs-reconnecting"
+    );
+
+    if (overlay) {
+      overlay.classList.add("show");
+    }
+
+    setText(
+      titleEl,
+      "BAĞLANTI KESİLDİ"
+    );
+
+    setText(
+      messageEl,
+      `${lastReason} Yeniden bağlanılıyor...`
+    );
+
+    const escMenu =
+      document.getElementById("esc-pause-menu");
+
+    if (escMenu) {
+      escMenu.classList.remove("show");
+    }
+
+    const kickOverlay =
+      document.getElementById("kick-overlay");
+
+    if (kickOverlay) {
+      kickOverlay.classList.remove("show");
+    }
+
+    const textMenu =
+      document.getElementById("custom-textmenu");
+
+    if (textMenu) {
+      textMenu.style.display = "none";
+    }
+
+    try {
+      document.exitPointerLock();
+    } catch {
+      // Pointer lock açık değilse hata önemli değil.
+    }
+  }
+
+  function hideOverlay() {
+    document.body.classList.remove(
+      "browsercs-reconnecting"
+    );
+
+    if (overlay) {
+      overlay.classList.remove("show");
+    }
+  }
+
+  function clearRetryTimer() {
+    if (retryTimer !== null) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+  }
+
+  function sanitizeEngineArgument(value) {
+    return String(value || "")
+      .replace(/["\\;\r\n]/g, "");
+  }
+
+  function restorePassword() {
+    const port =
+      typeof connectPort !== "undefined"
+        ? connectPort
+        : "";
+
+    const storedPassword =
+      sessionStorage.getItem(
+        `_csLastPw_${port}`
+      );
+
+    if (
+      storedPassword &&
+      typeof executeEngineCommand === "function"
+    ) {
+      const safePassword =
+        sanitizeEngineArgument(
+          storedPassword
+        );
+
+      executeEngineCommand(
+        `password "${safePassword}"`
+      );
+    }
+  }
+
+  function runRetry() {
+    if (!reconnecting) {
+      return;
+    }
+
+    if (
+      typeof engineRunning === "undefined" ||
+      !engineRunning ||
+      typeof executeEngineCommand !== "function"
+    ) {
+      setText(
+        messageEl,
+        "Oyun motoru yanıt vermiyor. Sayfa yenilenecek..."
+      );
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+      return;
+    }
+
+    if (attempt >= MAX_ATTEMPTS) {
+      setText(
+        titleEl,
+        "BAĞLANTI KURULAMADI"
+      );
+
+      setText(
+        messageEl,
+        "Sunucuya otomatik olarak bağlanılamadı. Tekrar deneyebilir veya sayfayı yenileyebilirsiniz."
+      );
+
+      setText(
+        attemptEl,
+        `${MAX_ATTEMPTS} deneme tamamlandı`
+      );
+
+      return;
+    }
+
+    attempt += 1;
+
+    setText(
+      attemptEl,
+      `Deneme ${attempt}/${MAX_ATTEMPTS}`
+    );
+
+    setText(
+      messageEl,
+      "Sunucuya yeniden bağlanılıyor..."
+    );
+
+    /*
+     * GameUI her ihtimale karşı kapalı kalsın.
+     * Bir kez göndermek yeterlidir.
+     */
+    executeEngineCommand(
+      "setinfo _vgui_menus 0"
+    );
+
+    restorePassword();
+
+    /*
+     * Xash'ın yerleşik retry komutu önceki sunucu
+     * bilgisini kullanır ve bağlantıyı yeniden başlatır.
+     */
+    executeEngineCommand("retry");
+
+    const nextDelay =
+      RETRY_DELAYS[
+        Math.min(
+          attempt,
+          RETRY_DELAYS.length - 1
+        )
+      ];
+
+    retryTimer = setTimeout(
+      runRetry,
+      nextDelay
+    );
+  }
+
+  function start(reason) {
+    /*
+     * Aynı kopma WebSocket, engine logu ve C++ eventi
+     * tarafından aynı anda bildirilebilir.
+     */
+    if (reconnecting) {
+      return;
+    }
+
+    reconnecting = true;
+    attempt = 0;
+
+    showOverlay(reason);
+
+    clearRetryTimer();
+
+    retryTimer = setTimeout(
+      runRetry,
+      RETRY_DELAYS[0]
+    );
+  }
+
+  function connected() {
+    if (!reconnecting) {
+      return;
+    }
+
+    reconnecting = false;
+    attempt = 0;
+
+    clearRetryTimer();
+    hideOverlay();
+
+    setText(
+      messageEl,
+      "Bağlantı kuruldu."
+    );
+
+    const canvas =
+      document.getElementById("canvas");
+
+    if (canvas) {
+      canvas.focus();
+    }
+  }
+
+  function retryNow() {
+    if (!reconnecting) {
+      reconnecting = true;
+      showOverlay(lastReason);
+    }
+
+    attempt = 0;
+    clearRetryTimer();
+    runRetry();
+  }
+
+  if (retryNowButton) {
+    retryNowButton.addEventListener(
+      "click",
+      retryNow
+    );
+  }
+
+  if (reloadButton) {
+    reloadButton.addEventListener(
+      "click",
+      () => window.location.reload()
+    );
+  }
+
+  return {
+    start,
+    connected,
+    retryNow,
+    get reconnecting() {
+      return reconnecting;
+    }
+  };
+})();
+
+window.BrowserCSReconnect = BrowserCSReconnect;
+
+window.addEventListener(
+  "browsercs-connection-state",
+  (event) => {
+    const state = event.detail?.state;
+
+    if (state === "disconnected") {
+      BrowserCSReconnect.start(
+        "Sunucu bağlantısı kesildi."
+      );
+      return;
+    }
+
+    if (state === "active") {
+      BrowserCSReconnect.connected();
+    }
+  }
+);
+
+window.addEventListener(
+  "xash3d-ws-closed",
+  () => {
+    BrowserCSReconnect.start(
+      "Ağ bağlantısı beklenmedik şekilde kapandı."
+    );
+  }
+);
+
 function addLoadingLog(msg, cls = '') {
   const p = document.createElement('p');
   if (cls) p.className = cls;
@@ -1792,9 +2122,21 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
           if (imports['wasi_snapshot_preview1']) patchResize(imports['wasi_snapshot_preview1']);
 
           WebAssembly.instantiate(wasmBinary, imports).then(output => {
-            memRef = output.instance.exports.memory;
-            window.wasmMemory = memRef; // Expose globally so Net.sendto can read the always-valid buffer!
-            console.log('[Memory] WASM hafızası alındı:', Math.round(memRef.buffer.byteLength / 1048576), 'MB');
+            memRef = output.instance.exports.memory || (imports && imports.env && imports.env.memory) || window.wasmMemory;
+            if (!memRef && output.instance.exports) {
+              for (const key in output.instance.exports) {
+                if (output.instance.exports[key] instanceof WebAssembly.Memory) {
+                  memRef = output.instance.exports[key];
+                  break;
+                }
+              }
+            }
+            if (memRef && memRef.buffer) {
+              window.wasmMemory = memRef; // Expose globally so Net.sendto can read the always-valid buffer!
+              console.log('[Memory] WASM hafızası alındı:', Math.round(memRef.buffer.byteLength / 1048576), 'MB');
+            } else {
+              console.warn('[Memory] WASM hafıza referansı exports veya imports.env içinde bulunamadı.');
+            }
             successCallback(output.instance, output.module);
           }).catch(e => {
             console.error('[WASM] instantiate hatası:', e);
@@ -2085,6 +2427,46 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
 
         }],
         print: (log) => {
+          if (
+            window.BrowserCSReconnect &&
+            typeof log === "string"
+          ) {
+            const retryablePatterns = [
+              /server connection timed out/i,
+              /connection to server lost/i,
+              /connection lost/i,
+              /couldn't connect/i,
+              /could not connect/i,
+              /network error/i,
+              /connection failed/i,
+              /server is not responding/i
+            ];
+
+            const nonRetryablePatterns = [
+              /you have been kicked/i,
+              /kicked by server/i,
+              /banned/i,
+              /bad password/i,
+              /server is full/i
+            ];
+
+            const isNonRetryable =
+              nonRetryablePatterns.some(
+                (pattern) => pattern.test(log)
+              );
+
+            const isRetryable =
+              retryablePatterns.some(
+                (pattern) => pattern.test(log)
+              );
+
+            if (isRetryable && !isNonRetryable) {
+              window.BrowserCSReconnect.start(
+                log.trim()
+              );
+            }
+          }
+
           if (log.includes('Could not get TCP/IPv6 address')) return;
           if (log.includes('File exists from loopback')) return;
           if (log.includes('ScriptProcessorNode')) return;
@@ -2309,49 +2691,6 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       }
     });
 
-    // ── Reconnect butonu ─────────────────────────────────────────
-    const reconnectOverlay = document.getElementById('reconnect-overlay');
-    const btnReconnect = document.getElementById('btn-reconnect');
-    if (btnReconnect) {
-      btnReconnect.addEventListener('click', () => {
-        if (reconnectOverlay) reconnectOverlay.classList.remove('show');
-        // Motora yeniden bağlan komutu gönder
-        if (xash && engineRunning) {
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          // Reconnect: önceki şifre sessionStorage'da varsa tekrar gönder
-          const storedPw = sessionStorage.getItem('_csLastPw_' + (typeof connectPort !== 'undefined' ? connectPort : ''));
-          if (storedPw) executeEngineCommand('password "' + storedPw + '"');
-          executeEngineCommand('connect 10.0.0.1:27015');
-        }
-      });
-    }
-
-    // WebSocket kapanınca reconnect overlay göster ve otomatik yeniden bağlan
-    let _activeConnectPort = connectPort; // map change sonrası yeniden kullanmak için
-    let _activeMapName = mapName;
-    let _isClientMode = !isHost && connectPort && connectPort !== 'listen' && connectPort !== true;
-
-    window.addEventListener('xash3d-ws-closed', () => {
-      if (reconnectOverlay) reconnectOverlay.classList.add('show');
-      // İstemci modundaysa (dedicated sunucuya bağlıysa) 3sn sonra otomatik reconnect dene
-      if (_isClientMode && _activeConnectPort) {
-        setTimeout(() => {
-          if (xash && engineRunning) {
-            console.log('[Map Change] Auto-reconnect tetiklendi, sunucuya yeniden bağlanılıyor...');
-            if (typeof addConsoleLog === 'function') addConsoleLog('Harita değişti — sunucuya yeniden bağlanılıyor...', 'ok');
-            executeEngineCommand('setinfo _vgui_menus 0');
-            executeEngineCommand('setinfo _vgui_menus 0');
-            executeEngineCommand('setinfo _vgui_menus 0');
-            const storedPw = sessionStorage.getItem('_csLastPw_' + (_activeConnectPort || ''));
-            if (storedPw) executeEngineCommand('password "' + storedPw + '"');
-            executeEngineCommand('connect 10.0.0.1:27015');
-            if (reconnectOverlay) reconnectOverlay.classList.remove('show');
-          }
-        }, 3000);
-      }
-    });
 
     // Focus canvas automatically on click
     gameCanvas.addEventListener('click', () => {
@@ -4644,3 +4983,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// --- BROWSERCS: Damage Indicator Overlay ---
+window.onDamageInfoReceived = function(damage, hitgroup) {
+  const container = document.getElementById('damage-indicator-container');
+  if (!container) return;
+
+  const dmgEl = document.createElement('div');
+  dmgEl.className = 'damage-indicator';
+  dmgEl.innerText = '-' + damage;
+
+  // Add a slight random offset so multiple numbers don't overlap completely
+  const offsetX = (Math.random() * 60 - 30) + 'px';
+  const offsetY = (Math.random() * 60 - 30) + 'px';
+  dmgEl.style.setProperty('--dx', offsetX);
+  dmgEl.style.setProperty('--dy', offsetY);
+
+  // If headshot, make it red and bigger
+  if (hitgroup === 1) { // HITGROUP_HEAD = 1
+    dmgEl.classList.add('headshot');
+  }
+
+  container.appendChild(dmgEl);
+
+  // Remove after animation completes (1000ms matching CSS)
+  setTimeout(() => {
+    if (dmgEl.parentNode === container) {
+      container.removeChild(dmgEl);
+    }
+  }, 1000);
+};

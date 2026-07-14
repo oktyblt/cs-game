@@ -1046,59 +1046,83 @@
       }
     }
 
-    /* RECONNECT OVERLAY */
-    #reconnect-overlay {
-      position: absolute;
+    /* RECONNECT OVERLAY (Two-tier kiosk mode) */
+    .connection-overlay {
+      position: fixed;
       inset: 0;
-      z-index: 2200;
-      background: rgba(0, 0, 0, 0.88);
-      backdrop-filter: blur(8px);
+      z-index: 2147483647;
+
       display: none;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1.1rem;
+
+      background: #030609;
+      color: #e8edf2;
+      font-family: "Rajdhani", sans-serif;
+
+      pointer-events: all;
     }
 
-    #reconnect-overlay.show {
+    .connection-overlay.show {
       display: flex;
     }
 
-    .reconnect-icon {
-      font-size: 3rem;
+    .connection-box {
+      width: min(420px, calc(100vw - 40px));
+      padding: 32px;
+
+      text-align: center;
+
+      background: #090e14;
+      border: 1px solid #f0a000;
+      box-shadow:
+        0 0 40px rgba(0, 0, 0, 0.9),
+        0 0 18px rgba(240, 160, 0, 0.18);
     }
 
-    .reconnect-title {
-      font-family: var(--font-title);
-      font-size: 1.5rem;
-      color: var(--cs-red);
-      letter-spacing: 0.05em;
+    .connection-box h2 {
+      margin: 18px 0 8px;
+      color: #f0a000;
+      letter-spacing: 2px;
     }
 
-    .reconnect-msg {
-      font-family: var(--font-hud);
-      font-size: 0.75rem;
-      color: var(--text-dim);
-    }
+    .connection-box button {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
 
-    #btn-reconnect {
-      background: var(--cs-yellow);
-      color: #050810;
-      font-family: var(--font-title);
-      font-size: 0.95rem;
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      padding: 0.7rem 2.5rem;
-      border: none;
-      border-radius: 4px;
       cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 20px rgba(240, 160, 0, 0.4);
+
+      color: #f0a000;
+      background: #111923;
+      border: 1px solid #704b00;
     }
 
-    #btn-reconnect:hover {
-      filter: brightness(1.12);
-      transform: translateY(-2px);
+    .connection-spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto;
+
+      border: 4px solid #26313b;
+      border-top-color: #f0a000;
+      border-radius: 50%;
+
+      animation: connection-spin 0.8s linear infinite;
+    }
+
+    @keyframes connection-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /*
+     * Reconnect sırasında engine canvas'ını tamamen gizle.
+     * Böylece eski GameUI veya son oyun karesi bir an bile görünmez.
+     */
+    body.browsercs-reconnecting #canvas {
+      visibility: hidden !important;
     }
 
     /* LOADING */
@@ -1533,6 +1557,38 @@
       .server-thumb-map-text {
         font-size: 0.9rem;
       }
+    }
+    #damage-indicator-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9998;
+    }
+    .damage-indicator {
+      position: absolute;
+      top: calc(50% + var(--dy, 0px));
+      left: calc(50% + var(--dx, 0px));
+      color: #ffcc00;
+      font-family: var(--font-hud), "Courier New", monospace;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 5px rgba(255,0,0,0.8);
+      transform: translate(-50%, -50%);
+      animation: damage-fadeout 1s forwards ease-out;
+    }
+    .damage-indicator.headshot {
+      color: #ff0000;
+      font-size: 32px;
+      text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 0 8px rgba(255,255,0,0.8);
+    }
+    @keyframes damage-fadeout {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+      15% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      30% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+      100% { opacity: 0; transform: translate(-50%, calc(-50% - 40px)) scale(1.0); }
     }
     #custom-sniperscope {
       display: none;
@@ -2278,6 +2334,9 @@
           <div class="sniper-dot"></div>
         </div>
 
+        <!-- HTML Damage Indicator Container -->
+        <div id="damage-indicator-container"></div>
+
         <!-- Custom BROWSERCS menu background - shown over canvas when in CS menu state -->
         <div id="cs-menu-bg" style="
           position:absolute;
@@ -2453,14 +2512,16 @@
           </div>
         </div>
 
-        <!-- Reconnect overlay (updated with kick reason) -->
-        <div id="reconnect-overlay">
-          <div class="reconnect-icon">🔌</div>
-          <div class="reconnect-title" id="reconnect-title">BAĞLANTI KESİLDİ</div>
-          <div class="reconnect-msg" id="reconnect-msg">Sunucu bağlantısı koptu</div>
-          <button id="btn-reconnect">🔄 YENİDEN BAĞLAN</button>
-          <button class="toolbar-btn danger" onclick="location.reload()"
-            style="margin-top:0.3rem;padding:0.45rem 1.5rem;">Sayfayı Yenile</button>
+        <!-- Reconnect overlay (two-tier kiosk mode) -->
+        <div id="reconnect-overlay" class="connection-overlay">
+          <div class="connection-box">
+            <div class="connection-spinner"></div>
+            <h2 id="reconnect-title">BAĞLANTI KESİLDİ</h2>
+            <p id="reconnect-message">Sunucuya yeniden bağlanılıyor...</p>
+            <p id="reconnect-attempt">Deneme 1/5</p>
+            <button id="btn-reconnect-now" type="button">ŞİMDİ TEKRAR DENE</button>
+            <button id="btn-reload-game" type="button">SAYFAYI YENİLE</button>
+          </div>
         </div>
 
         <!-- Kick / Disconnect reason overlay -->
