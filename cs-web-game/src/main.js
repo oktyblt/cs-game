@@ -4985,7 +4985,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- BROWSERCS: Damage Indicator Overlay ---
-window.onDamageInfoReceived = function(damage, hitgroup) {
+window.onDamageInfoReceived = function(damage, hitgroup, flags) {
   const container = document.getElementById('damage-indicator-container');
   if (!container) return;
 
