@@ -80,6 +80,12 @@ const docker = new Docker(); // Connects to local docker socket by default
 const PORT = process.env.PORT || 4000;
 const DOCKER_IMAGE = process.env.DOCKER_IMAGE || 'xash3d-cs15-server:latest';
 
+const getNextMapName = (currentMap) => {
+  const officialRotation = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld'];
+  const idx = officialRotation.indexOf(currentMap);
+  return idx !== -1 ? officialRotation[(idx + 1) % officialRotation.length] : 'de_dust2';
+};
+
 // Utility to create a server
 async function createServerContainer(options) {
   const { map, maxplayers, name, port, isOfficial, owner_id } = options;
@@ -137,6 +143,7 @@ mp_roundtime ${serverSettings.round_time}
 mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
+browsercs_nextmap "${getNextMapName(map)}"
 `;
   fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent);
 
@@ -191,7 +198,7 @@ sv_fileconsistency 0
   try {
     const mapCycleCmd = isOfficial ? ` && echo '${map}' > cstrike/mapcycle.txt` : '';
     const exec = await container.exec({
-      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\n' >> cstrike/server.cfg${mapCycleCmd}`],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\nsv_restartround 1\nbrowsercs_nextmap "${getNextMapName(map)}"\n' >> cstrike/server.cfg${mapCycleCmd}`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
@@ -978,6 +985,7 @@ mp_roundtime ${s_round}
 mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
+browsercs_nextmap "${getNextMapName(dbServer.map || 'de_dust2')}"
 `;
     fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent);
 
@@ -1020,7 +1028,7 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
       const isOfficialContainer = info.Config.Labels.isOfficial === 'true';
       const mapCycleCmd = isOfficialContainer ? ` && echo '${currentMap}' > cstrike/mapcycle.txt` : '';
       const exec = await container.exec({
-        Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\n' >> cstrike/server.cfg${mapCycleCmd}`],
+        Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_restartround 1\nbrowsercs_nextmap "${getNextMapName(currentMap)}"\n' >> cstrike/server.cfg${mapCycleCmd}`],
         AttachStdout: true, AttachStderr: true
       });
       await exec.start();
