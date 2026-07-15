@@ -258,10 +258,58 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
     if (typeof url === 'string' && url.startsWith('ws://') && location.protocol === 'https:') {
       url = url.replace('ws://', 'wss://');
     }
-    if (protocols !== undefined) {
-      return new OriginalWebSocket(url, protocols);
+    const socket = protocols !== undefined
+      ? new OriginalWebSocket(url, protocols)
+      : new OriginalWebSocket(url);
+
+    let isGameRelay = false;
+    try {
+      const relayUrl = new URL(url, window.location.href);
+      isGameRelay =
+        relayUrl.hostname === "backend.browsercs.com" &&
+        relayUrl.pathname.startsWith("/ws/");
+    } catch {
+      isGameRelay = false;
     }
-    return new OriginalWebSocket(url);
+
+    if (isGameRelay) {
+      const dispatchConnectionState = (state, reason = "") => {
+        window.dispatchEvent(
+          new CustomEvent("browsercs-connection-state", {
+            detail: { state, reason }
+          })
+        );
+      };
+
+      const handleFirstMessage = () => {
+        socket.removeEventListener(
+          "message",
+          handleFirstMessage
+        );
+        dispatchConnectionState("active");
+      };
+
+      socket.addEventListener(
+        "message",
+        handleFirstMessage
+      );
+
+      socket.addEventListener("close", (event) => {
+        dispatchConnectionState(
+          "disconnected",
+          event.reason || "WebSocket bağlantısı kapandı."
+        );
+      });
+
+      socket.addEventListener("error", () => {
+        dispatchConnectionState(
+          "disconnected",
+          "WebSocket bağlantı hatası."
+        );
+      });
+    }
+
+    return socket;
   }
 
   PatchedWebSocket.prototype = OriginalWebSocket.prototype;
@@ -1297,6 +1345,7 @@ const BrowserCSReconnect = (() => {
   ];
 
   let reconnecting = false;
+  let exhausted = false;
   let attempt = 0;
   let retryTimer = null;
   let lastReason = "";
@@ -1399,9 +1448,7 @@ const BrowserCSReconnect = (() => {
 
   function restorePassword() {
     const port =
-      typeof connectPort !== "undefined"
-        ? connectPort
-        : "";
+      window._browserCSConnectPort || "";
 
     const storedPassword =
       sessionStorage.getItem(
@@ -1433,19 +1480,31 @@ const BrowserCSReconnect = (() => {
       !engineRunning ||
       typeof executeEngineCommand !== "function"
     ) {
-      setText(
-        messageEl,
-        "Oyun motoru yanıt vermiyor. Sayfa yenilenecek..."
+      reconnecting = false;
+      exhausted = true;
+      clearRetryTimer();
+      showOverlay(
+        "Oyun motoru yeniden bağlantı komutuna yanıt vermiyor."
       );
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      setText(
+        titleEl,
+        "BAĞLANTI KURULAMADI"
+      );
 
+      setText(
+        messageEl,
+        "Sayfayı yenileyerek tekrar deneyebilirsiniz."
+      );
       return;
     }
 
     if (attempt >= MAX_ATTEMPTS) {
+      reconnecting = false;
+      exhausted = true;
+      clearRetryTimer();
+      showOverlay(lastReason);
+
       setText(
         titleEl,
         "BAĞLANTI KURULAMADI"
@@ -1465,16 +1524,6 @@ const BrowserCSReconnect = (() => {
     }
 
     attempt += 1;
-
-    setText(
-      attemptEl,
-      `Deneme ${attempt}/${MAX_ATTEMPTS}`
-    );
-
-    setText(
-      messageEl,
-      "Sunucuya yeniden bağlanılıyor..."
-    );
 
     /*
      * GameUI her ihtimale karşı kapalı kalsın.
@@ -1511,14 +1560,15 @@ const BrowserCSReconnect = (() => {
      * Aynı kopma WebSocket, engine logu ve C++ eventi
      * tarafından aynı anda bildirilebilir.
      */
-    if (reconnecting) {
+    if (reconnecting || exhausted) {
       return;
     }
 
     reconnecting = true;
+    exhausted = false;
     attempt = 0;
-
-    showOverlay(reason);
+    lastReason =
+      reason || "Sunucu bağlantısı kesildi.";
 
     clearRetryTimer();
 
@@ -1534,6 +1584,7 @@ const BrowserCSReconnect = (() => {
     }
 
     reconnecting = false;
+    exhausted = false;
     attempt = 0;
 
     clearRetryTimer();
@@ -1555,12 +1606,30 @@ const BrowserCSReconnect = (() => {
   function retryNow() {
     if (!reconnecting) {
       reconnecting = true;
-      showOverlay(lastReason);
     }
 
+    exhausted = false;
     attempt = 0;
+    hideOverlay();
     clearRetryTimer();
     runRetry();
+  }
+
+  function prepareConnection() {
+    reconnecting = false;
+    exhausted = false;
+    attempt = 0;
+    clearRetryTimer();
+    hideOverlay();
+  }
+
+  function nonRetryable(reason) {
+    lastReason = reason || lastReason;
+    reconnecting = false;
+    exhausted = true;
+    attempt = 0;
+    clearRetryTimer();
+    hideOverlay();
   }
 
   if (retryNowButton) {
@@ -1581,6 +1650,8 @@ const BrowserCSReconnect = (() => {
     start,
     connected,
     retryNow,
+    prepareConnection,
+    nonRetryable,
     get reconnecting() {
       return reconnecting;
     }
@@ -1596,13 +1667,21 @@ window.addEventListener(
 
     if (state === "disconnected") {
       BrowserCSReconnect.start(
-        "Sunucu bağlantısı kesildi."
+        event.detail?.reason ||
+          "Sunucu bağlantısı kesildi."
       );
       return;
     }
 
     if (state === "active") {
       BrowserCSReconnect.connected();
+      return;
+    }
+
+    if (state === "non-retryable") {
+      BrowserCSReconnect.nonRetryable(
+        event.detail?.reason || ""
+      );
     }
   }
 );
@@ -1781,6 +1860,15 @@ function fsMkdirP(em, fullPath) {
 // ─── Engine Başlatma ──────────────────────────────────────────────────────────
 
 async function initEngine(mapName, connectPort = null, isHost = false) {
+  if (connectPort && connectPort !== "listen") {
+    BrowserCSReconnect.prepareConnection();
+  }
+
+  window._browserCSConnectPort =
+    connectPort && connectPort !== "listen"
+      ? String(connectPort)
+      : "";
+
   if (engineRunning && xash) {
     if (connectPort) {
       // Zaten açıksa konsol komutu ile bağlan
@@ -2460,7 +2548,11 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
                 (pattern) => pattern.test(log)
               );
 
-            if (isRetryable && !isNonRetryable) {
+            if (isNonRetryable) {
+              window.BrowserCSReconnect.nonRetryable(
+                log.trim()
+              );
+            } else if (isRetryable) {
               window.BrowserCSReconnect.start(
                 log.trim()
               );
@@ -4606,11 +4698,14 @@ window._execMatchCfgWithPass = async function (svPassword) {
         const reconEl = document.getElementById('reconnect-overlay');
         const kickOpen = kickEl && kickEl.classList.contains('show');
         const reconOpen = reconEl && reconEl.classList.contains('show');
+        const reconActive =
+          window.BrowserCSReconnect &&
+          window.BrowserCSReconnect.reconnecting;
         const tm = document.getElementById('custom-textmenu');
         const tmOpen = tm && tm.style.display !== 'none';
         const sb = document.getElementById('custom-scoreboard');
         const sbOpen = sb && sb.style.display !== 'none';
-        if (!kickOpen && !reconOpen && !tmOpen && !sbOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
+        if (!kickOpen && !reconOpen && !reconActive && !tmOpen && !sbOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
           escMenu.classList.add('show');
         }
       }, 80);
@@ -4649,10 +4744,9 @@ window._execMatchCfgWithPass = async function (svPassword) {
     { r: /you have been kicked/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Yonetici tarafindan sunucudan atildiniz.' },
     { r: /kicked by server/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
     { r: /idle.*kick|afk.*kick/i, title: 'HAREKETSIZLIK', reason: 'Uzun sure hareketsizlik nedeniyle sunucudan otomatik atildiniz.' },
-    { r: /connection to server lost/i, title: 'BAGLANTI KESILDI', reason: 'Sunucu baglantisi beklenmedik sekilde kapandi.' },
+    { r: /banned/i, title: 'SUNUCU ERISIMI REDDEDILDI', reason: 'Bu sunucuya girisiniz engellenmis.' },
     { r: /server is full/i, title: 'SUNUCU DOLU', reason: 'Sunucuda yer kalmadigi icin baglantiniz reddedildi.' },
     { r: /bad password/i, title: 'HATALI SIFRE', reason: 'Sunucu sifresi hatali.' },
-    { r: /disconnect:/i, title: 'BAGLANTI KESILDI', reason: 'Sunucu baglantisi kesildi.' },
   ];
 
   window._showKickOverlay = function (title, reason) {
@@ -4673,6 +4767,9 @@ window._execMatchCfgWithPass = async function (svPassword) {
       const lower = msg.toLowerCase();
       for (const p of KICK_PATTERNS) {
         if (p.r.test(lower)) {
+          if (window.BrowserCSReconnect) {
+            window.BrowserCSReconnect.nonRetryable(msg);
+          }
           setTimeout(function () { window._showKickOverlay(p.title, p.reason); }, 500);
           break;
         }
