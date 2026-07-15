@@ -18,18 +18,15 @@ new g_pendingAttacker[33];
 new g_pendingHitgroup[33];
 new Float:g_healthBeforeDamage[33];
 
-public plugin_precache()
+public plugin_init()
 {
+	register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR);
+
 	gmsgDamageInfo = engfunc(
 		EngFunc_RegUserMsg,
 		"DamageInfo",
 		DAMAGEINFO_SIZE
 	);
-}
-
-public plugin_init()
-{
-	register_plugin(PLUGIN_NAME, PLUGIN_VERSION, PLUGIN_AUTHOR);
 
 	RegisterHam(
 		Ham_TraceAttack,
@@ -53,7 +50,11 @@ public plugin_init()
 	);
 }
 
+#if AMXX_VERSION_NUM >= 183
 public client_disconnected(id)
+#else
+public client_disconnect(id)
+#endif
 {
 	BrowserCS_ClearDamageState(id);
 }
@@ -182,10 +183,11 @@ public BrowserCS_OnTakeDamagePost(
 
 	if (damageValue > 0 && gmsgDamageInfo > 0)
 	{
-		message_begin(
+		engfunc(
+			EngFunc_MessageBegin,
 			MSG_ONE,
 			gmsgDamageInfo,
-			_,
+			0,
 			attacker
 		);
 

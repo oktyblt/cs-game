@@ -3,6 +3,7 @@
 #define PLUGIN_NAME "BrowserCS Chat Commands"
 #define PLUGIN_VERSION "1.0.0"
 #define PLUGIN_AUTHOR "BrowserCS"
+#define SERVER_CONFIG_PATH "server.cfg"
 
 new g_browsercsNextMap;
 
@@ -18,6 +19,59 @@ public plugin_init()
 
 	register_clcmd("say", "BrowserCS_HandleSay");
 	register_clcmd("say_team", "BrowserCS_HandleSay");
+}
+
+public plugin_cfg()
+{
+	BrowserCS_LoadNextMapConfig();
+}
+
+stock BrowserCS_LoadNextMapConfig()
+{
+	new line[192];
+	new lineNumber;
+	new textLength;
+
+	while (
+		read_file(
+			SERVER_CONFIG_PATH,
+			lineNumber,
+			line,
+			charsmax(line),
+			textLength
+		)
+	)
+	{
+		lineNumber++;
+		trim(line);
+
+		if (
+			!line[0] ||
+			line[0] == ';' ||
+			(line[0] == '/' && line[1] == '/')
+		)
+		{
+			continue;
+		}
+
+		new cvarName[64];
+		new cvarValue[64];
+
+		parse(
+			line,
+			cvarName,
+			charsmax(cvarName),
+			cvarValue,
+			charsmax(cvarValue)
+		);
+
+		if (!equali(cvarName, "browsercs_nextmap"))
+			continue;
+
+		remove_quotes(cvarValue);
+		trim(cvarValue);
+		set_pcvar_string(g_browsercsNextMap, cvarValue);
+	}
 }
 
 public BrowserCS_HandleSay(id)
