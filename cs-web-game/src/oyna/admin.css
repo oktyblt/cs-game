@@ -1,0 +1,31 @@
+#master-admin-panel .ma-nav-btn {
+          display:block;width:100%;text-align:left;padding:0.65rem 0.9rem;margin:0;
+          border:1px solid transparent;border-radius:4px;background:transparent;
+          color:var(--text-dim);font-family:var(--font-hud);font-size:0.78rem;cursor:pointer;
+        }
+        #master-admin-panel .ma-nav-btn:hover { color:var(--text-bright);background:rgba(255,255,255,0.04); }
+        #master-admin-panel .ma-nav-btn.active {
+          color:var(--cs-yellow);border-color:rgba(255,200,0,0.35);background:rgba(255,200,0,0.08);
+        }
+        #master-admin-panel .ma-view { display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden; }
+        #master-admin-panel .ma-view.active { display:flex; }
+        #master-admin-panel .ma-table-wrap { flex:1;overflow:auto;border:1px solid var(--border);border-radius:6px; }
+        #master-admin-panel table.ma-table { width:100%;border-collapse:collapse;font-family:var(--font-hud);font-size:0.72rem;text-align:left; }
+        #master-admin-panel table.ma-table th {
+          position:sticky;top:0;background:rgba(8,12,18,0.95);padding:0.55rem 0.5rem;
+          border-bottom:1px solid var(--border-bright);color:var(--text-dim);white-space:nowrap;
+        }
+        #master-admin-panel table.ma-table td {
+          padding:0.5rem;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap;
+        }
+        #master-admin-panel .ma-stat {
+          background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem;min-width:120px;flex:1;
+        }
+        #master-admin-panel .ma-stat .label { color:var(--text-dim);font-size:0.65rem;font-family:var(--font-hud);margin-bottom:0.35rem; }
+        #master-admin-panel .ma-stat .value { color:var(--cs-yellow);font-size:1.4rem;font-family:var(--font-title); }
+        #master-admin-panel .ma-toolbar { display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.85rem; }
+        #master-admin-panel .ma-input {
+          background:var(--bg-deep);border:1px solid var(--border);color:var(--text-bright);
+          padding:0.4rem 0.6rem;border-radius:4px;font-family:var(--font-ui);font-size:0.75rem;
+        }
+        #master-admin-panel select.ma-input { cursor:pointer; }

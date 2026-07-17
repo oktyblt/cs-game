@@ -1,177 +1,26 @@
-// CUSTOM MODALS — CS Temalı (Alert / Confirm / Prompt)
-function csModalShow(el) { if (el) { el.style.display = 'flex'; } }
-function csModalHide(el) { if (el) { el.style.display = 'none'; } }
-
-window.customAlert = function (msg, title = 'BİLGİ') {
-  return new Promise(resolve => {
-    const modal = document.getElementById('custom-alert-modal');
-    const titleEl = document.getElementById('custom-alert-title');
-    const msgEl = document.getElementById('custom-alert-message');
-    const btnOk = document.getElementById('btn-custom-alert-ok');
-    if (!modal || !btnOk) {
-      // Fallback: native alert yok, sadece console
-      console.warn('[customAlert]', msg);
-      resolve();
-      return;
-    }
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl) msgEl.innerHTML = msg.replace(/\n/g, '<br/>');
-    csModalShow(modal);
-
-    const onOk = () => {
-      csModalHide(modal);
-      btnOk.removeEventListener('click', onOk);
-      document.removeEventListener('keydown', onKey);
-      resolve();
-    };
-    const onKey = (e) => { if (e.key === 'Enter' || e.key === 'Escape') onOk(); };
-    btnOk.addEventListener('click', onOk);
-    document.addEventListener('keydown', onKey);
-  });
-};
-
-window.customPrompt = function (msg, defaultVal = '', title = 'GİRDİ BEKLENİYOR') {
-  return new Promise(resolve => {
-    const modal = document.getElementById('custom-prompt-modal');
-    const titleEl = document.getElementById('custom-prompt-title');
-    const msgEl = document.getElementById('custom-prompt-message');
-    const inputEl = document.getElementById('custom-prompt-input');
-    const btnOk = document.getElementById('btn-custom-prompt-ok');
-    const btnCan = document.getElementById('btn-custom-prompt-cancel');
-    if (!modal || !btnOk || !inputEl) {
-      console.warn('[customPrompt]', msg);
-      resolve(defaultVal || null);
-      return;
-    }
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl) msgEl.textContent = msg;
-    inputEl.value = defaultVal;
-    inputEl.type = (msg.toLowerCase().includes('şifre') || msg.toLowerCase().includes('password')) ? 'password' : 'text';
-    csModalShow(modal);
-    setTimeout(() => inputEl.focus(), 80);
-
-    const cleanup = () => {
-      csModalHide(modal);
-      btnOk.removeEventListener('click', onOk);
-      if (btnCan) btnCan.removeEventListener('click', onCancel);
-      document.removeEventListener('keydown', onKey);
-    };
-    const onOk = () => { cleanup(); resolve(inputEl.value); };
-    const onCancel = () => { cleanup(); resolve(null); };
-    const onKey = (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); onOk(); }
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-    };
-    btnOk.addEventListener('click', onOk);
-    if (btnCan) btnCan.addEventListener('click', onCancel);
-    document.addEventListener('keydown', onKey);
-  });
-};
-
-window.customConfirm = function (msg, title = 'ONAY') {
-  return new Promise(resolve => {
-    const modal = document.getElementById('custom-confirm-modal');
-    const titleEl = document.getElementById('custom-confirm-title');
-    const msgEl = document.getElementById('custom-confirm-message');
-    const btnOk = document.getElementById('btn-custom-confirm-ok');
-    const btnCan = document.getElementById('btn-custom-confirm-cancel');
-    if (!modal || !btnOk) {
-      console.warn('[customConfirm]', msg);
-      resolve(false);
-      return;
-    }
-    if (titleEl) titleEl.textContent = title;
-    if (msgEl) msgEl.textContent = msg;
-    csModalShow(modal);
-
-    const cleanup = () => {
-      csModalHide(modal);
-      btnOk.removeEventListener('click', onOk);
-      if (btnCan) btnCan.removeEventListener('click', onCancel);
-      document.removeEventListener('keydown', onKey);
-    };
-    const onOk = () => { cleanup(); resolve(true); };
-    const onCancel = () => { cleanup(); resolve(false); };
-    const onKey = (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); onOk(); }
-      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-    };
-    btnOk.addEventListener('click', onOk);
-    if (btnCan) btnCan.addEventListener('click', onCancel);
-    document.addEventListener('keydown', onKey);
-  });
-};
-
-// Native alert'i override et (sync kullanımları yakala)
-window.alert = (msg) => { window.customAlert(String(msg)); };
-
-window.openGuestNameModal = function (port, mapName) {
-  return new Promise(resolve => {
-    const modal = document.getElementById('guest-name-modal');
-    const input = document.getElementById('guest-name-input');
-    const btnSubmit = document.getElementById('btn-guest-name-submit');
-    if (!modal || !input || !btnSubmit) {
-      // fallback: just connect with stored or default name
-      resolve(localStorage.getItem('cs_nickname') || 'Player');
-      return;
-    }
-    // Pre-fill with previously stored name
-    input.value = localStorage.getItem('cs_nickname') || '';
-    modal.style.display = 'flex';
-    input.focus();
-
-    const doConnect = () => {
-      const nick = input.value.trim();
-      if (!nick) { input.style.border = '1px solid var(--cs-red)'; return; }
-      input.style.border = '';
-      // Persist for next time
-      localStorage.setItem('cs_nickname', nick);
-      // Also set the main nickname input
-      const globalNick = document.getElementById('user-nickname');
-      if (globalNick && !globalNick.readOnly) globalNick.value = nick;
-      modal.style.display = 'none';
-      cleanup();
-      resolve(nick);
-    };
-
-    const onCancel = () => {
-      modal.style.display = 'none';
-      cleanup();
-      resolve(null);
-    };
-
-    const cleanup = () => {
-      const cloneBtn = btnSubmit.cloneNode(true);
-      btnSubmit.parentNode.replaceChild(cloneBtn, btnSubmit);
-      input.removeEventListener('keydown', onEnter);
-      const cancelBtn = document.querySelector('#guest-name-modal button:last-child');
-      if (cancelBtn) cancelBtn.onclick = null;
-    };
-
-    const onEnter = (e) => { if (e.key === 'Enter') doConnect(); };
-    input.addEventListener('keydown', onEnter);
-    btnSubmit.addEventListener('click', doConnect);
-
-    const cancelBtn = modal.querySelector('button:last-child');
-    if (cancelBtn) cancelBtn.onclick = onCancel;
-  });
-};
-// Override native alert and prompt safely
-window.alert = (msg) => { window.customAlert(msg); };
-// Cannot cleanly override prompt as it is synchronous, but we can replace its usages in code.
-
-import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium } from "./auth.js";
+/**
+ * BrowserCS oyna entry — orchestrator.
+ * Yeni özellikler buraya değil; ilgili module'e eklenir:
+ *   admin/, ui/, net/, game/, api.js, dom.js
+ */
+import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium, isUserAdmin } from "./auth.js";
 import { buyServer, supabase } from './supabase.js';
-import { unzipSync } from 'fflate';
-
-const ASSET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000'
-  : 'https://browsercs.com';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
+import { Xash3D, Net } from 'xash3d-fwgs';
+import { API_URL, ASSET_URL } from './api.js';
+import { $, notify } from './dom.js';
+import './ui/modals.js';
+import './game/frameDiagnostics.js';
+import { isBrowserCSProtocolLog } from './ui/hudBridge.js';
+import { BrowserCSReconnect } from './net/reconnect.js';
+import { state } from './game/state.js';
+import { assertEngineBridges } from './game/engineBridge.js';
+import { loadMapList, renderMapList, selectMap, getMapType, formatSize } from './game/maps.js';
+import { ensureMapBspInVfs, recoverMissingMapBsp, extractMissingMapFromLog, normalizeMapName, fsMkdirP } from './game/vfs.js';
+import { initEngine, changeMap } from './game/engine.js';
+import { toggleConsole } from './game/console.js';
+import { isDeathmatchServer, buildModePill } from './game/serverMeta.js';
 
 // Fix for Xash3D Emscripten Black Sky Bug: Force WebGL alpha to false
-// This prevents the browser from making the canvas transparent where alpha=0
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   if (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2') {
@@ -188,8 +37,9 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   const OriginalAudioContext = window.AudioContext || window.webkitAudioContext;
   if (!OriginalAudioContext) return;
   const allAudioContexts = [];
+  let audioPollTimer = null;
+  let pollTicks = 0;
 
-  // Patch AudioContext constructor to track all instances
   const PatchedAudioContext = function (options) {
     const ctx = new OriginalAudioContext(options);
     allAudioContexts.push(ctx);
@@ -199,21 +49,31 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   window.AudioContext = PatchedAudioContext;
   if (window.webkitAudioContext) window.webkitAudioContext = PatchedAudioContext;
 
-  // On first user gesture, resume all suspended AudioContexts
   const resumeAll = () => {
-    allAudioContexts.forEach(ctx => {
+    let anySuspended = false;
+    allAudioContexts.forEach((ctx) => {
       if (ctx.state === 'suspended') {
+        anySuspended = true;
         ctx.resume().catch(() => { });
       }
     });
+    return anySuspended;
   };
 
   document.addEventListener('mousedown', resumeAll, { capture: true });
   document.addEventListener('keydown', resumeAll, { capture: true });
   document.addEventListener('touchstart', resumeAll, { capture: true });
 
-  // Also poll every 2s to resume any late-created AudioContexts (SDL2 creates its own)
-  setInterval(resumeAll, 2000);
+  // Late SDL2 contexts: poll sparsely, then stop once running + resumed
+  audioPollTimer = setInterval(() => {
+    pollTicks += 1;
+    const stillSuspended = resumeAll();
+    const engOn = !!state.engineRunning;
+    if ((!stillSuspended && engOn) || pollTicks >= 30) {
+      clearInterval(audioPollTimer);
+      audioPollTimer = null;
+    }
+  }, 10000);
 })();
 
 // Fix for Emscripten SOCKFS Mixed Content (ws:// blocked on HTTPS).
@@ -329,267 +189,33 @@ window.addEventListener('error', (event) => {
   if (event.error instanceof WebAssembly.RuntimeError) {
     originalError && originalError.call(console, '[WASM Crash]', event.error.message);
     if (typeof addConsoleLog === 'function') {
-      addConsoleLog(`[WASM Crash] ${event.error.message} — Yeniden bağlanmak için sayfayı yenileyiniz.`, 'err');
+      addConsoleLog(`Oyun çöktü: ${event.error.message} — Yeniden bağlanmak için sayfayı yenileyin.`, 'err');
     }
     // Kullanıcıya UI mesajı göster
     const overlay = document.getElementById('fatal-error-overlay');
     if (overlay) {
       overlay.style.display = 'flex';
       const msg = document.getElementById('fatal-error-msg');
-      if (msg) msg.textContent = `Engine crash: ${event.error.message}`;
+      if (msg) msg.textContent = 'Oyunda bir hata oluştu. Sayfayı yenileyin.';
     }
     event.preventDefault(); // default crash davranışını engelle
   }
 });
 
-// ─── Keyboard Intercept (capture:true) ───────────────────────────────────────
-// capture:true = bu listener SDL/engine'den ÖNCE çalışır.
-// Sadece gerçekten intercept etmemiz gereken tuşlar için stopPropagation kullanılır.
-window.addEventListener('keydown', (e) => {
-  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-
-  // [1] input/textarea: bu handler'da işlem yapma, event input elementine gitsin (Enter çalışsın)
-  if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
-    if (e.key !== 'Escape') {
-      return; // stopPropagation YOK — console input Enter'ı alabilsin
-    }
-  }
-
-  // [2] Tilde/backtick: konsol aç/kapat
-  if (e.key === '`' || e.key === '~' || e.key === 'é' || e.code === 'Backquote') {
-    e.stopPropagation();
-    e.preventDefault();
-    const cp = document.getElementById('console-panel');
-    if (cp) {
-      cp.classList.toggle('open');
-      if (cp.classList.contains('open')) {
-        document.exitPointerLock();
-        const inp = document.getElementById('console-input');
-        if (inp) inp.focus();
-      } else {
-        window.focus();
-        if (document.activeElement) document.activeElement.blur();
-      }
-    }
-    return;
-  }
-
-
-  // [4] Tab: tarayıcı focus döngüsünü engelle + scoreboard'u göster
-  if (e.key === 'Tab') {
-    if (activeTag !== 'input' && activeTag !== 'textarea' && activeTag !== 'select') {
-      e.preventDefault();
-      // Scoreboard'u JS tarafında direkt aç (C++ sinyali bekleme)
-      const sb = document.getElementById('custom-scoreboard');
-      if (sb && typeof engineRunning !== 'undefined' && engineRunning) {
-        sb.style.display = 'flex';
-      }
-    }
-  }
-}, true); // capture:true — engine'den önce çalışır
-
-// Tab bırakıldığında scoreboard'u kapat
-window.addEventListener('keyup', (e) => {
-  if (e.key === 'Tab') {
-    const sb = document.getElementById('custom-scoreboard');
-    if (sb) sb.style.display = 'none';
-  }
-}, true);
-
-// ─── SCOREBOARD GÜNCELLEME (C++ → JS) ────────────────────────────────────────
-window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlayerId, teamsJson) {
-  try {
-    const players = JSON.parse(playersJson);
-    let teams = [];
-    if (teamsJson) {
-      try {
-        teams = JSON.parse(teamsJson);
-      } catch (e) {}
-    }
-
-    const sbServerName = document.getElementById('sb-server-name');
-    const sbCT = document.getElementById('sb-ct-list');
-    const sbT = document.getElementById('sb-t-list');
-    const sbSpec = document.getElementById('sb-spec-list');
-    const sbSpecContainer = document.getElementById('sb-spec-container');
-    if (!sbCT || !sbT) return;
-
-    if (sbServerName) sbServerName.textContent = serverName || 'BrowserCS';
-
-    const makeRow = (p) => {
-      const isLocal = p.id === localPlayerId || p.local;
-      const isDead = p.dead === 1;
-      let name = p.name;
-      if (isLocal) name = `★ ${name}`;
-      if (isDead) name = `☠ ${name}`;
-      
-      const bg = isLocal ? 'background:rgba(255,200,0,0.08);' : '';
-      const opacity = isDead ? 'opacity: 0.5;' : 'opacity: 1;';
-      const color = isDead ? '#aaa' : (isLocal ? '#ffd700' : '#eee');
-
-      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); ${bg} ${opacity}">
-        <td style="padding:6px 10px; font-weight:${isLocal ? '700' : '400'}; color:${color};">${name}</td>
-        <td style="padding:6px 10px; text-align:center; color:#4caf50;">${p.frags ?? 0}</td>
-        <td style="padding:6px 10px; text-align:center; color:#ef5350;">${p.deaths ?? 0}</td>
-        <td style="padding:6px 10px; text-align:center; color:#90caf9;">${p.ping ?? 0}</td>
-      </tr>`;
-    };
-
-    const sortFn = (a, b) => {
-      if ((b.frags ?? 0) !== (a.frags ?? 0)) return (b.frags ?? 0) - (a.frags ?? 0);
-      return (a.deaths ?? 0) - (b.deaths ?? 0);
-    };
-
-    const ctPlayers = players.filter(p => {
-      const t = (p.team || '').toLowerCase();
-      return t === 'ct' || t === 'counter-terrorist' || t === 'counterterrorist';
-    }).sort(sortFn);
-    
-    const tPlayers = players.filter(p => {
-      const t = (p.team || '').toLowerCase();
-      return t === 'terrorist' || t === 't';
-    }).sort(sortFn);
-    
-    const specPlayers = players.filter(p => {
-      const t = (p.team || '').toLowerCase();
-      return !ctPlayers.includes(p) && !tPlayers.includes(p);
-    }).sort(sortFn);
-
-    sbCT.innerHTML = ctPlayers.length ? ctPlayers.map(makeRow).join('') :
-      '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
-    sbT.innerHTML = tPlayers.length ? tPlayers.map(makeRow).join('') :
-      '<tr><td colspan="4" style="padding:8px 10px; color:#555; text-align:center; font-size:0.75rem;">—</td></tr>';
-    
-    // Update team counts and scores
-    const ctCountEl = document.getElementById('sb-ct-count');
-    const tCountEl = document.getElementById('sb-t-count');
-    const ctScoreEl = document.getElementById('sb-ct-score');
-    const tScoreEl = document.getElementById('sb-t-score');
-
-    if (ctCountEl) ctCountEl.textContent = `(${ctPlayers.length} Oyuncu)`;
-    if (tCountEl) tCountEl.textContent = `(${tPlayers.length} Oyuncu)`;
-
-    const totalPlayerFrags = players.reduce((sum, p) => sum + Math.abs(p.frags || 0) + Math.abs(p.deaths || 0), 0);
-    if (players.length > 0 && totalPlayerFrags === 0) {
-      if (ctScoreEl) ctScoreEl.textContent = '0';
-      if (tScoreEl) tScoreEl.textContent = '0';
-    } else if (teams && teams.length > 0) {
-      const ctTeam = teams.find(t => t.name && t.name.toUpperCase() === 'CT');
-      const tTeam = teams.find(t => t.name && t.name.toUpperCase() === 'TERRORIST');
-      if (ctScoreEl && ctTeam) ctScoreEl.textContent = ctTeam.score;
-      if (tScoreEl && tTeam) tScoreEl.textContent = tTeam.score;
-    }
-
-    if (specPlayers.length > 0) {
-      sbSpecContainer.style.display = 'block';
-      sbSpec.textContent = specPlayers.map(p => p.name).join(', ');
-    } else {
-      sbSpecContainer.style.display = 'none';
-    }
-  } catch (e) {
-    console.error('[Scoreboard] Parse error:', e);
-  }
-};
-
-// ----------------------------------------
-// --- BROWSERCS TEXT MENU HANDLERS ---
-window._openTextMenu = function (validSlots, textStr) {
-  try {
-    window.textMenuSlots = validSlots;
-    const tm = document.getElementById('custom-textmenu');
-    const tmTitle = document.getElementById('textmenu-title');
-    const tmItems = document.getElementById('textmenu-items');
-
-    if (tm && tmTitle && tmItems) {
-      tmItems.innerHTML = '';
-      const lines = textStr.replace(/\\n/g, '\n').split('\n');
-
-      // Clean color codes (\y, \w, \r, \d, \b) from the title
-      let titleStr = lines[0] || 'MENU';
-      titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
-      tmTitle.innerText = titleStr;
-
-      for (let i = 1; i < lines.length; i++) {
-        let line = lines[i].trim();
-        if (!line) continue;
-
-        // Clean color codes before regex match
-        line = line.replace(/\\[ywrdb]/g, '').trim();
-
-        const match = line.match(/^(\d+)\.\s*(.*)/);
-        if (match) {
-          const slotNum = parseInt(match[1]);
-          const slotText = match[2];
-
-          // ── BROWSERCS 1.5 FIX: Hide CS 1.6 weapons from the buy menu ──
-          const lowerText = slotText.toLowerCase();
-          if (lowerText.includes('famas') || 
-              lowerText.includes('galil') || 
-              lowerText.includes('clarion') || 
-              lowerText.includes('defender') || 
-              lowerText.includes('shield')) {
-            // Unset the valid slot bit so keyboard shortcuts also ignore it
-            const isZ = (slotNum === 0);
-            const bitC = isZ ? (1 << 9) : (1 << (slotNum - 1));
-            window.textMenuSlots &= ~bitC; 
-            continue; // Skip rendering this item
-          }
-
-          const btn = document.createElement('div');
-          btn.className = 'textmenu-item';
-          btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
-
-          // Check if slot is valid
-          const isZero = (slotNum === 0);
-          const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-          
-          btn.onclick = () => {
-              if ((window.textMenuSlots & bitCheck) !== 0) {
-                if (window.executeEngineCommand) window.executeEngineCommand(`menuselect ${slotNum}`);
-              }
-          };
-
-          if ((window.textMenuSlots & bitCheck) === 0) {
-            btn.style.opacity = '0.4';
-            btn.style.cursor = 'not-allowed';
-          }
-          tmItems.appendChild(btn);
-        } else {
-          // Non-selectable text line
-          const div = document.createElement('div');
-          div.className = 'menu-item';
-          div.style.color = 'var(--text-dim)';
-          div.style.fontSize = '0.7rem';
-          div.style.padding = '0.2rem 0';
-          div.innerText = line;
-          tmItems.appendChild(div);
-        }
-      }
-      console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
-      tm.style.display = 'flex';
-    }
-  } catch (e) {
-    console.error('Textmenu parse error', e);
-  }
-};
-
-window._closeTextMenu = function () {
-  const tm = document.getElementById('custom-textmenu');
-  if (tm) tm.style.display = 'none';
-  window.textMenuSlots = 0;
-};
 
 // Fix for typing in console input (stop event from bubbling to Emscripten)
 document.addEventListener('DOMContentLoaded', () => {
   const consoleInput = document.getElementById('console-input');
   if (consoleInput) {
     consoleInput.addEventListener('keydown', (e) => {
-      e.stopPropagation(); // Stop bubbling to window (where Emscripten listens)
+      e.stopPropagation();
       if (e.key === 'Escape') {
-        const cp = document.getElementById('console-panel');
-        if (cp) cp.classList.remove('open');
-        window.focus();
-        consoleInput.blur();
+        if (typeof window.closeConsolePanel === 'function') window.closeConsolePanel();
+        else {
+          const cp = document.getElementById('console-panel');
+          if (cp) cp.classList.remove('open');
+          consoleInput.blur();
+        }
       }
     });
     // Also stop keyup and keypress
@@ -612,6 +238,10 @@ window.alert = function (msg) {
     // Sadece kritik hataları console'a yaz
     if (typeof addConsoleLog === 'function') {
       addConsoleLog(`[Engine] ${s}`, 'warn');
+    }
+    const missingMap = extractMissingMapFromLog(s);
+    if (missingMap && typeof recoverMissingMapBsp === 'function') {
+      recoverMissingMapBsp(missingMap);
     }
     return;
   }
@@ -646,10 +276,40 @@ const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
 
+// Verbose browser DevTools logs: ?debug=1 or localStorage.browsercs_debug=1
+function isBrowserCSVerboseLogs() {
+  try {
+    if (window._browserCSVerboseLogs === true) return true;
+    if (localStorage.getItem('browsercs_debug') === '1') return true;
+    return /(?:^|[?&])debug=1(?:&|$)/.test(location.search || '');
+  } catch (_) {
+    return false;
+  }
+}
+
+function browserCSDebugLog(...args) {
+  if (isBrowserCSVerboseLogs()) originalLog.apply(console, args);
+}
+
+function shouldMirrorConsoleToHud(msg) {
+  if (!msg) return false;
+  if (msg.includes('[Engine Output]') || msg.includes('[Engine Error]')) return false;
+  if (isBrowserCSProtocolLog(msg)) return false;
+  // Gürültülü debug / cache satırlarını oyun konsoluna yansıtma
+  if (
+    /\[Cache\]|\[DEBUG\]|\[Ağ Log|\[Memory\]|\[BuyMenu\]|\[DEBUG VFS\]|\[Konsol\]|\[Browser\]|\[WebRTC\]|WebGL:|ScriptProcessorNode|INVALID_ENUM|Deprecation|AudioWorklet|entry type 'frame'|showscores|emscriptenWebGLGet/i.test(
+      msg
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
 console.log = function (...args) {
   originalLog.apply(console, args);
   const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-  if (!msg.includes('[Engine Output]') && typeof addConsoleLog === 'function') {
+  if (shouldMirrorConsoleToHud(msg) && typeof addConsoleLog === 'function') {
     addConsoleLog(`[Log] ${msg}`);
   }
 };
@@ -657,7 +317,7 @@ console.log = function (...args) {
 console.warn = function (...args) {
   originalWarn.apply(console, args);
   const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-  if (typeof addConsoleLog === 'function') {
+  if (shouldMirrorConsoleToHud(msg) && typeof addConsoleLog === 'function') {
     addConsoleLog(`[Warn] ${msg}`, 'warn');
   }
 };
@@ -665,12 +325,10 @@ console.warn = function (...args) {
 console.error = function (...args) {
   originalError.apply(console, args);
   const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-  if (!msg.includes('[Engine Error]') && typeof addConsoleLog === 'function') {
+  if (shouldMirrorConsoleToHud(msg) && typeof addConsoleLog === 'function') {
     addConsoleLog(`[Error] ${msg}`, 'err');
   }
 };
-
-import { Xash3D, Net } from 'xash3d-fwgs';
 
 // ==========================================
 // Xash3D LZSS Decompression Monkey-Patch
@@ -791,81 +449,120 @@ function decompressFragmentLzss(u8) {
   return newPkt;
 }
 
-const originalRecvfrom = Net.prototype.recvfrom;
+/** Cache errno pointer — ccall on every empty poll kills combat FPS. */
+Net.prototype._ensureErrnoPtr = function () {
+  if (this._errnoPtr) return this._errnoPtr;
+  try {
+    const ptr = this.em?.Module?.ccall('getErrnoLocation', 'number', [], []);
+    if (ptr) this._errnoPtr = ptr;
+  } catch (_) { /* ignore */ }
+  return this._errnoPtr || 0;
+};
+
+Net.prototype._setEagain = function () {
+  const errnoPtr = this._ensureErrnoPtr();
+  if (errnoPtr) this.em.setValue(errnoPtr, 6, 'i32');
+};
+
+/** Reuse TypedArray views of WASM memory; recreate only after grow/detach. */
+Net.prototype._heapViews = function () {
+  const buffer = window.wasmMemory.buffer;
+  if (this._heapBuf !== buffer || !this._heapU8) {
+    this._heapBuf = buffer;
+    this._heapU8 = new Uint8Array(buffer);
+    this._heap8 = new Int8Array(buffer);
+    this._heap16 = new Int16Array(buffer);
+    this._heap32 = new Int32Array(buffer);
+  }
+  return this;
+};
+
+/** Reuse outbound packet buffers to cut GC from per-packet .slice() */
+Net.prototype._outPoolRing = null;
+Net.prototype._outPoolIdx = 0;
+Net.prototype._allocOutPacket = function (len) {
+  if (!this._outPoolRing) {
+    this._outPoolRing = [
+      new Uint8Array(4096),
+      new Uint8Array(4096),
+      new Uint8Array(4096),
+      new Uint8Array(4096),
+    ];
+    this._outPoolIdx = 0;
+  }
+  let buf = this._outPoolRing[this._outPoolIdx];
+  this._outPoolIdx = (this._outPoolIdx + 1) % this._outPoolRing.length;
+  if (buf.length < len) {
+    buf = new Uint8Array(len);
+    const prev = (this._outPoolIdx + this._outPoolRing.length - 1) % this._outPoolRing.length;
+    this._outPoolRing[prev] = buf;
+  }
+  return buf.subarray(0, len);
+};
+
 Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, socklenPtr) {
   const packet = this.incoming.pull();
   if (!packet) {
-    return originalRecvfrom.call(this, fd, bufPtr, bufLen, flags, sockaddrPtr, socklenPtr);
+    // xash3d-fwgs 0.2.x: non-blocking empty socket must return EAGAIN
+    this._setEagain();
+    return -1;
   }
-  const buffer = window.wasmMemory.buffer;
+  this._heapViews();
   const data = packet.data;
-  let u8 = data instanceof Uint8Array ? data : new Uint8Array(data.buffer || data);
-
-  let finalData = u8;
-
-  // Önce tam paket başı LZSS kontrolü (eski yöntem)
-  if (finalData.length > 8) {
-    const view = new DataView(finalData.buffer, finalData.byteOffset, finalData.byteLength);
-    if (view.getUint32(0, true) === 0x53535A4C) { // LZSS
-      // const decompressed = lzssDecompress(finalData);
-      if (decompressed) {
-        finalData = decompressed;
-      }
-    }
-  }
-
-  // Fragment paketi içindeki LZSS'i decompress et
-  // finalData = decompressFragmentLzss(finalData);
+  const finalData = data instanceof Uint8Array
+    ? data
+    : new Uint8Array(data.buffer || data, data.byteOffset || 0, data.byteLength || data.length || 0);
 
   const copyLen = Math.min(bufLen, finalData.length);
-  if (copyLen > 0) new Uint8Array(buffer).set(finalData.subarray(0, copyLen), bufPtr);
+  if (copyLen > 0) this._heapU8.set(finalData.subarray(0, copyLen), bufPtr);
 
   if (sockaddrPtr) {
-    const heap8 = new Int8Array(buffer);
-    const heap16 = new Int16Array(buffer);
     const port = packet.port;
-    heap16[sockaddrPtr >> 1] = 2; // AF_INET
-    heap8[sockaddrPtr + 2] = (port >> 8) & 0xff;
-    heap8[sockaddrPtr + 3] = port & 0xff;
-    heap8[sockaddrPtr + 4] = packet.ip[0];
-    heap8[sockaddrPtr + 5] = packet.ip[1];
-    heap8[sockaddrPtr + 6] = packet.ip[2];
-    heap8[sockaddrPtr + 7] = packet.ip[3];
+    this._heap16[sockaddrPtr >> 1] = 2; // AF_INET
+    this._heap8[sockaddrPtr + 2] = (port >> 8) & 0xff;
+    this._heap8[sockaddrPtr + 3] = port & 0xff;
+    this._heap8[sockaddrPtr + 4] = packet.ip[0];
+    this._heap8[sockaddrPtr + 5] = packet.ip[1];
+    this._heap8[sockaddrPtr + 6] = packet.ip[2];
+    this._heap8[sockaddrPtr + 7] = packet.ip[3];
   }
-  if (socklenPtr) new Int32Array(buffer)[socklenPtr >> 2] = 16;
+  if (socklenPtr) this._heap32[socklenPtr >> 2] = 16;
   return copyLen;
 };
 
 // Override sendto to avoid Detached ArrayBuffer on WebAssembly Memory Grow
 Net.prototype.sendto = function (fd, bufPtr, bufLen, flags, sockaddrPtr, socklenPtr) {
-  const buffer = window.wasmMemory.buffer;
-  const heapU8 = new Uint8Array(buffer);
+  this._heapViews();
   const [ip, port] = this.readSockaddrFast(sockaddrPtr);
 
-  // Slice so we hold a separate copy in JS memory
-  const packetCopy = heapU8.slice(bufPtr, bufPtr + bufLen);
-  this.sender.sendto({ data: packetCopy, ip, port });
+  // Pool + copy: DC must not hold a live HEAP view; avoid allocating a new
+  // Uint8Array every packet (major GC source for 75↔45 FPS oscillation).
+  const packetCopy = this._allocOutPacket(bufLen);
+  packetCopy.set(this._heapU8.subarray(bufPtr, bufPtr + bufLen));
+  const sent = this.sender.sendto({ data: packetCopy, ip, port });
+  if (sent === false) {
+    this._setEagain();
+    return -1;
+  }
   return bufLen;
 };
 
 // Override sendtoBatch to avoid Detached ArrayBuffer
 Net.prototype.sendtoBatch = function (fd, bufsPtr, lensPtr, count, flags, sockaddrPtr, socklenPtr) {
-  const buffer = window.wasmMemory.buffer;
-  const heap32 = new Int32Array(buffer);
-  const heapU8 = new Uint8Array(buffer);
-
+  this._heapViews();
   let totalSize = 0;
   const [ip, port] = this.readSockaddrFast(sockaddrPtr);
   for (let i = 0; i < count; ++i) {
-    const size = heap32[(lensPtr >> 2) + i];
-    const packetPtr = heap32[(bufsPtr >> 2) + i];
-    const slice = heapU8.slice(packetPtr, packetPtr + size);
+    const size = this._heap32[(lensPtr >> 2) + i];
+    const packetPtr = this._heap32[(bufsPtr >> 2) + i];
+    const slice = this._allocOutPacket(size);
+    slice.set(this._heapU8.subarray(packetPtr, packetPtr + size));
     this.sender.sendto({
       data: slice,
       port,
       ip
     });
-    totalSize += slice.length;
+    totalSize += size;
   }
   return totalSize;
 };
@@ -881,26 +578,201 @@ class Xash3DWebSocket extends Xash3D {
     this.packetCountRecv = 0;
     this.lastTargetIp = [127, 0, 0, 1];
     this.lastTargetPort = 27015;
+    this.dcReady = Promise.resolve();
+    this._webrtcTimeoutTimer = null;
+    this._dcFailed = false;
+    this._suppressDisconnectEvent = false;
+    this._connectWsInFlight = null;
+    this._ensureDcInFlight = null;
+    this._pendingLocalCandidates = [];
+  }
+
+  _cleanupWebRTC() {
+    if (this._webrtcTimeoutTimer) {
+      clearTimeout(this._webrtcTimeoutTimer);
+      this._webrtcTimeoutTimer = null;
+    }
+    if (this._candidateInterval) {
+      clearInterval(this._candidateInterval);
+      this._candidateInterval = null;
+    }
+    if (this._keepAliveInterval) {
+      clearInterval(this._keepAliveInterval);
+      this._keepAliveInterval = null;
+    }
+    try { this.dc?.close(); } catch (e) { }
+    try { this.pc?.close(); } catch (e) { }
+    this.dc = null;
+    this.pc = null;
+    this.peerId = null;
+    this._pendingLocalCandidates = [];
+  }
+
+  _flushPendingLocalCandidates() {
+    if (!this.peerId || !this._pendingLocalCandidates?.length) return;
+    const batch = this._pendingLocalCandidates.splice(0);
+    for (const c of batch) {
+      fetch(`${API_URL}/webrtc/candidate/${this.peerId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidate: c.candidate, mid: c.mid })
+      }).then(res => {
+        if (res.status === 404) this.peerId = null;
+      }).catch(() => { });
+    }
+  }
+
+  _detachDcReady() {
+    // Eski promise'i sessizce bırak — reject uncaught error üretmesin
+    if (this.dcReady && typeof this.dcReady.catch === 'function') {
+      this.dcReady.catch(() => {});
+    }
+    this._resolveDcReady = null;
+    this._rejectDcReady = null;
+  }
+
+  _resetWebRTCConnection() {
+    this._suppressDisconnectEvent = true;
+    this._detachDcReady();
+    this._connectWsInFlight = null;
+    this._cleanupWebRTC();
+    this._dcFailed = false;
+    this._suppressDisconnectEvent = false;
+  }
+
+  async ensureDcReady(maxWaitMs = 45000) {
+    if (this.dc?.readyState === 'open') {
+      return;
+    }
+
+    if (this._ensureDcInFlight) {
+      return this._ensureDcInFlight;
+    }
+
+    // Tek uzun 55s timeout yerine kısa denemeler:
+    // 1. deneme sık timeout oluyor, 2. genelde hemen açılıyor → kullanıcı 1+ dk bekliyordu.
+    const ATTEMPT_MS = 10000;
+
+    this._ensureDcInFlight = (async () => {
+      try {
+        const deadline = Date.now() + maxWaitMs;
+        let attempt = 0;
+
+        while (Date.now() < deadline) {
+          if (this.dc?.readyState === 'open') {
+            return;
+          }
+
+          // Devam eden denemeyi bekle
+          if (this._connectWsInFlight) {
+            await this._connectWsInFlight;
+            if (this.dc?.readyState === 'open') {
+              return;
+            }
+          }
+
+          attempt += 1;
+          const slice = Math.max(
+            3000,
+            Math.min(ATTEMPT_MS, deadline - Date.now())
+          );
+
+          const hadSession = !!(this.pc || this.dc || this._dcFailed);
+          if (hadSession) {
+            browserCSDebugLog(`[DEBUG] WebRTC deneme #${attempt}...`);
+            if (attempt > 1) {
+              addConsoleLog(`[Ağ] Bağlantı yeniden deneniyor (#${attempt})...`, 'warn');
+            }
+            this._resetWebRTCConnection();
+          } else {
+            browserCSDebugLog(`[DEBUG] WebRTC ilk bağlantı (#${attempt})...`);
+            this._detachDcReady();
+          }
+
+          await this.connectWs({ timeoutMs: slice, quietTimeout: attempt < 3 });
+
+          let timeoutId = null;
+          try {
+            await Promise.race([
+              this.dcReady,
+              new Promise((_, reject) => {
+                timeoutId = setTimeout(
+                  () => reject(new Error('WebRTC attempt timeout')),
+                  slice + 500
+                );
+              })
+            ]);
+          } catch (_) {
+            // sonraki slice
+          } finally {
+            if (timeoutId) clearTimeout(timeoutId);
+          }
+
+          if (this.dc?.readyState === 'open') {
+            return;
+          }
+
+          // Başarısız denemeyi temizle, kısa nefes, tekrar
+          this._suppressDisconnectEvent = true;
+          try { this._cleanupWebRTC(); } catch (_) { /* ignore */ }
+          this._suppressDisconnectEvent = false;
+          this._dcFailed = true;
+
+          if (Date.now() >= deadline) break;
+          await new Promise((r) => setTimeout(r, 250));
+        }
+
+        throw new Error('WebRTC timeout');
+      } finally {
+        this._ensureDcInFlight = null;
+      }
+    })();
+
+    return this._ensureDcInFlight;
   }
 
   async init() {
     await super.init();
+    const isRemoteClient = this.connectPort && this.connectPort !== 'listen' && !this.isHost;
+    if (isRemoteClient) {
+      // Assetler bitene kadar WebRTC kurma — ensureDcReady sonra bağlar.
+      // Bekleyen (pending) promise oluşturma: reject → Uncaught (in promise) hatası.
+      this.dcReady = Promise.resolve();
+      return;
+    }
     await this.connectWs();
   }
 
-  async connectWs() {
-    return new Promise(async (resolve) => {
+  async connectWs(opts = {}) {
+    const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 12000;
+    const quietTimeout = !!opts.quietTimeout;
+
+    if (this.dc?.readyState === 'open') {
+      return;
+    }
+
+    if (this._connectWsInFlight) {
+      return this._connectWsInFlight;
+    }
+
+    this._connectWsInFlight = new Promise(async (resolve) => {
       if (!this.connectPort || this.connectPort === 'listen') {
+        this.dcReady = Promise.resolve();
         resolve();
         return;
       }
 
+      this.dcReady = new Promise((resolveDc, rejectDc) => {
+        this._resolveDcReady = resolveDc;
+        this._rejectDcReady = rejectDc;
+      });
+      // Unhandled rejection olmasın
+      this.dcReady.catch(() => {});
+
       const role = this.isHost ? 'host' : 'client';
-      console.log(`[DEBUG] Connecting Xash3D Net WebRTC to port ${this.connectPort} (${role})`);
+      browserCSDebugLog(`[DEBUG] Connecting Xash3D Net WebRTC to port ${this.connectPort} (${role})`);
       addConsoleLog(`[Ağ] WebRTC ile bağlanılıyor (${role.toUpperCase()}): port ${this.connectPort}`, 'warn');
 
-      // WebRTC bağlantısı 8 saniye içinde kurulamazsa, bekleme!
-      // Engine'in açılmasını (menüye girmesini) engellememek için resolve atıyoruz.
       let resolved = false;
       const safeResolve = () => {
         if (!resolved) {
@@ -908,19 +780,30 @@ class Xash3DWebSocket extends Xash3D {
           resolve();
         }
       };
-      setTimeout(safeResolve, 8000);
 
+      // Az STUN + TURN: fazla sunucu ilk ICE'yi yavaşlatıyordu
       const pc = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun.cloudflare.com:3478' },
-          { urls: 'stun:stun.twilio.com:3478' },
-          { urls: 'stun:stun.services.mozilla.com:3478' }
-        ]
+          {
+            urls: [
+              'turn:relay.metered.ca:80?transport=udp',
+              'turn:relay.metered.ca:443?transport=tcp',
+              'turns:relay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          }
+        ],
+        iceTransportPolicy: 'all',
+        bundlePolicy: 'max-bundle',
+        iceCandidatePoolSize: 4
       });
       this.pc = pc;
+      this._pendingLocalCandidates = [];
 
-      // Gerçek UDP deneyimi: unordered ve maxRetransmits=0
+      // UDP-benzeri: retransmit kuyruğu ateş/combat'ta gecikme yaratıyordu.
       const dc = pc.createDataChannel('xash3d', {
         ordered: false,
         maxRetransmits: 0
@@ -929,13 +812,31 @@ class Xash3DWebSocket extends Xash3D {
       dc.binaryType = 'arraybuffer';
 
       dc.onopen = () => {
-        console.log('[DEBUG] Net WebRTC DataChannel connected!');
+        browserCSDebugLog('[DEBUG] Net WebRTC DataChannel connected!');
         addConsoleLog('[Ağ] WebRTC UDP-Kanalı bağlantısı başarılı!', 'ok');
 
-        // Keep-alive ping
+        this._dcFailed = false;
+        if (this._webrtcTimeoutTimer) {
+          clearTimeout(this._webrtcTimeoutTimer);
+          this._webrtcTimeoutTimer = null;
+        }
+        if (this._candidateInterval) {
+          clearInterval(this._candidateInterval);
+          this._candidateInterval = null;
+        }
+        this._resolveDcReady?.();
+        window.dispatchEvent(
+          new CustomEvent('browsercs-connection-state', {
+            detail: { state: 'active' }
+          })
+        );
+
+        // Relay-only keepalive — oyun sunucusuna UDP olarak GİTMEMELİ
         this._keepAliveInterval = setInterval(() => {
           if (this.dc && this.dc.readyState === 'open') {
-            try { this.dc.send(new Uint8Array([0xFF, 0xFF, 0xFF, 0xFF, 0x69])); } catch (e) { }
+            try {
+              this.dc.send(new Uint8Array([0x00, 0x42, 0x43, 0x53, 0x4B])); // \0BCSK
+            } catch (e) { /* ignore */ }
           }
         }, 15000);
 
@@ -945,65 +846,110 @@ class Xash3DWebSocket extends Xash3D {
       dc.onerror = (e) => {
         console.error('[DEBUG] Net WebRTC DataChannel error', e);
         addConsoleLog('[Ağ] WebRTC bağlantı hatası!', 'err');
+        this._dcFailed = true;
+        this._rejectDcReady?.(e);
         safeResolve();
       };
 
       dc.onclose = () => {
         if (this._keepAliveInterval) clearInterval(this._keepAliveInterval);
-        console.log('[DEBUG] Net WebRTC DataChannel closed');
+        browserCSDebugLog('[DEBUG] Net WebRTC DataChannel closed');
+        if (this._suppressDisconnectEvent) {
+          return;
+        }
         addConsoleLog(`[Ağ] WebRTC bağlantısı kapandı!`, 'err');
+        if (window.BrowserCSReconnect?.sessionJoined) {
+          return;
+        }
+        window.dispatchEvent(
+          new CustomEvent('browsercs-connection-state', {
+            detail: { state: 'disconnected', reason: 'WebRTC kanalı kapandı' }
+          })
+        );
       };
 
-      dc.onmessage = async (e) => {
-        let buffer;
-        try {
-          if (e.data instanceof ArrayBuffer) {
-            buffer = e.data;
-          } else if (e.data && typeof e.data.arrayBuffer === 'function') {
-            buffer = await e.data.arrayBuffer();
-          } else if (typeof e.data === 'string') {
-            const enc = new TextEncoder();
-            buffer = enc.encode(e.data).buffer;
-          } else {
-            return;
-          }
-        } catch (err) {
-          console.error('[Ağ Log] Veri işleme hatası:', err);
+      // Kısa timeout — ensureDcReady hemen yeni deneme başlatır
+      this._webrtcTimeoutTimer = setTimeout(() => {
+        if (this.dc?.readyState === 'open') return;
+        if (!quietTimeout) {
+          addConsoleLog('[Ağ] WebRTC bağlantı zaman aşımı', 'warn');
+        } else {
+          browserCSDebugLog('[DEBUG] WebRTC attempt timeout — retrying');
+        }
+        this._dcFailed = true;
+        this._rejectDcReady?.(new Error('WebRTC timeout'));
+        this._suppressDisconnectEvent = true;
+        try { this._cleanupWebRTC(); } catch (_) { /* ignore */ }
+        this._suppressDisconnectEvent = false;
+        safeResolve();
+      }, timeoutMs);
+
+      dc.onmessage = (e) => {
+        const raw = e.data;
+        if (!raw) return;
+
+        let data;
+        if (raw instanceof ArrayBuffer) {
+          if (raw.byteLength === 0) return;
+          data = new Uint8Array(raw);
+        } else if (raw instanceof Uint8Array) {
+          if (raw.byteLength === 0) return;
+          data = raw;
+        } else if (typeof raw === 'string') {
+          if (!raw.length) return;
+          data = new TextEncoder().encode(raw);
+        } else {
           return;
         }
 
-        if (!buffer || buffer.byteLength === 0) return;
-
         this.packetCountRecv++;
         if (this.packetCountRecv <= 20) {
-          console.log(`[Ağ Log - Alınan #${this.packetCountRecv}] ${buffer.byteLength} byte veri alındı.`);
+          browserCSDebugLog(`[Ağ Log - Alınan #${this.packetCountRecv}] ${data.byteLength} byte`);
         }
 
         const srcIp = this.isHost ? [10, 0, 0, 2] : [10, 0, 0, 1];
-        const srcPort = this.isHost ? 27005 : 27015;
-
-        const packet = {
-          ip: srcIp,
-          port: srcPort,
-          data: new Int8Array(buffer)
-        };
+        const clientPort = Number(this.connectPort) || 27015;
+        const srcPort = this.isHost ? 27005 : clientPort;
 
         try {
-          this.net.incoming.enqueue(packet);
+          this.net.incoming.enqueue({
+            ip: srcIp,
+            port: srcPort,
+            data
+          });
         } catch (err) {
-          console.error("[Ağ Log] Xash3D enqueue hatası:", err);
+          console.error('[Ağ Log] Xash3D enqueue hatası:', err);
         }
       };
 
-      pc.onicecandidate = async (e) => {
-        if (e.candidate && this.peerId) {
-          fetch(`${API_URL}/webrtc/candidate/${this.peerId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ candidate: e.candidate.candidate, mid: e.candidate.sdpMid })
-          }).then(res => {
-            if (res.status === 404) this.peerId = null; // stop trying
-          }).catch(() => { });
+      // CRITICAL: candidates often fire before peerId exists — buffer then flush.
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) return;
+        const payload = {
+          candidate: e.candidate.candidate,
+          mid: e.candidate.sdpMid
+        };
+        if (!this.peerId) {
+          this._pendingLocalCandidates.push(payload);
+          return;
+        }
+        fetch(`${API_URL}/webrtc/candidate/${this.peerId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(res => {
+          if (res.status === 404) this.peerId = null;
+        }).catch(() => { });
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        const st = pc.iceConnectionState;
+        browserCSDebugLog('[WebRTC] iceConnectionState:', st);
+        if (st === 'failed') {
+          addConsoleLog('[Ağ] ICE başarısız — yeniden denenecek', 'warn');
+          this._dcFailed = true;
+          this._rejectDcReady?.(new Error('ICE failed'));
+          safeResolve();
         }
       };
 
@@ -1011,6 +957,8 @@ class Xash3DWebSocket extends Xash3D {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
+        // Hemen offer gönder — trickle ICE ile adaylar sonra gelir.
+        // Eski 1.2s gather beklemesi ilk join'i gereksiz yere geciktiriyordu.
         const res = await fetch(`${API_URL}/webrtc/offer`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1023,79 +971,95 @@ class Xash3DWebSocket extends Xash3D {
         if (data.error) throw new Error(data.error);
 
         this.peerId = data.peerId;
+        this._flushPendingLocalCandidates();
         await pc.setRemoteDescription(new RTCSessionDescription({ type: data.type, sdp: data.sdp }));
+        this._flushPendingLocalCandidates();
 
-        // Sunucudan gelen ICE adaylarını topla
+        // DC açılana kadar sunucu adaylarını çek (ICE connected olsa bile)
         this._candidateInterval = setInterval(async () => {
-          if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+          if (!this.pc || this.pc !== pc) {
             clearInterval(this._candidateInterval);
+            this._candidateInterval = null;
+            return;
+          }
+          if (this.dc?.readyState === 'open') {
+            clearInterval(this._candidateInterval);
+            this._candidateInterval = null;
+            return;
+          }
+          if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+            clearInterval(this._candidateInterval);
+            this._candidateInterval = null;
             return;
           }
           try {
-            if (!this.peerId) {
-              clearInterval(this._candidateInterval);
-              return;
-            }
+            if (!this.peerId) return;
             const cRes = await fetch(`${API_URL}/webrtc/candidates/${this.peerId}`);
-            if (cRes.status === 404) {
-              clearInterval(this._candidateInterval);
-              return;
+            if (!cRes.ok) return;
+            const cands = await cRes.json();
+            for (let c of cands) {
+              await pc.addIceCandidate(new RTCIceCandidate({ candidate: c.candidate, sdpMid: c.mid })).catch(() => { });
             }
-            if (cRes.ok) {
-              const cands = await cRes.json();
-              for (let c of cands) {
-                await pc.addIceCandidate(new RTCIceCandidate({ candidate: c.candidate, sdpMid: c.mid })).catch(() => { });
-              }
-            }
-          } catch (err) { }
-        }, 1000);
+          } catch (err) { /* ignore */ }
+        }, 200);
 
       } catch (err) {
         console.error('[WebRTC] Signaling Hatası:', err);
         addConsoleLog('[Ağ] WebRTC Signaling Hatası: ' + err.message, 'err');
+        this._rejectDcReady?.(err);
         safeResolve();
       }
+    }).finally(() => {
+      this._connectWsInFlight = null;
     });
+
+    return this._connectWsInFlight;
   }
 
   sendto(packet) {
     if (packet.ip) this.lastTargetIp = packet.ip;
     if (packet.port) this.lastTargetPort = packet.port;
 
-    if (!this.dc || this.dc.readyState !== 'open') return;
+    if (!this.dc || this.dc.readyState !== 'open') return false;
 
     const ip = packet.ip;
 
     if (this.isHost) {
       // HOST (Listen Server) mode
-      if (!ip || ip[0] === 127) return;
+      if (!ip || ip[0] === 127) return false;
     } else {
       // CLIENT mode
-      if (!ip || ip[0] !== 10) return;
+      if (!ip || ip[0] !== 10) return false;
     }
 
     this.packetCountSend++;
     if (this.packetCountSend <= 20) {
       const dest = ip ? ip.join('.') : '?';
-      console.log(`[Ağ Log - Gönderilen #${this.packetCountSend}] ${packet.data.byteLength} byte → ${dest}:${packet.port}`);
-      addConsoleLog(`[Ağ] Paket #${this.packetCountSend} gönderiliyor: ${packet.data.byteLength} byte`, 'ok');
+      browserCSDebugLog(`[Ağ Log - Gönderilen #${this.packetCountSend}] ${packet.data.byteLength} byte → ${dest}:${packet.port}`);
     }
 
-    const cleanBuffer = new Uint8Array(packet.data).buffer;
+    // Net.prototype.sendto havuzdan Uint8Array verir — DC.send TypedArray kabul eder.
+    // buffer.slice() her pakette yeni allocation = GC salınımı; yapma.
     try {
-      this.dc.send(cleanBuffer);
-    } catch (e) { }
+      const data = packet.data;
+      if (data instanceof ArrayBuffer) {
+        this.dc.send(data);
+      } else if (ArrayBuffer.isView(data)) {
+        this.dc.send(data);
+      } else {
+        this.dc.send(data);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
 }
 
-// ─── Durum ───────────────────────────────────────────────────────────────────
-let xash = null;
-let currentMap = null;
-let engineRunning = false;
-let maps = [];
-let activeFilter = 'all';
-let consoleOpen = false;
+window.Xash3DWebSocket = Xash3DWebSocket;
+
+// ─── Durum — shared via game/state.js ────────────────────────────────────────
 
 // --- Progress Helper for Large Downloads with Cache API ---
 async function fetchWithProgress(url, label) {
@@ -1164,7 +1128,6 @@ async function fetchWithProgress(url, label) {
 }
 
 // ── XASH3D BAŞLATMA MANTIĞI ─────────────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
 const splashEl = $('splash');
 const splashBar = $('splash-bar');
 const splashStatus = $('splash-status');
@@ -1193,7 +1156,6 @@ const consoleInput = $('console-input');
 const btnConsole = $('btn-console');
 const btnCopyConsole = $('btn-copy-console');
 const btnDownloadQConsole = $('btn-download-qconsole');
-const notifContainer = $('notifications')
 const mapCountInfo = $('map-count-info');
 const tabMaps = $('tab-maps');
 const tabServers = $('tab-servers');
@@ -1223,14 +1185,6 @@ if (userNicknameInput) {
 
 // ─── Yardımcılar ─────────────────────────────────────────────────────────────
 
-function notify(msg, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `notif ${type === 'error' ? 'error' : type === 'success' ? 'success' : ''}`;
-  el.textContent = msg;
-  notifContainer.appendChild(el);
-  setTimeout(() => el.remove(), 5000);
-}
-
 function setSplash(msg, pct) {
   splashStatus.textContent = msg;
   splashBar.style.width = `${pct}%`;
@@ -1243,6 +1197,7 @@ function setEngineStatus(msg, state = 'orange') {
 
 function addConsoleLog(msg, cls = '') {
   // DOM elementinin hazır olup olmadığını kontrol et (Erken log yönlendirmesinde çökmeyi önler)
+  if (isBrowserCSProtocolLog(String(msg || ''))) return;
 
   try {
     if (typeof consoleLog === 'undefined' || !consoleLog) {
@@ -1253,24 +1208,99 @@ function addConsoleLog(msg, cls = '') {
     p.className = `log-line ${cls}`;
     p.textContent = msg;
     consoleLog.appendChild(p);
+    // Ring buffer: sınırsız DOM büyümesi FPS yer
+    while (consoleLog.children.length > 200) {
+      consoleLog.removeChild(consoleLog.firstChild);
+    }
     consoleLog.scrollTop = consoleLog.scrollHeight;
   } catch (e) {
     originalError.apply(console, ['addConsoleLog hatası:', e]);
   }
 }
+window.addConsoleLog = addConsoleLog;
 
 
-// Güvenli konsol komutu çalıştırma yardımcısı (Doğrudan WASM _Cmd_ExecuteString çağrısı yapar)
-window.executeEngineCommand = function executeEngineCommand(cmd) {
-  if (!xash || !xash.em) {
-    console.warn('[Konsol] Komut gönderilemedi, engine hazır değil:', cmd);
-    return;
+
+function stripConsoleQuotes(value) {
+  const v = String(value || '').trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    return v.slice(1, -1);
+  }
+  return v;
+}
+
+function normalizeConsoleCommand(rawCmd) {
+  const trimmed = String(rawCmd || '').trim();
+  if (!trimmed) {
+    return { commands: [], meta: null };
   }
 
-  const command = cmd.endsWith('\n') ? cmd : cmd + '\n';
+  const nameMatch = trimmed.match(/^name\s+(.+)$/i);
+  if (nameMatch) {
+    const nick = stripConsoleQuotes(nameMatch[1]).replace(/["\\]/g, '').slice(0, 31);
+    if (!nick) {
+      return {
+        commands: [],
+        meta: { kind: 'error', message: 'Geçerli bir isim yaz: name "YeniIsim"' }
+      };
+    }
+    return {
+      commands: [`name "${nick}"`, `setinfo name "${nick}"`],
+      meta: { kind: 'name', name: nick }
+    };
+  }
+
+  const setinfoMatch = trimmed.match(/^setinfo\s+(\S+)\s+(.+)$/i);
+  if (setinfoMatch) {
+    const key = setinfoMatch[1];
+    const value = stripConsoleQuotes(setinfoMatch[2]).replace(/"/g, '');
+    return {
+      commands: [`setinfo ${key} "${value}"`],
+      meta: { kind: 'setinfo', key, value }
+    };
+  }
+
+  // Sunucu-only komutlar client konsolundan çalışmaz
+  if (/^(sv_restart|restart|changelevel|map|kick|ban)\b/i.test(trimmed)) {
+    return {
+      commands: [trimmed],
+      meta: {
+        kind: 'server-only',
+        message:
+          `"${trimmed.split(/\s+/)[0]}" sunucu komutudur. Client konsolundan çalışmaz — YÖNET panelini veya RCON kullan.`
+      }
+    };
+  }
+
+  // AMXX menü/komutları sunucuya açıkça iletilsin
+  if (/^amx[_a-z0-9]/i.test(trimmed) || /^amxmodmenu$/i.test(trimmed)) {
+    const mapMatch = trimmed.match(/\bchangelevel\s+([a-zA-Z0-9_]+)/i);
+    return {
+      commands: [trimmed, `cmd ${trimmed}`],
+      meta: {
+        kind: 'amx',
+        command: trimmed,
+        preloadMap: mapMatch ? mapMatch[1] : null
+      }
+    };
+  }
+
+  return { commands: [trimmed], meta: null };
+}
+
+function runEngineCommandRaw(cmd) {
+  if (!state.xash || !state.xash.em) {
+    console.warn('[Konsol] Komut gönderilemedi, engine hazır değil:', cmd);
+    return false;
+  }
+
+  const command = cmd.endsWith('\n') ? cmd : `${cmd}\n`;
 
   try {
-    const em = xash.em;
+    const em = state.xash.em;
     const asm = em.asm || (em.Module && em.Module.asm);
 
     if (asm && typeof asm.Cmd_ExecuteString === 'function' && typeof asm.malloc === 'function' && typeof asm.free === 'function') {
@@ -1287,13 +1317,12 @@ window.executeEngineCommand = function executeEngineCommand(cmd) {
 
           asm.Cmd_ExecuteString(ptr);
           asm.free(ptr);
-          console.log(`[Konsol] direct-wasm-asm üzerinden komut çalıştırıldı: ${cmd}`);
-          return;
+          browserCSDebugLog(`[Konsol] direct-wasm-asm: ${cmd}`);
+          return true;
         }
       }
     }
 
-    // Fallback 1: C-style exports on em or em.Module
     const func = em._Cmd_ExecuteString || (em.Module && em.Module._Cmd_ExecuteString);
     const malloc = em._malloc || (em.Module && em.Module._malloc);
     const free = em._free || (em.Module && em.Module._free);
@@ -1309,354 +1338,110 @@ window.executeEngineCommand = function executeEngineCommand(cmd) {
         view[ptr + command.length] = 0;
         func(ptr);
         free(ptr);
-        console.log(`[Konsol] direct-wasm-export üzerinden komut çalıştırıldı: ${cmd}`);
-        return;
+        browserCSDebugLog(`[Konsol] direct-wasm-export: ${cmd}`);
+        return true;
       }
     }
 
-    // Fallback 2: em.ccall
     if (typeof em.ccall === 'function') {
       em.ccall('Cmd_ExecuteString', null, ['string'], [command]);
-      console.log(`[Konsol] Komut çalıştırıldı (em.ccall): ${cmd}`);
+      browserCSDebugLog(`[Konsol] em.ccall: ${cmd}`);
+      return true;
     }
-    // Fallback 3: em.Module.ccall
-    else if (em.Module && typeof em.Module.ccall === 'function') {
+
+    if (em.Module && typeof em.Module.ccall === 'function') {
       em.Module.ccall('Cmd_ExecuteString', null, ['string'], [command]);
-      console.log(`[Konsol] Komut çalıştırıldı (em.Module.ccall): ${cmd}`);
+      browserCSDebugLog(`[Konsol] em.Module.ccall: ${cmd}`);
+      return true;
     }
-    // Fallback 4: xash.Cmd_ExecuteString
-    else {
-      xash.Cmd_ExecuteString(command);
-      console.log(`[Konsol] Komut çalıştırıldı (Cmd_ExecuteString): ${cmd}`);
+
+    if (typeof state.xash.Cmd_ExecuteString === 'function') {
+      state.xash.Cmd_ExecuteString(command);
+      browserCSDebugLog(`[Konsol] Cmd_ExecuteString: ${cmd}`);
+      return true;
     }
   } catch (e) {
     console.error('[Konsol] Komut çalıştırma hatası:', e);
   }
+  return false;
 }
 
-const BrowserCSReconnect = (() => {
-  const MAX_ATTEMPTS = 5;
-  const RETRY_DELAYS = [
-    1000,
-    2000,
-    3000,
-    5000,
-    8000
-  ];
+// Güvenli konsol komutu çalıştırma yardımcısı
+window.executeEngineCommand = function executeEngineCommand(cmd) {
+  const { commands, meta } = normalizeConsoleCommand(cmd);
 
-  let reconnecting = false;
-  let exhausted = false;
-  let attempt = 0;
-  let retryTimer = null;
-  let lastReason = "";
-
-  const overlay =
-    document.getElementById("reconnect-overlay");
-
-  const titleEl =
-    document.getElementById("reconnect-title");
-
-  const messageEl =
-    document.getElementById("reconnect-message");
-
-  const attemptEl =
-    document.getElementById("reconnect-attempt");
-
-  const retryNowButton =
-    document.getElementById("btn-reconnect-now");
-
-  const reloadButton =
-    document.getElementById("btn-reload-game");
-
-  function setText(element, value) {
-    if (element) {
-      element.textContent = value;
-    }
+  if (meta?.kind === 'error') {
+    addConsoleLog(meta.message, 'err');
+    if (typeof notify === 'function') notify(meta.message, 'error');
+    return;
   }
 
-  function showOverlay(reason) {
-    lastReason =
-      reason || "Sunucu bağlantısı kesildi.";
+  if (meta?.kind === 'server-only') {
+    addConsoleLog(meta.message, 'warn');
+    if (typeof notify === 'function') notify(meta.message, 'warn');
+  }
 
-    document.body.classList.add(
-      "browsercs-reconnecting"
-    );
-
-    if (overlay) {
-      overlay.classList.add("show");
-    }
-
-    setText(
-      titleEl,
-      "BAĞLANTI KESİLDİ"
-    );
-
-    setText(
-      messageEl,
-      `${lastReason} Yeniden bağlanılıyor...`
-    );
-
-    const escMenu =
-      document.getElementById("esc-pause-menu");
-
-    if (escMenu) {
-      escMenu.classList.remove("show");
-    }
-
-    const kickOverlay =
-      document.getElementById("kick-overlay");
-
-    if (kickOverlay) {
-      kickOverlay.classList.remove("show");
-    }
-
-    const textMenu =
-      document.getElementById("custom-textmenu");
-
-    if (textMenu) {
-      textMenu.style.display = "none";
-    }
-
+  if (meta?.kind === 'name') {
     try {
-      document.exitPointerLock();
-    } catch {
-      // Pointer lock açık değilse hata önemli değil.
+      localStorage.setItem('cs_nickname', meta.name);
+      if (userNicknameInput) userNicknameInput.value = meta.name;
+    } catch (e) { /* ignore */ }
+    addConsoleLog(`İsim güncellendi: ${meta.name}`, 'ok');
+    if (typeof notify === 'function') {
+      notify(`İsim: ${meta.name}`, 'success');
     }
   }
 
-  function hideOverlay() {
-    document.body.classList.remove(
-      "browsercs-reconnecting"
-    );
-
-    if (overlay) {
-      overlay.classList.remove("show");
-    }
-  }
-
-  function clearRetryTimer() {
-    if (retryTimer !== null) {
-      clearTimeout(retryTimer);
-      retryTimer = null;
-    }
-  }
-
-  function sanitizeEngineArgument(value) {
-    return String(value || "")
-      .replace(/["\\;\r\n]/g, "");
-  }
-
-  function restorePassword() {
-    const port =
-      window._browserCSConnectPort || "";
-
-    const storedPassword =
-      sessionStorage.getItem(
-        `_csLastPw_${port}`
-      );
-
-    if (
-      storedPassword &&
-      typeof executeEngineCommand === "function"
-    ) {
-      const safePassword =
-        sanitizeEngineArgument(
-          storedPassword
-        );
-
-      executeEngineCommand(
-        `password "${safePassword}"`
-      );
-    }
-  }
-
-  function runRetry() {
-    if (!reconnecting) {
-      return;
-    }
-
-    if (
-      typeof engineRunning === "undefined" ||
-      !engineRunning ||
-      typeof executeEngineCommand !== "function"
-    ) {
-      reconnecting = false;
-      exhausted = true;
-      clearRetryTimer();
-      showOverlay(
-        "Oyun motoru yeniden bağlantı komutuna yanıt vermiyor."
-      );
-
-      setText(
-        titleEl,
-        "BAĞLANTI KURULAMADI"
-      );
-
-      setText(
-        messageEl,
-        "Sayfayı yenileyerek tekrar deneyebilirsiniz."
-      );
-      return;
-    }
-
-    if (attempt >= MAX_ATTEMPTS) {
-      reconnecting = false;
-      exhausted = true;
-      clearRetryTimer();
-      showOverlay(lastReason);
-
-      setText(
-        titleEl,
-        "BAĞLANTI KURULAMADI"
-      );
-
-      setText(
-        messageEl,
-        "Sunucuya otomatik olarak bağlanılamadı. Tekrar deneyebilir veya sayfayı yenileyebilirsiniz."
-      );
-
-      setText(
-        attemptEl,
-        `${MAX_ATTEMPTS} deneme tamamlandı`
-      );
-
-      return;
-    }
-
-    attempt += 1;
-
-    /*
-     * GameUI her ihtimale karşı kapalı kalsın.
-     * Bir kez göndermek yeterlidir.
-     */
-    executeEngineCommand(
-      "setinfo _vgui_menus 0"
-    );
-
-    restorePassword();
-
-    /*
-     * Xash'ın yerleşik retry komutu önceki sunucu
-     * bilgisini kullanır ve bağlantıyı yeniden başlatır.
-     */
-    executeEngineCommand("retry");
-
-    const nextDelay =
-      RETRY_DELAYS[
-        Math.min(
-          attempt,
-          RETRY_DELAYS.length - 1
-        )
-      ];
-
-    retryTimer = setTimeout(
-      runRetry,
-      nextDelay
+  if (meta?.kind === 'amx') {
+    addConsoleLog(
+      'AMXX komutu gönderildi. Menü açılmazsa bu sunucuda admin değilsindir (setinfo _pw + amx_admins).',
+      'warn'
     );
   }
 
-  function start(reason) {
-    /*
-     * Aynı kopma WebSocket, engine logu ve C++ eventi
-     * tarafından aynı anda bildirilebilir.
-     */
-    if (reconnecting || exhausted) {
-      return;
-    }
-
-    reconnecting = true;
-    exhausted = false;
-    attempt = 0;
-    lastReason =
-      reason || "Sunucu bağlantısı kesildi.";
-
-    clearRetryTimer();
-
-    retryTimer = setTimeout(
-      runRetry,
-      RETRY_DELAYS[0]
-    );
-  }
-
-  function connected() {
-    if (!reconnecting) {
-      return;
-    }
-
-    reconnecting = false;
-    exhausted = false;
-    attempt = 0;
-
-    clearRetryTimer();
-    hideOverlay();
-
-    setText(
-      messageEl,
-      "Bağlantı kuruldu."
-    );
-
-    const canvas =
-      document.getElementById("canvas");
-
-    if (canvas) {
-      canvas.focus();
-    }
-  }
-
-  function retryNow() {
-    if (!reconnecting) {
-      reconnecting = true;
-    }
-
-    exhausted = false;
-    attempt = 0;
-    hideOverlay();
-    clearRetryTimer();
-    runRetry();
-  }
-
-  function prepareConnection() {
-    reconnecting = false;
-    exhausted = false;
-    attempt = 0;
-    clearRetryTimer();
-    hideOverlay();
-  }
-
-  function nonRetryable(reason) {
-    lastReason = reason || lastReason;
-    reconnecting = false;
-    exhausted = true;
-    attempt = 0;
-    clearRetryTimer();
-    hideOverlay();
-  }
-
-  if (retryNowButton) {
-    retryNowButton.addEventListener(
-      "click",
-      retryNow
-    );
-  }
-
-  if (reloadButton) {
-    reloadButton.addEventListener(
-      "click",
-      () => window.location.reload()
-    );
-  }
-
-  return {
-    start,
-    connected,
-    retryNow,
-    prepareConnection,
-    nonRetryable,
-    get reconnecting() {
-      return reconnecting;
+  const runCommands = () => {
+    for (const c of commands) {
+      runEngineCommandRaw(c);
     }
   };
-})();
+
+  // Admin changelevel: önce client VFS'ye BSP yaz, sonra sunucuya komutu gönder
+  if (meta?.preloadMap) {
+    ensureMapBspInVfs(meta.preloadMap).then((ok) => {
+      if (!ok) {
+        addConsoleLog(`Harita VFS'ye yüklenemedi: ${meta.preloadMap}`, 'err');
+        if (typeof notify === 'function') {
+          notify(`Harita indirilemedi: ${meta.preloadMap}`, 'error');
+        }
+        return;
+      }
+      runCommands();
+    });
+    return;
+  }
+
+  runCommands();
+};
+
+function appendBrowserCSPerfConfig(cfgBuffer) {
+  // HTML skorboard TAB olayının tek sahibidir. Native +showscores'u kapat.
+  const tabGuard = '\nunbind "TAB"\nbind "TAB" ""\n';
+  let base = cfgBuffer && cfgBuffer.length ? cfgBuffer : new Uint8Array(0);
+  try {
+    const text = new TextDecoder().decode(base);
+    const stripped = text
+      .replace(/^\s*bind\s+"?TAB"?\s+.+$/gim, '')
+      .replace(/^\s*bind\s+"?tab"?\s+.+$/gim, '');
+    base = new TextEncoder().encode(stripped);
+  } catch (_) {
+    /* keep original bytes */
+  }
+  const guardBytes = new TextEncoder().encode(tabGuard);
+  const merged = new Uint8Array(base.length + guardBytes.length);
+  merged.set(base, 0);
+  merged.set(guardBytes, base.length);
+  return merged;
+}
 
 window.BrowserCSReconnect = BrowserCSReconnect;
 
@@ -1666,6 +1451,9 @@ window.addEventListener(
     const state = event.detail?.state;
 
     if (state === "disconnected") {
+      // WebRTC asset indirme sırasında ısıtılır. Bu aşamadaki ICE kapanması
+      // kullanıcıya reconnect ekranı göstermemeli.
+      if (!window._browserCSAssetsReady) return;
       BrowserCSReconnect.start(
         event.detail?.reason ||
           "Sunucu bağlantısı kesildi."
@@ -1674,7 +1462,9 @@ window.addEventListener(
     }
 
     if (state === "active") {
-      BrowserCSReconnect.connected();
+      if (typeof addConsoleLog === "function") {
+        addConsoleLog("[Ağ] WebRTC kanalı açık — sunucu oturumu bekleniyor...", "ok");
+      }
       return;
     }
 
@@ -1689,13 +1479,29 @@ window.addEventListener(
 window.addEventListener(
   "xash3d-ws-closed",
   () => {
+    if (!window._browserCSAssetsReady) return;
     BrowserCSReconnect.start(
       "Ağ bağlantısı beklenmedik şekilde kapandı."
     );
   }
 );
 
+window.addEventListener("browsercs-gameui-blocked", (event) => {
+  const action = event.detail?.action || "menu";
+
+  // Sadece kullanıcı bilinçli çıkış yaptığında lobiye dön.
+  // set-active-menu / main-menu bağlantı akışında da tetiklenir — reconnect BAŞLATMA.
+  if (action === "quit") {
+    if (typeof window.leaveBrowserCSServer === "function") {
+      window.leaveBrowserCSServer({ message: "BrowserCS menüsüne dönülüyor..." });
+    } else {
+      location.reload();
+    }
+  }
+});
+
 function addLoadingLog(msg, cls = '') {
+  // exposed for game/engine.js
   const p = document.createElement('p');
   if (cls) p.className = cls;
   p.textContent = msg;
@@ -1704,1306 +1510,81 @@ function addLoadingLog(msg, cls = '') {
 }
 
 function setProgress(pct, msg) {
-  loadingProgress.style.width = `${pct}%`;
+  if (loadingProgress) loadingProgress.style.width = `${pct}%`;
   const pctEl = document.getElementById('loading-pct-text');
   if (pctEl) pctEl.textContent = `${Math.round(pct)}%`;
-  if (msg) addLoadingLog(msg, pct >= 90 ? 'ok' : '');
+
+  const titleEl = document.getElementById('loading-title');
+  const statusEl = document.getElementById('loading-status');
+  const phaseEl = document.getElementById('loading-phase');
+  const overlay = document.getElementById('loading-overlay');
+  const text = String(msg || '');
+  const lower = text.toLowerCase();
+
+  const isNetwork =
+    pct >= 92 ||
+    /webrtc|ağ|sunucu|bağlan/i.test(lower);
+  const isReady = pct >= 100 || /tamamlandı|hazır/i.test(lower);
+
+  if (overlay) {
+    overlay.classList.toggle('phase-network', isNetwork && !isReady);
+    overlay.classList.toggle('phase-ready', isReady);
+  }
+  if (titleEl) {
+    titleEl.textContent = isReady
+      ? 'HAZIR'
+      : (isNetwork ? 'SUNUCUYA BAĞLANILIYOR' : 'DOSYALAR İNDİRİLİYOR');
+  }
+  if (phaseEl) {
+    phaseEl.textContent = isReady ? 'HAZIR' : (isNetwork ? 'AĞ' : 'PAKET');
+  }
+  if (statusEl && text) {
+    statusEl.textContent = text;
+  }
+
+  if (msg) addLoadingLog(msg, pct >= 90 || isReady ? 'ok' : '');
 }
 
-function getMapType(name) {
-  if (name.startsWith('de_')) return { prefix: 'de', label: 'BOMB DEFUSAL' };
-  if (name.startsWith('cs_')) return { prefix: 'cs', label: 'HOSTAGE RESCUE' };
-  if (name.startsWith('as_')) return { prefix: 'as', label: 'ASSASSINATION' };
-  if (name.startsWith('es_')) return { prefix: 'es', label: 'ESCAPE' };
-  return { prefix: '?', label: 'UNKNOWN' };
-}
-
-function formatSize(bytes) {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}K`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}M`;
-}
-
-// ─── Harita Listesi ───────────────────────────────────────────────────────────
-
-async function loadMapList() {
-  try {
-    const res = await fetch(`${ASSET_URL}/api/maps`);
-    const data = await res.json();
-    maps = (data && data.maps && data.maps.length > 0) ? data.maps : [
-      { name: 'de_dust2', size: 2686884, description: 'Bomb Defusal' },
-      { name: 'de_dust', size: 1986440, description: 'Bomb Defusal' },
-      { name: 'cs_assault', size: 2100000, description: 'Hostage Rescue' },
-      { name: 'de_inferno', size: 2450000, description: 'Bomb Defusal' },
-      { name: 'cs_office', size: 2300000, description: 'Hostage Rescue' },
-      { name: 'de_aztec', size: 2800000, description: 'Bomb Defusal' }
-    ];
-
-    renderMapList();
-    return true;
-  } catch (err) {
-    console.warn('Map list fetch warning, using defaults:', err);
-    maps = [
-      { name: 'de_dust2', size: 2686884, description: 'Bomb Defusal' },
-      { name: 'de_dust', size: 1986440, description: 'Bomb Defusal' },
-      { name: 'cs_assault', size: 2100000, description: 'Hostage Rescue' },
-      { name: 'de_inferno', size: 2450000, description: 'Bomb Defusal' },
-      { name: 'cs_office', size: 2300000, description: 'Hostage Rescue' },
-      { name: 'de_aztec', size: 2800000, description: 'Bomb Defusal' }
-    ];
-
-    renderMapList();
-    return true;
-  }
-}
-
-function renderMapList() {
-  // RCON harita select'ini de doldur
-  const rconMapSel = $('rcon-map-select');
-  if (rconMapSel) {
-    const cur = rconMapSel.value;
-    rconMapSel.innerHTML = maps.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
-    if (cur && maps.find(m => m.name === cur)) rconMapSel.value = cur;
-  }
-
-  const query = mapSearch.value.toLowerCase();
-  const filter = activeFilter;
-
-  const filtered = maps.filter(m => {
-    const matchSearch = m.name.toLowerCase().includes(query);
-    const matchFilter = filter === 'all' || m.name.startsWith(filter + '_');
-    return matchSearch && matchFilter;
-  });
-
-  if (filtered.length === 0) {
-    mapList.innerHTML = `<div style="padding:1rem;font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);">Sonuç bulunamadı</div>`;
-    return;
-  }
-
-  mapList.innerHTML = filtered.map(m => {
-    const type = getMapType(m.name);
-    const isSelected = m.name === currentMap;
-    return `
-      <div class="map-item ${isSelected ? 'selected' : ''}" data-map="${m.name}">
-        <span class="map-badge ${type.prefix}">${type.prefix.toUpperCase()}</span>
-        <span class="map-name">${m.name}</span>
-        <span class="map-size">${formatSize(m.size)}</span>
-      </div>`;
-  }).join('');
-
-  mapList.querySelectorAll('.map-item').forEach(el => {
-    el.addEventListener('click', () => selectMap(el.dataset.map));
-  });
-}
-
-function selectMap(name) {
-  currentMap = name;
-  renderMapList();
-
-  const map = maps.find(m => m.name === name);
-  const type = getMapType(name);
-  const maxPl = parseInt(document.getElementById('max-players-select')?.value || '16');
-  const half = Math.floor(maxPl / 2);
-
-  noMapState.style.display = 'none';
-  mapCard.style.display = 'block';
-  cardMapName.textContent = name;
-  if (cardMapType) cardMapType.textContent = `${type.label} — COUNTER-STRIKE 1.5`;
-  if (cardMapDesc) cardMapDesc.textContent = map?.description || 'CS 1.5 klasik haritası.';
-  btnLaunch.disabled = false;
-
-  // Team capacities
-  const ctCap = document.getElementById('ct-team-capacity');
-  const tCap = document.getElementById('t-team-capacity');
-  const vsBadge = document.getElementById('vs-badge-text');
-  if (ctCap) ctCap.textContent = `${half} Oyuncu`;
-  if (tCap) tCap.textContent = `${half} Oyuncu`;
-  if (vsBadge) vsBadge.textContent = `${half}v${half}`;
-
-  // Thumbnail background
-  const thumb = document.getElementById('map-thumb-hero');
-  if (thumb) {
-    const thumbUrl = `https://browsercs.com/cs-assets/thumbnails/${name}.jpg`;
-    thumb.style.backgroundImage = 'none';
-    fetch(thumbUrl, { mode: 'cors', cache: 'force-cache' }).then(r => r.blob()).then(blob => {
-      thumb.style.backgroundImage = `url('${URL.createObjectURL(blob)}')`;
-    }).catch(() => { });
-    thumb.style.backgroundSize = 'cover';
-    thumb.style.backgroundPosition = 'center';
-  }
-
-  // Type badge
-  const typeBadge = document.getElementById('map-type-badge');
-  if (typeBadge) {
-    typeBadge.textContent = type.label;
-    typeBadge.className = 'map-thumb-badge';
-    if (name.startsWith('de_')) typeBadge.classList.add('bomb');
-    else if (name.startsWith('cs_')) typeBadge.classList.add('hostage');
-    else typeBadge.classList.add('escape');
-  }
-}
-
-
-// ─── EM FS Yardımcıları ───────────────────────────────────────────────────────
-
-/**
- * Emscripten FS'de iç içe dizin oluşturur (mkdir -p benzeri).
- */
-function fsMkdirP(em, fullPath) {
-  const parts = fullPath.split('/').filter(Boolean);
-  let current = '';
-  for (const part of parts) {
-    current += '/' + part;
-    try { em.FS.mkdir(current); } catch (e) { /* Zaten var */ }
-  }
-}
-
-// ─── Engine Başlatma ──────────────────────────────────────────────────────────
-
-async function initEngine(mapName, connectPort = null, isHost = false) {
-  if (connectPort && connectPort !== "listen") {
-    BrowserCSReconnect.prepareConnection();
-  }
-
-  window._browserCSConnectPort =
-    connectPort && connectPort !== "listen"
-      ? String(connectPort)
-      : "";
-
-  if (engineRunning && xash) {
-    if (connectPort) {
-      // Zaten açıksa konsol komutu ile bağlan
-      addConsoleLog(`connect wss://backend.browsercs.com/ws/${connectPort}`);
-      // TODO: xash konsoluna komut gönderme
-    } else {
-      changeMap(mapName);
-    }
-    return;
-  }
-
-  // UI geçişi
-  gameWrapper.classList.add('active');
-  previewPanel.classList.add('hidden');
-  loadingOverlay.classList.add('active');
-  loadingMapName.textContent = mapName;
-  toolbarMapName.textContent = mapName;
-  loadingLog.innerHTML = '';
-  loadingProgress.style.width = '0%';
-  btnLaunch.disabled = true;
-
-  setEngineStatus('Oyun dosyaları indiriliyor...', 'orange');
-
-  // İlk bağlantı bilgi mesajları
-  addLoadingLog('🚀 Sunucuya bağlanılıyor: ' + mapName, 'ok');
-  addLoadingLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  addLoadingLog('⚠️  İLK BAĞLANTI UYARISI:', 'warn');
-  addLoadingLog('   İlk kez bağlanıyorsanız oyun dosyaları indiriliyor.', 'warn');
-  addLoadingLog('   Bu işlem 1-3 dakika sürebilir (yaklaşık 250 MB).', 'warn');
-  addLoadingLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  addLoadingLog('✅ Sonraki girişlerde dosyalar önbellekten yüklenir.');
-  addLoadingLog('ℹ️  Çerezleri temizlerseniz tekrar indirilir.');
-  addLoadingLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-  // Akıllı Önbellek (Cache API) - Her girişte 250MB indirmeyi engeller
-  async function cachedFetch(url, noCache = false) {
-    if (noCache) return fetch(url);
-    try {
-      const cache = await caches.open('cs-assets-v1');
-      const req = new Request(url);
-      let res = await cache.match(req);
-      if (res) {
-        console.log('[Cache] Yüklendi:', url);
-        return res;
-      }
-      res = await fetch(url);
-      if (res.ok && res.status === 200 && !(res.headers.get("content-type") || "").includes("text/html")) {
-        cache.put(req, res.clone());
-      }
-      return res;
-    } catch (e) {
-      return fetch(url);
-    }
-  }
-
-  try {
-    // ── Adım 1: Tüm Dosyaları RAM'e İndir (Engine başlamadan ÖNCE) ─────────
-    setProgress(5, 'xash.wasm indiriliyor... (~3.7MB)');
-    const wasmRes = await cachedFetch('/wasm/xash.wasm');
-    if (!wasmRes.ok) throw new Error('xash.wasm indirilemedi');
-    const wasmBinary = await wasmRes.arrayBuffer();
-
-
-    // Oyun dosyaları preRun içinde asenkron olarak sırayla indirilecek.
-    // Bu sayede JS RAM kullanımı ve WASM Heap şişmesi önlenecek.
-    const cacheBust = `?v=${Date.now()}`;
-
-    // ─── KRİTİK SPRITE DÜZELTMESİ (SPA 404 SORUNU) ─────────────
-    setProgress(40, "Oyun motoru modülleri ve sprite'lar indiriliyor...");
-
-    // Cloudflare Pages SPA modunda olmayan dosyalara index.html döndürüldüğü için
-    // sprite fetch işlemleri "200 OK" dönüyor ve oyun .spr dosyası yerine HTML 
-    // parse edip "wrong id" veya "unknown format" diyerek çöküyor.
-    // Garantili olan muzzleflash1.spr dosyasını "dummy/fallback" sprite olarak kullanalım.
-    const dummySprRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/sprites/muzzleflash1.spr`);
-    if (!dummySprRes.ok) throw new Error('muzzleflash1.spr (fallback) indirilemedi');
-    const dummySprBuffer = new Uint8Array(await dummySprRes.arrayBuffer());
-    window.dummySprBuffer = dummySprBuffer;
-
-    const dummyMdlRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/models/p_galil.mdl`);
-    if (dummyMdlRes.ok) window.dummyMdlBuffer = new Uint8Array(await dummyMdlRes.arrayBuffer());
-
-    window.dummyWavBuffer = new Uint8Array([
-      82, 73, 70, 70, 36, 0, 0, 0, 87, 65, 86, 69, 102, 109, 116, 32, 16, 0, 0, 0, 1, 0, 1, 0,
-      68, 172, 0, 0, 136, 88, 1, 0, 2, 0, 16, 0, 100, 97, 116, 97, 0, 0, 0, 0
-    ]);
-
-    // İhtiyaç duyulan diğer sprite'ları güvenli bir şekilde fetch eden yardımcı
-    async function safeFetchSprite(path) {
-      try {
-        const res = await cachedFetch(path);
-        const contentType = res.headers.get('content-type') || '';
-        // Eğer SPA fallback yüzünden HTML geldiyse reddet
-        if (res.ok && !contentType.includes('text/html')) {
-          const buf = await res.arrayBuffer();
-          // Header kontrolü: "IDSP" (0x50534449 in little endian = 73, 68, 83, 80)
-          const u8 = new Uint8Array(buf);
-          if (u8.length > 4 && u8[0] === 73 && u8[1] === 68 && u8[2] === 83 && u8[3] === 80) {
-            return u8;
-          }
-        }
-      } catch (e) { }
-      return dummySprBuffer;
-    }
-
-    const [
-      gfxRes, fontsRes,
-      csServerRes, csClientRes, csMenuRes,
-      fsRes, glRes,
-      vDeltaRes, vRcRes, cDeltaRes, cCfgRes, serverCfgRes, cmdMenuRes,
-      dotSprBuffer, animglowSprBuffer, richoSprBuffer, shellchromeSprBuffer, crosshairsSprBuffer, radioSprBuffer
-    ] = await Promise.all([
-      cachedFetch(`${ASSET_URL}/cs-assets/valve/gfx.wad`),
-      cachedFetch(`${ASSET_URL}/cs-assets/valve/fonts.wad`),
-      cachedFetch((isHost || !connectPort || connectPort === 'listen' || connectPort === true) ? '/wasm/dlls/cs_emscripten_wasm32_v36.wasm' : '/wasm/dlls/cs_emscripten_wasm32_v34_stable.wasm'),
-      cachedFetch('/wasm/cl_dlls/client_emscripten_wasm32_v65.wasm'),
-      cachedFetch('/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm'),
-      cachedFetch('/wasm/filesystem_stdio.wasm'),
-      cachedFetch('/wasm/libref_webgl2.wasm'),
-      cachedFetch(`${ASSET_URL}/cs-assets/valve/delta.lst`),
-      cachedFetch(`${ASSET_URL}/cs-assets/valve/valve.rc`),
-      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/delta.lst`),
-      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/config.cfg`),
-      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/server.cfg`).catch(() => new Response("")),
-      cachedFetch(`${ASSET_URL}/cs-assets/cstrike/commandmenu.txt`).catch(() => new Response("")),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/dot.spr`),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/animglow01.spr`),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/richo1.spr`),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/shellchrome.spr`),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/crosshairs.spr`),
-      safeFetchSprite(`${ASSET_URL}/cs-assets/cstrike/sprites/radio.spr`)
-    ]);
-
-    addLoadingLog(`✓ Sprite'lar yüklendi (Fallbacks aktif)`);
-
-    setProgress(50, 'Ekstra harita dokuları (WAD) sırayla indiriliyor...');
-    const wadsRes = await cachedFetch(`${ASSET_URL}/api/wads`, true);
-    const { wads } = await wadsRes.json();
-
-    const downloadedWads = [];
-    for (const wad of wads) {
-      const res = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/${wad}`);
-      if (res.ok && !(res.headers.get("content-type") || "").includes("text/html")) {
-        const wadData = new Uint8Array(await res.arrayBuffer());
-        downloadedWads.push({ name: wad, data: wadData });
-      }
-    }
-
-    const valveWadsList = ['halflife1.wad', 'halflife2.wad', 'cached.wad', 'decals.wad', 'liquids.wad', 'pldecal.wad', 'spraypaint.wad', 'xeno.wad', 'fonts.wad', 'gfx.wad'];
-    const downloadedValveWads = [];
-    for (const wad of valveWadsList) {
-      const res = await cachedFetch(`${ASSET_URL}/cs-assets/valve/${wad}`);
-      if (res.ok && !(res.headers.get("content-type") || "").includes("text/html")) {
-        const wadData = new Uint8Array(await res.arrayBuffer());
-        downloadedValveWads.push({ name: wad, data: wadData });
-      }
-    }
-
-    setProgress(40, 'Dosyalar hazırlanıyor...');
-
-    if (!gfxRes.ok) throw new Error('gfx.wad indirilemedi');
-    if (!csServerRes.ok) throw new Error('cs_emscripten_wasm32.wasm indirilemedi');
-
-    const gfxBuffer = new Uint8Array(await gfxRes.arrayBuffer());
-    const fontsBuffer = new Uint8Array(await fontsRes.arrayBuffer());
-    const csServerBuffer = new Uint8Array(await csServerRes.arrayBuffer());
-    const csClientBuffer = new Uint8Array(await csClientRes.arrayBuffer());
-    const csMenuBuffer = new Uint8Array(await csMenuRes.arrayBuffer());
-
-    const fsBuffer = new Uint8Array(await fsRes.arrayBuffer());
-    const glBuffer = new Uint8Array(await glRes.arrayBuffer());
-    const vDeltaBuffer = (vDeltaRes.ok && !(vDeltaRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await vDeltaRes.arrayBuffer()) : new Uint8Array(0);
-
-    const vRcBuffer = (vRcRes.ok && !(vRcRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await vRcRes.arrayBuffer()) : new Uint8Array(0);
-
-    const cDeltaBuffer = (cDeltaRes.ok && !(cDeltaRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await cDeltaRes.arrayBuffer()) : new Uint8Array(0);
-
-    const cCfgBuffer = (cCfgRes.ok && !(cCfgRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await cCfgRes.arrayBuffer()) : new Uint8Array(0);
-
-    const cmdMenuBuffer = (cmdMenuRes.ok && !(cmdMenuRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await cmdMenuRes.arrayBuffer()) : new Uint8Array(0);
-
-
-    setProgress(45, 'CS yapılandırma (liblist.gam) indiriliyor...');
-    const liblistRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/liblist.gam`);
-    if (!liblistRes.ok) throw new Error('liblist.gam indirilemedi');
-    const liblistBuffer = (liblistRes.ok && !(liblistRes.headers.get("content-type") || "").includes("text/html")) ? new Uint8Array(await liblistRes.arrayBuffer()) : new Uint8Array(0);
-
-
-    setProgress(50, `Harita indiriliyor: ${mapName}.bsp...`);
-    const bspRes = await cachedFetch(`${ASSET_URL}/cs-assets/cstrike/maps/${mapName}.bsp`);
-    if (!bspRes.ok) throw new Error(`${mapName}.bsp indirilemedi`);
-    const bspBuffer = new Uint8Array(await bspRes.arrayBuffer());
-
-    // ── Adım 2: Xash3D WASM instance oluştur ────────────────────────────────
-    setProgress(65, 'Xash3D WASM instance oluşturuluyor...');
-
-    // WebGL 2.0 desteği kontrolü
-    const checkGL = gameCanvas.getContext('webgl2') || gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
-    if (!checkGL) {
-      window.customAlert("Oyun motoru başlatılamadı! Bilgisayarınızın ekran kartı veya tarayıcınız WebGL teknolojisini desteklemiyor. \n\nLütfen Chrome/Edge ayarlarından 'Donanım Hızlandırma' (Hardware Acceleration) seçeneğinin AÇIK olduğundan emin olun veya ekran kartı sürücülerinizi güncelleyin.");
-      throw new Error('WebGL desteklenmiyor.');
-    }
-
-    const nickname = (userNicknameInput && userNicknameInput.value.trim()) ? userNicknameInput.value.trim() : '';
-    if (!nickname) {
-      window.customAlert("Lütfen oyuna girmeden önce bir oyuncu adı belirleyin!");
-      throw new Error("Boş oyuncu adı");
-    }
-    let xashArgs = [
-      '-windowed',
-      '-game', 'cstrike',
-      '+setinfo', '_vgui_menus 0',
-      '+mp_consistency', '0',
-      '+sv_lan', '0',
-      '+sv_allow_download', '1',
-      '+cl_allowdownload', '0',
-      '+cl_download_ingame', '0',
-      '+cl_lw', '0',
-      '+voice_enable', '0',
-      '+sv_voiceenable', '0',
-      '+touch_enable', '0',
-      '+touch_emulate', '0',
-      '+name', nickname,
-      '+bind', '1', 'slot1',
-      '+bind', '2', 'slot2',
-      '+bind', '3', 'slot3',
-      '+bind', '4', 'slot4',
-      '+bind', '5', 'slot5',
-      '+bind', '6', 'slot6',
-      '+bind', '7', 'slot7',
-      '+bind', '8', 'slot8',
-      '+bind', '9', 'slot9',
-      '+bind', '0', 'slot10',
-      '+bind', 'm', 'chooseteam',
-      '+bind', 'b', 'buy',
-      '+alias', 'toggle_hand', 'hand_left',
-      '+alias', 'hand_left', 'cl_righthand 0; alias toggle_hand hand_right',
-      '+alias', 'hand_right', 'cl_righthand 1; alias toggle_hand hand_left',
-      '+bind', 'h', 'toggle_hand',
-      '-heapsize', '65536',
-      '+ip', '10.0.0.2',
-      '+clientport', (27000 + Math.floor(Math.random() * 1000)).toString(),
-      '+cl_updaterate', '101',
-      '+cl_cmdrate', '101',
-      '+rate', '100000',
-      '+ex_interp', '0.01',
-      '+fps_max', '100',
-      '+setinfo', '_vgui_menus', '0',
-      '+setinfo', 'vgui_menus', '0',
-      // In-game console error overlay'i kapat
-      '+sensitivity', '3',
-      '+zoom_sensitivity_ratio', '1.2',
-      '+cl_bob', '0.01',
-      '+cl_bobup', '0.5',
-      '+r_drawviewmodel', '1',
-      '+hud_fastswitch', '1',
-      '+gl_clear', '1',
-      '+r_novis', '0',
-      '+setinfo', '_vgui_menus', '0',
-    ];
-
-
-    let actualWsPort = null;
-    if (isHost || !connectPort || connectPort === 'listen' || connectPort === true) {
-      xashArgs.push('+maxplayers', '16', '+map', mapName);
-      actualWsPort = (connectPort && connectPort !== 'listen') ? connectPort : null;
-    } else {
-      // İstemci olarak bağlanıyoruz.
-      // KRİTİK FIX: İlk yüklemede engine henüz assetleri (PK3) tam çekmeden +connect
-      // komutu gelirse, Xash3D bağlantıyı reddedip ana menüye düşüyor.
-      // Bu yüzden +connect'i argüman olarak vermek yerine,
-      // PK3 indirmesi bitince executeEngineCommand() ile 'connect' göndereceğiz.
-      actualWsPort = connectPort;
-    }
-
-    xash = new Xash3DWebSocket({
-      canvas: gameCanvas,
-      arguments: xashArgs,
-      connectPort: actualWsPort,
-      isHost: isHost,
-      renderer: 'gl4es',
-      module: {
-        INITIAL_MEMORY: 536870912 // 512 MB to prevent memory growth (which detaches ArrayBuffer)
-      },
-
-      libraries: {
-        menu: '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        client: '/wasm/cl_dlls/client_emscripten_wasm32_v65.wasm',
-        server: (isHost || !connectPort || connectPort === 'listen' || connectPort === true) ? '/wasm/dlls/cs_emscripten_wasm32_v36.wasm' : '/wasm/dlls/cs_emscripten_wasm32_v34_stable.wasm',
-        render: {
-          gl4es: '/wasm/libref_webgl2.wasm'
-        }
-      },
-
-      filesMap: {
-        'filesystem_stdio.wasm': '/wasm/filesystem_stdio.wasm',
-        'cl_dlls/menu_emscripten_wasm32.wasm': '/wasm/cl_dlls/menu_emscripten_wasm32_v34.wasm',
-        'cl_dlls/client_emscripten_wasm32.wasm': '/wasm/cl_dlls/client_emscripten_wasm32_v65.wasm',
-        'dlls/cs_emscripten_wasm32.wasm': (isHost || !connectPort || connectPort === 'listen' || connectPort === true) ? '/wasm/dlls/cs_emscripten_wasm32_v36.wasm' : '/wasm/dlls/cs_emscripten_wasm32_v34_stable.wasm',
-        'dlls/hl_emscripten_wasm32.wasm': '/wasm/dlls/hl_emscripten_wasm32.wasm',
-      },
-
-      module: {
-        keyboardListeningElement: gameCanvas,
-        wasmBinary,
-        INITIAL_MEMORY: 536870912, // 320 MB (to completely avoid memory growth and Detached ArrayBuffer issues)
-        instantiateWasm: (imports, successCallback) => {
-          let memRef = null;
-
-          const patchResize = (envObj) => {
-            envObj['emscripten_resize_heap'] = (requestedSize) => {
-              requestedSize = requestedSize >>> 0;
-              if (!memRef) {
-                console.error('[Memory] memRef henüz hazır değil!');
-                return 0;
-              }
-              const oldSize = memRef.buffer.byteLength;
-              if (requestedSize <= oldSize) return 1;
-              const pages = Math.ceil((requestedSize - oldSize) / 65536);
-              try {
-                memRef.grow(pages);
-                console.log(`[Memory] Büyütüldü: +${pages} page → ${Math.round(memRef.buffer.byteLength / 1048576)} MB`);
-
-                // CRITICAL FIX: Notify Emscripten JS runtime about the memory growth
-                // This updates HEAPU8, HEAP32 etc. globally so we don't get Detached ArrayBuffer!
-                if (envObj['emscripten_notify_memory_growth']) {
-                  envObj['emscripten_notify_memory_growth'](0);
-                }
-
-                return 1;
-              } catch (e) {
-                console.error('[Memory] grow() başarısız:', e.message, 'istenen:', Math.round(requestedSize / 1048576) + 'MB', 'mevcut:', Math.round(oldSize / 1048576) + 'MB');
-                return 0;
-              }
-            };
-          };
-
-          if (imports.env) patchResize(imports.env);
-          if (imports['wasi_snapshot_preview1']) patchResize(imports['wasi_snapshot_preview1']);
-
-          WebAssembly.instantiate(wasmBinary, imports).then(output => {
-            memRef = output.instance.exports.memory || (imports && imports.env && imports.env.memory) || window.wasmMemory;
-            if (!memRef && output.instance.exports) {
-              for (const key in output.instance.exports) {
-                if (output.instance.exports[key] instanceof WebAssembly.Memory) {
-                  memRef = output.instance.exports[key];
-                  break;
-                }
-              }
-            }
-            if (memRef && memRef.buffer) {
-              window.wasmMemory = memRef; // Expose globally so Net.sendto can read the always-valid buffer!
-              console.log('[Memory] WASM hafızası alındı:', Math.round(memRef.buffer.byteLength / 1048576), 'MB');
-            } else {
-              console.warn('[Memory] WASM hafıza referansı exports veya imports.env içinde bulunamadı.');
-            }
-            successCallback(output.instance, output.module);
-          }).catch(e => {
-            console.error('[WASM] instantiate hatası:', e);
-          });
-
-          return {}; // async instantiation sinyali
-        },
-        preRun: [(em) => {
-          addLoadingLog('Sanal dosya sistemi (FS) kuruluyor...');
-          const safeMkdir = (dir) => { try { em.FS.mkdir(dir); } catch (e) { } };
-
-          safeMkdir('/cstrike');
-          safeMkdir('/cstrike/maps');
-          safeMkdir('/cstrike/dlls');
-          safeMkdir('/cstrike/cl_dlls');
-          safeMkdir('/cstrike/models');
-          safeMkdir('/cstrike/models/shield');
-          safeMkdir('/cstrike/sprites');
-          safeMkdir('/valve');
-          safeMkdir('/valve/dlls');
-
-          // --- VFS FALLBACK HOOK ---
-          // Xash3D çökmelerini önlemek için eksik dosyalar istendiğinde dummy döner
-          const originalOpen = em.FS.open;
-          em.FS.open = function (path, flags, mode) {
-            try {
-              return originalOpen(path, flags, mode);
-            } catch (e) {
-              if (e.name === 'ErrnoError' && e.errno === 44) { // ENOENT
-                const p = path.toLowerCase();
-                if (p.endsWith('.spr') || p.endsWith('.mdl') || p.endsWith('.wav')) {
-                  console.warn(`[VFS Fallback] Eksik dosya tespit edildi: ${path}. Çökmeyi önlemek için dummy kullanılıyor.`);
-                  // İlgili dizinleri oluştur
-                  const parentDir = path.substring(0, path.lastIndexOf('/'));
-                  const parts = parentDir.split('/').filter(Boolean);
-                  let current = '';
-                  for (const part of parts) {
-                    current += '/' + part;
-                    try { em.FS.mkdir(current); } catch (err) { }
-                  }
-                  // Dosyayı oluştur
-                  if (p.endsWith('.spr') && window.dummySprBuffer) {
-                    em.FS.writeFile(path, window.dummySprBuffer);
-                  } else if (p.endsWith('.mdl') && window.dummyMdlBuffer) {
-                    em.FS.writeFile(path, window.dummyMdlBuffer);
-                  } else if (p.endsWith('.wav') && window.dummyWavBuffer) {
-                    em.FS.writeFile(path, window.dummyWavBuffer);
-                  } else {
-                    // boş dosya yaz
-                    em.FS.writeFile(path, new Uint8Array(0));
-                  }
-                  // Tekrar dene
-                  return originalOpen(path, flags, mode);
-                }
-              }
-              throw e;
-            }
-          };
-
-          em.addRunDependency('load_pk3_assets');
-          window.pk3Promise = (async () => {
-            const pk3Files = [
-              '/wasm/cstrike_models_player.pk3',
-              '/wasm/cstrike_models_shield.pk3',
-              '/wasm/cstrike_models_other.pk3',
-              '/wasm/cstrike_gfx_env.pk3',
-              '/wasm/cstrike_gfx_other.pk3',
-              '/wasm/cstrike_sound.pk3',
-              '/wasm/cstrike_sprites.pk3',
-              '/wasm/cstrike_essential.pk3',
-              '/wasm/buy_menus.pk3?nocache=1',
-              '/wasm/valve_models.pk3',
-              '/wasm/valve_sound.pk3',
-              '/wasm/valve_sprites.pk3',
-              '/wasm/valve_gfx.pk3',
-              '/wasm/valve_essential.pk3',
-              '/wasm/cstrike_wads.pk3'
-            ];
-
-            let loadedCount = 0;
-            for (const file of pk3Files) {
-              try {
-                const rawFile = file.split('?')[0];
-                const filename = rawFile.split('/').pop();
-                const targetPath = rawFile.includes('valve_') ? `/valve/${filename}` : `/cstrike/${filename}`;
-                addLoadingLog(`İndiriliyor: ${filename}...`);
-                // buy_menus.pk3 için cache bypass
-                const isBuyMenus = rawFile.includes('buy_menus');
-                const res = isBuyMenus
-                  ? await fetch(rawFile, { cache: 'no-store' })
-                  : await cachedFetch(file);
-                if (res && res.ok) {
-                  const buf = new Uint8Array(await res.arrayBuffer());
-                  em.FS.writeFile(targetPath, buf);
-                  loadedCount++;
-                  setProgress(20 + Math.floor((loadedCount / pk3Files.length) * 60), `İndirildi: ${filename}`);
-                }
-              } catch (e) {
-                console.error(`[Assets] Dosya indirilemedi: ${file}`, e);
-              }
-            }
-            addLoadingLog(`📦 ${loadedCount} adet oyun paketi (.pk3) başarıyla sisteme yazıldı.`, 'ok');
-            console.log("[DEBUG VFS] /cstrike/ contents:", em.FS.readdir('/cstrike'));
-            console.log("[DEBUG VFS] /valve/ contents:", em.FS.readdir('/valve'));
-
-            // CS 1.5 buy CFG'leri - cstrike/custom/touch/ = Xash3D en yüksek öncelikli dizin
-            const buyMenuCFGs = ['buy_pistol_t', 'buy_pistol_ct', 'buy_rifle_t', 'buy_rifle_ct',
-              'buy_submachinegun_t', 'buy_submachinegun_ct',
-              'buy_machinegun_t', 'buy_machinegun_ct',
-              'buy_shotgun_t', 'buy_shotgun_ct'];
-            try { em.FS.mkdir('/cstrike/custom'); } catch (e) { }
-            try { em.FS.mkdir('/cstrike/custom/touch'); } catch (e) { }
-            try { em.FS.mkdir('/cstrike/touch'); } catch (e) { }
-            let cfgWritten = 0;
-            for (const cfgName of buyMenuCFGs) {
-              try {
-                const r = await fetch(`/wasm/touch/${cfgName}.cfg`, { cache: 'no-store' });
-                if (r.ok) {
-                  const buf = new Uint8Array(await r.arrayBuffer());
-                  // #1 oncelik: cstrike/custom/touch/ (Xash3D en yuksek oncelik)
-                  em.FS.writeFile(`/cstrike/custom/touch/${cfgName}.cfg`, buf);
-                  // #2 fallback: cstrike/touch/
-                  em.FS.writeFile(`/cstrike/touch/${cfgName}.cfg`, buf);
-                  cfgWritten++;
-                  console.log(`[BuyMenu] Yazildi: ${cfgName}.cfg (${buf.length}B)`);
-                } else {
-                  console.error(`[BuyMenu] HATA: ${cfgName}.cfg HTTP ${r.status}`);
-                }
-              } catch (e) { console.error(`[BuyMenu] Exception: ${cfgName}`, e); }
-            }
-            addLoadingLog(`CS 1.5 buy CFGleri yazildi: ${cfgWritten}/${buyMenuCFGs.length}`, 'ok');
-            console.log('[BuyMenu] custom/touch VFS:', em.FS.readdir('/cstrike/custom/touch'));
-            // Fetch custom localized files to override pk3 defaults
-            const customTexts = [
-              '/cs-assets/cstrike/motd.txt',
-              '/cs-assets/cstrike/resource/cstrike_english.txt',
-              '/cs-assets/valve/resource/valve_english.txt',
-              '/cs-assets/cstrike/commandmenu.txt',
-              '/cs-assets/cstrike/liblist.gam',
-              '/cs-assets/cstrike/titles.txt'
-            ];
-            for (const fileUrl of customTexts) {
-              try {
-                const res = await cachedFetch(fileUrl);
-                if (res.ok) {
-                  const buf = new Uint8Array(await res.arrayBuffer());
-                  const path = fileUrl.replace('/cs-assets', '');
-                  try { em.FS.writeFile(path, buf); } catch (e) {
-                    // Fallback create dir
-                    if (path.includes('/resource/')) {
-                      const isValve = path.startsWith('/valve');
-                      try { em.FS.mkdir(isValve ? '/valve/resource' : '/cstrike/resource'); } catch (e2) { }
-                      em.FS.writeFile(path, buf);
-                    }
-                  }
-                }
-              } catch (e) { }
-            }
-
-            em.removeRunDependency('load_pk3_assets');
-          })();
-
-          em.FS.writeFile('/cstrike/liblist.gam', liblistBuffer);
-          em.FS.writeFile(`/cstrike/maps/${mapName}.bsp`, bspBuffer);
-
-          // İstemci ise: autoexec.cfg'ye connect yazmıyoruz.
-          // Motor haritayı +map ile yükleyecek, sonra engine tam hazır olduktan sonra
-          // delayed connect komutu göndereceğiz (aşağıda, engine başladıktan sonra).
-
-          downloadedWads.forEach(wad => {
-            em.FS.writeFile(`/cstrike/${wad.name}`, wad.data);
-          });
-          let halflife1Data = null;
-          let halflife2Data = null;
-
-          downloadedValveWads.forEach(wad => {
-            if (wad.name === 'halflife1.wad') {
-              halflife1Data = wad.data;
-            } else if (wad.name === 'halflife2.wad') {
-              halflife2Data = wad.data;
-            } else {
-              em.FS.writeFile(`/valve/${wad.name}`, wad.data);
-            }
-          });
-
-          if (halflife1Data && halflife2Data) {
-            const combined = new Uint8Array(halflife1Data.length + halflife2Data.length);
-            combined.set(halflife1Data);
-            combined.set(halflife2Data, halflife1Data.length);
-            em.FS.writeFile(`/valve/halflife.wad`, combined);
-          }
-
-          addLoadingLog(`📦 Dosyalar RAM dosya sistemine yazıldı. (+${downloadedWads.length + downloadedValveWads.length} WAD)`, 'ok');
-
-          // ─── KRİTİK: WASM crash'e neden olan sprite'lar ─────────────────────
-          // CS 1.5 kurulumunda cstrike/sprites/ dizininde bulunmuyorlar.
-          // Bunlar asset server'ın dmc/sprites fallback'inden gerçek dosyalar olarak
-          // yüklendi ve şimdi VFS'e yazılıyor. Bu eksiklik WASM memory crash'ine neden oluyordu.
-          em.FS.writeFile('/cstrike/sprites/dot.spr', dotSprBuffer);
-          em.FS.writeFile('/cstrike/sprites/animglow01.spr', animglowSprBuffer);
-          em.FS.writeFile('/cstrike/sprites/richo1.spr', richoSprBuffer);
-          em.FS.writeFile('/cstrike/sprites/shellchrome.spr', shellchromeSprBuffer);
-          em.FS.writeFile('/cstrike/sprites/crosshairs.spr', crosshairsSprBuffer);
-          em.FS.writeFile('/cstrike/sprites/radio.spr', radioSprBuffer);
-          // valve/sprites dizinine de yaz (bazı CS sürümleri oradan okur)
-          try { em.FS.mkdir('/valve/sprites'); } catch (e) { }
-          em.FS.writeFile('/valve/sprites/dot.spr', dotSprBuffer);
-          em.FS.writeFile('/valve/sprites/animglow01.spr', animglowSprBuffer);
-          em.FS.writeFile('/valve/sprites/richo1.spr', richoSprBuffer);
-          em.FS.writeFile('/valve/sprites/shellchrome.spr', shellchromeSprBuffer);
-          em.FS.writeFile('/valve/sprites/crosshairs.spr', crosshairsSprBuffer);
-          // ─────────────────────────────────────────────────────────────────────
-
-          // CS 1.6 missing sprites (for CS 1.5 compatibility)
-          const missingSprites = [
-            '/cstrike/sprites/shadow_circle.spr',
-            '/cstrike/sprites/gas_puff_01.spr',
-            '/cstrike/sprites/voiceicon.spr',
-            '/cstrike/sprites/radaropaque.spr',
-            '/cstrike/sprites/sniper_scope.spr'
-          ];
-          missingSprites.forEach(path => em.FS.writeFile(path, dummySprBuffer));
-
-          // Scope arc TGA stubs (sniperscope.cpp uses scanline rendering now, not TGA textures)
-          // Write minimal valid 1x1 transparent TGA files to avoid file-not-found crashes
-          const stubTga = new Uint8Array([0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 32, 8, 0, 0, 0, 0]);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_nw.tga', stubTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_ne.tga', stubTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_se.tga', stubTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc_sw.tga', stubTga);
-          em.FS.writeFile('/cstrike/sprites/scope_arc.tga', stubTga);
-
-
-          // DLL dosyaları
-          em.FS.writeFile('/cstrike/dlls/cs_emscripten_wasm32.wasm', csServerBuffer);
-          em.FS.writeFile('/cstrike/cl_dlls/client_emscripten_wasm32.wasm', csClientBuffer);
-          em.FS.writeFile('/cstrike/cl_dlls/menu_emscripten_wasm32.wasm', csMenuBuffer);
-
-          em.FS.writeFile('/filesystem_stdio.wasm', fsBuffer);
-          em.FS.writeFile('/libref_webgl2.wasm', glBuffer);
-          em.FS.writeFile('/libref_gles3compat.wasm', glBuffer);
-
-          // Valve dosyaları
-          em.FS.writeFile('/valve/gfx.wad', gfxBuffer);
-          em.FS.writeFile('/valve/fonts.wad', fontsBuffer);
-          em.FS.writeFile('/valve/delta.lst', vDeltaBuffer);
-          em.FS.writeFile('/valve/valve.rc', vRcBuffer);
-
-          // CS config dosyaları
-          em.FS.writeFile('/cstrike/delta.lst', cDeltaBuffer);
-          em.FS.writeFile('/cstrike/config.cfg', cCfgBuffer);
-          if (cmdMenuBuffer && cmdMenuBuffer.length > 0) {
-            em.FS.writeFile('/cstrike/commandmenu.txt', cmdMenuBuffer);
-          }
-          // server.cfg write removed
-
-          // ─── c0a0.bsp STUB ────────────────────────────────────────────────────
-          // Xash3D client modu başlarken arka plan menü sunucu için c0a0.bsp arar.
-          // Bu dosya olmadan Host_ErrorInit hatası ve alert dialog çıkar.
-          // Geçici çözüm: seçili haritanın BSP'sini c0a0.bsp olarak da yaz.
-          // Engine bağlandıktan sonra sunucunun haritasına geçiş yapar.
-          try {
-            safeMkdir('/valve/maps');
-            em.FS.writeFile('/valve/maps/c0a0.bsp', bspBuffer);
-            em.FS.writeFile('/cstrike/maps/c0a0.bsp', bspBuffer);
-            addLoadingLog('c0a0.bsp stub yazıldı ✓', 'ok');
-          } catch (e) {
-            addLoadingLog('c0a0 stub yazma uyarısı: ' + e.message, 'warn');
-          }
-          // ─────────────────────────────────────────────────────────────────────
-
-          addLoadingLog('Tüm dosyalar FS\'ye yazıldı ✓');
-
-          // ── KRİTİK FIX: SOCKFS WebSocket URL'ini WSS'e zorla ────────────────
-          // Emscripten'in SOCKFS kodu varsayılan olarak ws:// URL'i oluşturuyor.
-          // HTTPS sayfasında bu Mixed Content hatası ile bloklaniyor.
-          // websocketArgs.url = 'wss://' diyerek tüm engine WebSocket bağlantılarını
-          // güvenli WSS kanalına yönlendiriyoruz.
-          try {
-            if (em.SOCKFS) {
-              em.SOCKFS.websocketArgs['url'] = 'wss://';
-              addLoadingLog('SOCKFS WSS override uygulandı ✓', 'ok');
-            }
-          } catch (e) {
-            addLoadingLog('SOCKFS override uyarısı: ' + e.message, 'warn');
-          }
-          // ─────────────────────────────────────────────────────────────────────
-
-        }],
-        print: (log) => {
-          if (
-            window.BrowserCSReconnect &&
-            typeof log === "string"
-          ) {
-            const retryablePatterns = [
-              /server connection timed out/i,
-              /connection to server lost/i,
-              /connection lost/i,
-              /couldn't connect/i,
-              /could not connect/i,
-              /network error/i,
-              /connection failed/i,
-              /server is not responding/i
-            ];
-
-            const nonRetryablePatterns = [
-              /you have been kicked/i,
-              /kicked by server/i,
-              /banned/i,
-              /bad password/i,
-              /server is full/i
-            ];
-
-            const isNonRetryable =
-              nonRetryablePatterns.some(
-                (pattern) => pattern.test(log)
-              );
-
-            const isRetryable =
-              retryablePatterns.some(
-                (pattern) => pattern.test(log)
-              );
-
-            if (isNonRetryable) {
-              window.BrowserCSReconnect.nonRetryable(
-                log.trim()
-              );
-            } else if (isRetryable) {
-              window.BrowserCSReconnect.start(
-                log.trim()
-              );
-            }
-          }
-
-          if (log.includes('Could not get TCP/IPv6 address')) return;
-          if (log.includes('File exists from loopback')) return;
-          if (log.includes('ScriptProcessorNode')) return;
-
-          if (log.includes('[BROWSERCS_SCOREBOARD]')) {
-            try {
-              const jsonStr = log.split('[BROWSERCS_SCOREBOARD]')[1].trim();
-              const payload = JSON.parse(jsonStr);
-              // serverName boş gelirse join sırasında sakladığımız ismi kullan
-              const resolvedServerName = payload.serverName
-                || (window._motdServerMeta && window._motdServerMeta.serverName)
-                || 'BrowserCS';
-              if (window.updateBrowserCSScoreboard) {
-                window.updateBrowserCSScoreboard(JSON.stringify(payload.players), resolvedServerName, payload.localPlayerId);
-              }
-            } catch (e) {
-              console.error('Scoreboard parse error', e);
-            }
-            return;
-          }
-
-          if (log.includes('[BROWSERCS_HIDE_SCOREBOARD]')) {
-            const sbContainer = document.getElementById('custom-scoreboard');
-            if (sbContainer) sbContainer.style.display = 'none';
-            return;
-          }
-
-          if (log.includes('[BROWSERCS_TEXTMENU_CLOSE]')) {
-            const tm = document.getElementById('custom-textmenu');
-            if (tm) tm.style.display = 'none';
-            window.textMenuSlots = 0;
-            return;
-          }
-
-          if (log.includes('[BROWSERCS_TEXTMENU]')) {
-            try {
-              const parts = log.split('[BROWSERCS_TEXTMENU]')[1].trim();
-              const pipeIdx = parts.indexOf('|');
-              if (pipeIdx > -1) {
-                window.textMenuSlots = parseInt(parts.substring(0, pipeIdx));
-                const textStr = parts.substring(pipeIdx + 1).replace(/\\n/g, '\n');
-
-                const tm = document.getElementById('custom-textmenu');
-                const tmTitle = document.getElementById('textmenu-title');
-                const tmItems = document.getElementById('textmenu-items');
-                if (tm && tmTitle && tmItems) {
-                  tmItems.innerHTML = '';
-                  const lines = textStr.split('\n');
-
-                  // Clean color codes (\y, \w, \r, \d, \b) from the title
-                  let titleStr = lines[0] || 'MENU';
-                  titleStr = titleStr.replace(/\\[ywrdb]/g, '').trim();
-                  tmTitle.innerText = titleStr;
-
-                  for (let i = 1; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if (!line) continue;
-
-                    // Clean color codes before regex match
-                    line = line.replace(/\\[ywrdb]/g, '').trim();
-
-                    const match = line.match(/^(\d+)[.)\-\s]+\s*(.*)/);
-                    if (match) {
-                      const slotNum = parseInt(match[1]);
-                      const slotText = match[2];
-
-                      const btn = document.createElement('div');
-                      btn.className = 'textmenu-item';
-                      btn.innerHTML = `<span class="textmenu-key">${slotNum === 0 ? '0' : slotNum}</span> <span>${slotText}</span>`;
-
-                      // Check if slot is valid
-                      const isZero = (slotNum === 0);
-                      const bitCheck = isZero ? (1 << 9) : (1 << (slotNum - 1));
-                      if ((window.textMenuSlots & bitCheck) !== 0) {
-                        btn.onclick = () => {
-                          if (window.executeEngineCommand) window.executeEngineCommand(`menuselect ${slotNum}`);
-                          tm.style.display = 'none';
-                        };
-                      } else {
-                        btn.style.opacity = '0.4';
-                        btn.style.cursor = 'not-allowed';
-                      }
-                      tmItems.appendChild(btn);
-                    } else {
-                      // Non-selectable text line
-                      const div = document.createElement('div');
-                      div.style.color = 'var(--text-dim)';
-                      div.style.fontSize = '0.7rem';
-                      div.style.padding = '0.2rem 0';
-                      div.innerText = line;
-                      tmItems.appendChild(div);
-                    }
-                  }
-                  console.log('[DEBUG] Opening HTML Text Menu:', titleStr);
-                  tm.style.display = 'flex';
-                }
-              }
-            } catch (e) { console.error('Textmenu parse error', e); }
-            return;
-          }
-
-          // BUY DEBUG: silah satın alma logları
-          if (log.includes('[BUY_DEBUG]')) {
-            console.warn('%c' + log, 'color: #ff0; background: #000; font-weight: bold; font-size: 13px;');
-            addConsoleLog('🛒 ' + log, 'warn');
-            return;
-          }
-
-          // İZLEM: Disconnect/kick sebebini bul
-          if (log.includes('Disconnect') || log.includes('disconnect') ||
-            log.includes('CRC') || log.includes('differ') ||
-            log.includes('reject') || log.includes('kick') ||
-            log.includes('resource') || log.includes('Resource') ||
-            log.includes('spawn') || log.includes('Spawn') ||
-            log.includes('begin') || log.includes('new\n') ||
-            log.includes('team') || log.includes('inconsistent')) {
-            console.warn('[ENGINE KEY]', log);
-            addConsoleLog('>>> ' + log, 'warn');
-          } else {
-            // Filter noisy keystrokes or unbounds
-            if (log.trim().length <= 3) return;
-            if (log.startsWith('"')) return;
-            if (log.includes('is unbound')) return;
-            if (log.includes('Unknown command:')) return;
-
-            console.log('[Engine Output]', log);
-            addConsoleLog(log);
-          }
-          if (log.includes('Loading map') || log.includes('Spawning server')) {
-            setProgress(90, log);
-          }
-        },
-        printErr: (log) => {
-          if (log.includes('Could not get TCP/IPv6 address')) return;
-          if (log.includes('File exists from loopback')) return;
-          if (log.includes('ScriptProcessorNode')) return;
-          if (log.includes('INVALID_ENUM')) return;
-          if (log.includes('WebGL')) return;
-          if (log.includes('Deprecation')) return;
-          console.error('[Engine Error]', log);
-          addConsoleLog(log, !log.includes('WARNING') ? 'err' : 'warn');
-        },
-      },
-    });
-
-    setProgress(80, 'Engine init (boot) ediliyor...');
-    await xash.init();
-    console.log('[DEBUG] xash.init() completed successfully!');
-
-    // ── Adım 4: Engine main loop başlat ─────────────────────────────
-    setProgress(88, 'Engine ana döngüsü başlatılıyor...');
-    xash.main();
-    console.log('[DEBUG] xash.main() completed successfully!');
-    engineRunning = true;
-
-    setProgress(100, 'Oyun başladı! 🎮');
-    setEngineStatus('Engine çalışıyor — WebGL2', 'green');
-    notify('Oyun başladı! Canvas\'a tıkla → mouse yakala', 'success');
-
-    // İstemci +connect argümanı ile başladığı için ekstra komut göndermeye gerek yok.
-    // Motor otomatik olarak sunucuya bağlanacak.
-
-    // Loading overlay'i gizle
-    setTimeout(async () => {
-      if (window.pk3Promise) {
-        setProgress(95, 'Oyun assetlerinin indirilmesi bekleniyor...');
-        await window.pk3Promise;
-      }
-      setProgress(100, 'Tamamlandı!');
-
-      // Delay before hiding so user sees 100%
-      setTimeout(() => {
-        loadingOverlay.classList.remove('active');
-        gameCanvas.focus();
-        startFPSCounter();
-
-        // Eğer istemciysek ve uzak sunucuya bağlanmamız gerekiyorsa:
-        if (!isHost && connectPort && connectPort !== 'listen' && connectPort !== true) {
-          console.log('[DEBUG] Assetler yüklendi, uzak sunucuya bağlanılıyor...');
-          if (typeof addConsoleLog === 'function') addConsoleLog('Assetler tamamlandı. Sunucuya bağlanılıyor...', 'ok');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          executeEngineCommand('setinfo _vgui_menus 0');
-          
-          const pw = window._pendingServerPassword || sessionStorage.getItem('_csLastPw_' + connectPort);
-          if (pw) {
-            executeEngineCommand('password "' + pw + '"');
-            window._pendingServerPassword = null;
-          }
-          executeEngineCommand('connect 10.0.0.1:27015');
-        }
-
-        // ── Keybind overlay: oyuna girilince 9 saniye göster ─────────
-        const keybindOverlay = document.getElementById('keybind-overlay');
-        if (keybindOverlay) {
-          keybindOverlay.style.display = 'block';
-          setTimeout(() => { keybindOverlay.style.display = 'none'; }, 9000);
-        }
-
-        // ── Welcome MOTD overlay: bağlantıdan 1.5sn sonra göster ─────
-        setTimeout(() => {
-          const meta = window._motdServerMeta || {};
-          if (typeof window.showWelcomeMOTD === 'function') {
-            window.showWelcomeMOTD(meta.serverName, meta.mapName);
-          }
-        }, 1500);
-      }, 500);
-    }, 1500);
-
-    // ── Mouse lock bildirimi ──────────────────────────────────────
-    const mouselockTip = document.getElementById('mouselock-tip');
-    document.addEventListener('pointerlockchange', () => {
-      if (!mouselockTip) return;
-      if (document.pointerLockElement === gameCanvas) {
-        mouselockTip.style.display = 'block';
-        mouselockTip.style.animation = 'none';
-        mouselockTip.offsetHeight; // reflow
-        mouselockTip.style.animation = 'fadeout-tip 3s ease forwards';
-        setTimeout(() => { mouselockTip.style.display = 'none'; }, 3100);
-      } else {
-        mouselockTip.style.display = 'none';
-      }
-    });
-
-
-    // Focus canvas automatically on click
-    gameCanvas.addEventListener('click', () => {
-      if (document.activeElement !== gameCanvas) {
-        gameCanvas.focus();
-      }
-      if (engineRunning && !document.pointerLockElement) {
-        // Tarayıcı kilit reddettiğinde ESC vb basılırsa oyun menüye düşüyor.
-        // Ekrana tıkladığında zorla kilidi geri isteyelim.
-        try { gameCanvas.requestPointerLock(); } catch (e) { }
-      }
-    });
-
-  } catch (err) {
-    // Xash3D WASM bazen sayısal değer (Infinity) throw ediyor — stringify et
-    const errMsg = (err && err.message) ? err.message : String(err);
-    if (errMsg === 'Infinity' || errMsg === 'NaN' || errMsg === '0') {
-      // Bu WASM'ın internal crash'i — sayfayı koru, overlay göster
-      const overlay = document.getElementById('fatal-error-overlay');
-      const msg = document.getElementById('fatal-error-msg');
-      if (overlay) { overlay.style.display = 'flex'; }
-      if (msg) msg.textContent = 'Engine iç hatası (WASM assert/crash). Sayfayı yenileyin.';
-      engineRunning = false;
-      return;
-    }
-    console.error('Engine hatası:', err);
-    addLoadingLog(`⚠ HATA: ${errMsg}`, 'warn');
-    addConsoleLog(`Engine başlatma hatası: ${errMsg}`, 'err');
-    notify(`Engine hatası: ${errMsg}`, 'error');
-    setEngineStatus('Engine hatası', 'red');
-
-    if (errMsg.includes('magic word')) {
-      addLoadingLog('→ WASM dosyası yanlış yüklenmiş.', 'warn');
-    }
-    if (errMsg.includes('SharedArrayBuffer')) {
-      addLoadingLog('→ COOP/COEP headers eksik.', 'warn');
-    }
-
-    engineRunning = false;
-    xash = null;
-    btnLaunch.disabled = false;
-
-    setTimeout(() => {
-      loadingOverlay.classList.remove('active');
-      gameWrapper.classList.remove('active');
-      previewPanel.classList.remove('hidden');
-    }, 4000);
-  }
-}
-
-function changeMap(mapName) {
-  if (!xash || !engineRunning) return;
-  loadingMapName.textContent = mapName;
-  toolbarMapName.textContent = mapName;
-  loadingLog.innerHTML = '';
-  loadingOverlay.classList.add('active');
-  loadingProgress.style.width = '20%';
-  addLoadingLog(`Harita değişiyor: ${mapName}`, 'ok');
-
-  // Önce yeni BSP'yi EM FS'ye yaz
-  const em = xash.em;
-  fetch(`/cs-assets/maps/${mapName}.bsp`)
-    .then(r => r.arrayBuffer())
-    .then(buf => {
-      fsMkdirP(em, '/cstrike/maps');
-      em.FS.writeFile(`/cstrike/maps/${mapName}.bsp`, new Uint8Array(buf));
-      setProgress(70, `${mapName}.bsp yüklendi`);
-      executeEngineCommand(`map ${mapName}`);
-      setProgress(90, 'Harita yükleniyor...');
-      setTimeout(() => {
-        setProgress(100, 'Hazır!');
-        setTimeout(() => {
-          loadingOverlay.classList.remove('active');
-          currentMap = mapName;
-        }, 800);
-      }, 2000);
-    })
-    .catch(err => {
-      addLoadingLog(`Harita yüklenemedi: ${err.message}`, 'warn');
-      setTimeout(() => loadingOverlay.classList.remove('active'), 2000);
-    });
-}
-
+window.ensureMapBspInVfs = ensureMapBspInVfs;
 // ─── FPS Sayacı ───────────────────────────────────────────────────────────────
 
+let _fpsCounterStarted = false;
 function startFPSCounter() {
-  let frameCount = 0;
-  let lastTime = performance.now();
+  if (_fpsCounterStarted) return;
+  _fpsCounterStarted = true;
 
-  // Canvas her frame'de render edildiğinde sayacı artır
-  const observer = new PerformanceObserver(() => frameCount++);
-  try { observer.observe({ entryTypes: ['frame'] }); } catch (e) { /* desteklenmiyor */ }
-
-  setInterval(() => {
-    if (!engineRunning) return;
-    const now = performance.now();
-    const elapsed = (now - lastTime) / 1000;
-    if (elapsed >= 1) {
-      // Alternatif FPS hesaplama — requestAnimationFrame bazlı
-      lastTime = now;
-      frameCount = 0;
-    }
-  }, 1000);
-
-  // requestAnimationFrame ile basit FPS counter
   let rafCount = 0;
   let rafLast = performance.now();
   function rafLoop() {
-    if (!engineRunning) return;
-    rafCount++;
-    const now = performance.now();
-    const ramDisplay = document.getElementById('ram-display');
-    if (now - rafLast >= 1000) {
-      fpsDisplay.textContent = `${rafCount} FPS`;
-      if (ramDisplay && performance && performance.memory) {
-        const mb = Math.round(performance.memory.usedJSHeapSize / (1024 * 1024));
-        ramDisplay.textContent = `${mb} MB RAM`;
+    if (!state.engineRunning) {
+      _fpsCounterStarted = false;
+      return;
+    }
+    if (!document.hidden) {
+      rafCount++;
+      const now = performance.now();
+      if (now - rafLast >= 1000) {
+        if (fpsDisplay) fpsDisplay.textContent = `${rafCount} FPS`;
+        const ramDisplay = document.getElementById('ram-display');
+        if (ramDisplay && performance && performance.memory) {
+          const mb = Math.round(performance.memory.usedJSHeapSize / (1024 * 1024));
+          ramDisplay.textContent = `${mb} MB RAM`;
+        }
+        rafCount = 0;
+        rafLast = now;
       }
+    } else {
+      rafLast = performance.now();
       rafCount = 0;
-      rafLast = now;
     }
     requestAnimationFrame(rafLoop);
   }
   requestAnimationFrame(rafLoop);
 }
 
-// ─── Konsol ───────────────────────────────────────────────────────────────────
-
-function toggleConsole() {
-  consoleOpen = !consoleOpen;
-  consolePanel.classList.toggle('open', consoleOpen);
-  if (consoleOpen) {
-    consoleInput.focus();
-  } else {
-    consoleInput.blur();
-    if (engineRunning) gameCanvas.focus();
-  }
-}
-
-consoleInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const cmd = consoleInput.value.trim();
-    if (cmd && xash) {
-      addConsoleLog(`] ${cmd}`, 'ok');
-      executeEngineCommand(cmd);
-      consoleInput.value = '';
-    }
-  } else if (e.key === 'Escape') {
-    toggleConsole();
-  }
-});
-
-btnConsole.addEventListener('click', () => {
-  toggleConsole();
-});
-
-btnCopyConsole.addEventListener('click', () => {
-  const lines = Array.from(consoleLog.querySelectorAll('.log-line'))
-    .map(el => el.textContent)
-    .join('\n');
-  navigator.clipboard.writeText(lines)
-    .then(() => notify('Konsol logları panoya kopyalandı!', 'success'))
-    .catch(() => notify('Loglar kopyalanamadı!', 'error'));
-});
-
-btnDownloadQConsole.addEventListener('click', () => {
-  if (!xash || !xash.em) {
-    notify('Oyun henüz başlatılmadı!', 'error');
-    return;
-  }
-  try {
-    const em = xash.em;
-    let logContent = null;
-    const pathsToTry = [
-      '/cstrike/qconsole.log',
-      '/rwdir/cstrike/qconsole.log',
-      '/qconsole.log',
-      '/valve/qconsole.log',
-      '/rwdir/valve/qconsole.log'
-    ];
-    for (const p of pathsToTry) {
-      try {
-        logContent = em.FS.readFile(p, { encoding: 'utf8' });
-        if (logContent) {
-          console.log(`[Console Log] Found qconsole.log at ${p}`);
-          break;
-        }
-      } catch (e) { }
-    }
-    if (!logContent) {
-      const FS = em.FS || (em.Module && em.Module.FS);
-      if (FS) {
-        for (const p of pathsToTry) {
-          try {
-            logContent = FS.readFile(p, { encoding: 'utf8' });
-            if (logContent) break;
-          } catch (e) { }
-        }
-      }
-    }
-    if (!logContent) {
-      notify('qconsole.log bulunamadı veya henüz yazılmadı!', 'error');
-      return;
-    }
-
-    const blob = new Blob([logContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'qconsole.log';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    notify('qconsole.log başarıyla indirildi!', 'success');
-  } catch (e) {
-    console.error(e);
-    notify('Log indirme hatası: ' + e.message, 'error');
-  }
-});
-
+window.toggleConsole = toggleConsole;
+window.openConsolePanel = () => toggleConsole(true);
+window.closeConsolePanel = () => toggleConsole(false);
 function updateTeamSizes() {
   const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
   const half = Math.floor(maxP / 2);
@@ -3038,19 +1619,19 @@ if (btnBuyPremium) {
 
     const btn = btnBuyPremium;
     const origText = btn.textContent;
-    btn.textContent = 'YÖNLENDİRİLİYOR...';
+    btn.textContent = 'HAZIRLANIYOR...';
     btn.disabled = true;
 
     try {
-      if (isUserPremium()) {
+      if (isUserAdmin()) {
         const sName = (await window.customPrompt('Sunucu Adı Girin:', 'CS 1.5 Özel Sunucu', 'SUNUCU ADI')) || 'CS 1.5 Özel Sunucu';
         const sMap = (await window.customPrompt('Harita Seçin:', 'de_dust2', 'HARİTA SEÇ')) || 'de_dust2';
         const sRcon = (await window.customPrompt('RCON Şifresi Belirleyin:', 'admin123', 'RCON ŞİFRESİ')) || 'admin';
 
-        notify('VIP Üye Tanındı: AWS üzerinde sunucunuz başlatılıyor...', 'success');
+        notify('Admin: AWS üzerinde sunucunuz başlatılıyor...', 'success');
 
         const token = await getSessionToken();
-        const res = await fetch(`${API_URL}/api/create-server`, {
+        const res = await fetch(`${API_URL}/api/start-server`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -3061,35 +1642,31 @@ if (btnBuyPremium) {
 
         const d = await res.json();
         if (d.success && d.port) {
-          const { createPurchasedServer } = await import('./supabase.js');
-          const dbRes = await createPurchasedServer(user.id, sName, sMap, 16, d.port, sRcon);
-
-          if (dbRes.error) {
-            notify('AWS Sunucusu açıldı ancak veritabanı kayıt hatası: ' + dbRes.error.message, 'error');
-          } else {
-            notify(`AWS Sunucunuz veritabanına kaydedildi ve aktif edildi! Dashboard üzerinden bağlanabilirsiniz.`, 'success');
-            if (premiumModal) premiumModal.style.display = 'none';
-          }
+          notify(`AWS Sunucunuz aktif edildi! Port: ${d.port}`, 'success');
+          if (premiumModal) premiumModal.style.display = 'none';
+          if (window.refreshDashboard) window.refreshDashboard();
+          if (window.loadServerList) window.loadServerList();
         } else {
           notify('AWS Sunucusu açılamadı! ' + (d.error || ''), 'error');
         }
-        btn.textContent = origText;
-        btn.disabled = false;
         return;
       }
 
-      const { data, error } = await buyServer(user.id, 'CS 1.5 Premium Üyelik', 'N/A', 0);
-      if (data && data.checkout_url) {
-        btn.textContent = origText;
-        btn.disabled = false;
-        window.location.href = data.checkout_url;
+      if (typeof window.promptAndCreateRentalOrder === 'function') {
+        await window.promptAndCreateRentalOrder();
+        if (premiumModal) premiumModal.style.display = 'none';
+        if (window.refreshDashboard) window.refreshDashboard();
       } else {
-        notify(error ? error.message : 'Ödeme sayfasına yönlendirilemedi.', 'error');
-        btn.textContent = origText;
-        btn.disabled = false;
+        const { data, error } = await buyServer(user.id, 'CS 1.5 Sunucu Kiralama', 'de_dust2', 16);
+        if (error) throw error;
+        if (window.showIbanPaymentModal) {
+          window.showIbanPaymentModal(data.order, data.payment, data.instruction);
+        }
+        if (premiumModal) premiumModal.style.display = 'none';
       }
     } catch (err) {
-      notify('Hata: ' + err.message, 'error');
+      notify('Hata: ' + (err?.message || err), 'error');
+    } finally {
       btn.textContent = origText;
       btn.disabled = false;
     }
@@ -3186,45 +1763,24 @@ btnLaunch.addEventListener('click', async () => {
   const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
 
   try {
-    const res = await fetch(`${API_URL}/api/create-server`, {
+    const token = await getSessionToken();
+    const res = await fetch(`${API_URL}/api/start-server`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({ map: currentMap, maxplayers: maxP, name: sName, host: nickname })
     });
     const data = await res.json();
 
     if (data.success) {
-      notify(`"${data.name}" kuruldu! (Tarayıcı İçi Host P2P)`, 'success');
-
-      // Heartbeat: sunucuyu her 5 dakikada bir yeniden kaydet (KV TTL'yi canlı tut)
-      if (window._serverHeartbeat) clearInterval(window._serverHeartbeat);
-      window._serverHeartbeat = setInterval(async () => {
-        try {
-          const token = await getSessionToken();
-          await fetch(`${API_URL}/api/create-server`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({
-              map: data.map || currentMap,
-              maxplayers: maxP,
-              name: sName,
-              host: nickname,
-              roomId: data.port  // Aynı room ID ile güncelle
-            })
-          });
-          console.log('[Sunucu] Heartbeat gönderildi - kayıt yenilendi');
-        } catch (e) {
-          console.warn('[Sunucu] Heartbeat hatası:', e.message);
-        }
-      }, 5 * 60 * 1000); // 5 dakika
-
-      // Motoru tarayıcı içi host (listen server) modunda ve relay ile başlat
-      window.connectToServer(data.port, data.map || currentMap, true);
+      notify(`"${data.name || sName}" kuruldu! Port: ${data.port}`, 'success');
+      if (window.refreshDashboard) window.refreshDashboard();
+      if (window.loadServerList) loadServerList();
+      window.connectToServer(data.port, data.map || currentMap, false);
     } else {
-      notify('Sunucu başlatılamadı!', 'error');
+      notify('Sunucu başlatılamadı: ' + (data.error || ''), 'error');
       btnLaunch.disabled = false;
       btnLaunch.textContent = originalText;
     }
@@ -3252,7 +1808,8 @@ async function loadServerList() {
     window.__loadedServers = data.servers || [];
 
     if (onlineServersCount) {
-      onlineServersCount.textContent = `(${data.servers ? data.servers.length : 0} Açık Oda)`;
+      const runningCount = (data.servers || []).filter(s => s.state === 'running').length;
+      onlineServersCount.textContent = `(${runningCount} Açık Oda)`;
     }
 
     if (data.servers && data.servers.length > 0) {
@@ -3260,7 +1817,7 @@ async function loadServerList() {
       if (fullServersGrid) fullServersGrid.innerHTML = '';
 
       const officialServers = [];
-      const otherServers = [];
+      const rentalServers = [];
 
       data.servers.forEach(server => {
         let displayName = server.name;
@@ -3268,15 +1825,21 @@ async function loadServerList() {
         let badgeText = '🟢 CANLI P2P';
         let playersCount = server.players !== undefined ? server.players : '?';
         let isOfficialFinal = false;
+        let isDeathmatchFinal = isDeathmatchServer(server);
 
-        if (server.isOfficial === true) {
-          displayName = 'BrowserCS';
+        if (isDeathmatchFinal) {
+          displayName = server.name?.replace(/^BROWSERCS\s*\|\s*/i, '') || 'Deathmatch';
+          displayHost = 'BrowserCS (Resmi)';
+          badgeText = '⭐ RESMİ SUNUCU';
+          isOfficialFinal = true;
+        } else if (server.isOfficial === true) {
+          displayName = server.name?.replace(/^BROWSERCS\s*\|\s*/i, '') || 'BrowserCS';
           displayHost = 'BrowserCS (Resmi)';
           badgeText = '⭐ RESMİ SUNUCU';
           isOfficialFinal = true;
         } else if (server.isOfficial === false) {
-          displayHost = 'Oyuncu Sunucusu';
-          badgeText = '🚀 DEDICATED';
+          displayHost = server.host || 'Kiralık Sunucu';
+          badgeText = server.state === 'running' ? '🏠 KİRALIK' : '⏸ KAPALI';
         } else if (displayName.startsWith('CS Server') && (!server.host || server.host === 'Anonim')) {
           displayName = 'BrowserCS';
           displayHost = 'BrowserCS (Resmi)';
@@ -3284,10 +1847,35 @@ async function loadServerList() {
           isOfficialFinal = true;
         }
 
-        const srvObj = { ...server, displayName, displayHost, badgeText, playersCount, isOfficialFinal };
+        const srvObj = { ...server, displayName, displayHost, badgeText, playersCount, isOfficialFinal, isDeathmatchFinal };
         if (isOfficialFinal) officialServers.push(srvObj);
-        else otherServers.push(srvObj);
+        else rentalServers.push(srvObj);
       });
+
+      officialServers.sort((a, b) => {
+        if (a.isDeathmatchFinal && !b.isDeathmatchFinal) return -1;
+        if (!a.isDeathmatchFinal && b.isDeathmatchFinal) return 1;
+        return (a.port || 0) - (b.port || 0);
+      });
+      rentalServers.sort((a, b) => (a.port || 0) - (b.port || 0));
+
+      const appendCategoryHeader = (container, title, color, marginTop = '0') => {
+        const header = document.createElement('div');
+        header.className = 'server-category-header';
+        header.style.gridColumn = '1 / -1';
+        header.style.alignSelf = 'start';
+        header.style.fontFamily = 'var(--font-hud)';
+        header.style.fontSize = '0.85rem';
+        header.style.color = color;
+        header.style.borderBottom = `2px solid ${color}`;
+        header.style.paddingBottom = '0.5rem';
+        header.style.marginTop = marginTop;
+        header.style.marginBottom = '0.25rem';
+        header.style.letterSpacing = '0.05em';
+        header.style.textTransform = 'uppercase';
+        header.textContent = title;
+        container.appendChild(header);
+      };
 
       const renderGridItem = (server, container, isMini) => {
         const mapImgUrl = `${ASSET_URL}/assets/maps/${server.map}.jpg`;
@@ -3303,9 +1891,7 @@ async function loadServerList() {
           div.style.padding = '0.6rem';
           div.style.marginBottom = '0.6rem';
           div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
-          const miniModePill = server.mode === 'match'
-            ? '<span style="background:rgba(220,30,30,0.2);border:1px solid rgba(220,30,30,0.5);color:#ff6b6b;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">⚔ MAÇ</span>'
-            : '<span style="background:rgba(20,140,60,0.18);border:1px solid rgba(50,200,100,0.4);color:#4dbb7a;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">🟢 NORMAL</span>';
+          const miniModePill = buildModePill(server, true);
           const miniLockPill = server.hasPassword
             ? '<span style="background:rgba(255,204,0,0.15);border:1px solid rgba(255,204,0,0.4);color:#ffcc00;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">🔒 ŞİFRELİ</span>'
             : '';
@@ -3324,7 +1910,12 @@ async function loadServerList() {
             </div>
           `;
           div.addEventListener('click', async () => {
-            window._motdServerMeta = { serverName: server.name || server.displayName, mapName: server.map, serverId: server.id, owner_id: server.owner_id };
+            if (server.state !== 'running' || !server.port) {
+              notify('Bu sunucu şu an kapalı.', 'error');
+              return;
+            }
+            window._motdServerMeta = { serverName: server.name || server.displayName, mapName: server.map, serverId: server.serverId || server.id, owner_id: server.owner_id, mode: server.mode, gameMode: server.gameMode };
+            window._browserCSIsDeathmatch = isDeathmatchServer(server);
             // Sifre gerekiyorsa modal aç
             if (server.hasPassword) {
               const pw = await window.openServerJoinPasswordModal(server.port, server.name || server.displayName);
@@ -3346,9 +1937,7 @@ async function loadServerList() {
           const card = document.createElement('div');
           card.className = 'server-card-box anim-fade-in';
           // Mode pill: match=red, normal=green
-          const modePill = server.mode === 'match'
-            ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(220,30,30,0.18);border:1px solid rgba(220,30,30,0.5);color:#ff6b6b;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">⚔ MAÇ MODU</span>`
-            : `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(20,140,60,0.15);border:1px solid rgba(50,200,100,0.35);color:#4dbb7a;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">🟢 NORMAL</span>`;
+          const modePill = buildModePill(server, false);
           const lockPill = server.hasPassword
             ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,204,0,0.12);border:1px solid rgba(255,204,0,0.35);color:#ffcc00;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">🔒 ŞİFRELİ</span>`
             : '';
@@ -3371,13 +1960,19 @@ async function loadServerList() {
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
                 <button class="btn-join-room" style="flex:1;">▶ ODAYA KATIL</button>
                 ${(server.owner_id && getCurrentUser() && server.owner_id === getCurrentUser().id) ?
-              `<button class="btn-join-room" style="background:var(--bg-deep); border:1px solid var(--border-bright); color:var(--text-bright); padding:0 0.8rem; font-size:1rem;" title="Sunucu Ayarları" onclick="openServerSettings('${server.id}')">⚙️</button>`
+              `<button class="btn-join-room" style="background:var(--bg-deep); border:1px solid var(--border-bright); color:var(--text-bright); padding:0 0.8rem; font-size:1rem;" title="Sunucu Ayarları" onclick="openServerSettings('${server.serverId || server.id}')">⚙️</button>`
               : ''}
               </div>
             </div>
           `;
-          card.querySelector('.btn-join-room').addEventListener('click', async () => {
-            window._motdServerMeta = { serverName: server.name, mapName: server.map, serverId: server.id, owner_id: server.owner_id };
+          const joinBtn = card.querySelector('.btn-join-room');
+          joinBtn.addEventListener('click', async () => {
+            if (server.state !== 'running' || !server.port) {
+              notify('Bu sunucu şu an kapalı.', 'error');
+              return;
+            }
+            window._motdServerMeta = { serverName: server.name, mapName: server.map, serverId: server.serverId || server.id, owner_id: server.owner_id, mode: server.mode, gameMode: server.gameMode };
+            window._browserCSIsDeathmatch = isDeathmatchServer(server);
 
             // Sifre gerekiyorsa temali modal goster
             if (server.hasPassword) {
@@ -3402,44 +1997,18 @@ async function loadServerList() {
 
       if (activeServersContainer) {
         officialServers.forEach(s => renderGridItem(s, activeServersContainer, true));
-        otherServers.forEach(s => renderGridItem(s, activeServersContainer, true));
+        rentalServers.forEach(s => renderGridItem(s, activeServersContainer, true));
       }
 
       if (fullServersGrid) {
         if (officialServers.length > 0) {
-          const header = document.createElement('div');
-          header.style.gridColumn = '1 / -1';
-          header.style.alignSelf = 'end';
-          header.style.fontFamily = 'var(--font-hud)';
-          header.style.fontSize = '0.85rem';
-          header.style.color = 'var(--cs-yellow)';
-          header.style.borderBottom = '2px solid var(--cs-yellow)';
-          header.style.paddingBottom = '0.5rem';
-          header.style.marginTop = '0';
-          header.style.marginBottom = '1rem';
-          header.style.letterSpacing = '0.05em';
-          header.style.textTransform = 'uppercase';
-          header.textContent = "BrowserCS Resmi Sunucuları";
-          fullServersGrid.appendChild(header);
+          appendCategoryHeader(fullServersGrid, '⭐ BrowserCS Resmi Sunucuları', 'var(--cs-yellow)');
           officialServers.forEach(s => renderGridItem(s, fullServersGrid, false));
         }
 
-        if (otherServers.length > 0) {
-          const header = document.createElement('div');
-          header.style.gridColumn = '1 / -1';
-          header.style.alignSelf = 'end';
-          header.style.fontFamily = 'var(--font-hud)';
-          header.style.fontSize = '0.85rem';
-          header.style.color = 'var(--text-dim)';
-          header.style.borderBottom = '1px solid var(--border-bright)';
-          header.style.paddingBottom = '0.5rem';
-          header.style.marginTop = '2rem';
-          header.style.marginBottom = '1rem';
-          header.style.letterSpacing = '0.05em';
-          header.style.textTransform = 'uppercase';
-          header.textContent = "Diğer Sunucular";
-          fullServersGrid.appendChild(header);
-          otherServers.forEach(s => renderGridItem(s, fullServersGrid, false));
+        if (rentalServers.length > 0) {
+          appendCategoryHeader(fullServersGrid, '🏠 Kiralık Sunucular', 'var(--text-dim)', officialServers.length > 0 ? '2rem' : '0');
+          rentalServers.forEach(s => renderGridItem(s, fullServersGrid, false));
         }
       }
 
@@ -3462,6 +2031,8 @@ async function loadServerList() {
     if (activeServersContainer) activeServersContainer.innerHTML = '<div style="color: var(--cs-red); font-size: 0.7rem; padding: 20px; text-align: center;">Sunucular yüklenemedi.</div>';
   }
 }
+
+window.loadServerList = loadServerList;
 
 if (tabServers && tabMaps) {
   tabServers.addEventListener('click', () => {
@@ -3498,577 +2069,29 @@ if (btnCloseServerBrowser) {
   });
 }
 
-// ─── MASTER ADMIN LOGIC ────────────────────────────────────────────────────────
-const btnMasterAdmin = $('btn-master-admin');
-const adminLoginModal = $('admin-login-modal');
-const btnAdminLoginCancel = $('btn-admin-login-cancel');
-const btnAdminLoginSubmit = $('btn-admin-login-submit');
-const adminPasswordInput = $('admin-password-input');
-const masterAdminPanel = $('master-admin-panel');
-const btnAdminPanelClose = $('btn-admin-panel-close');
-const masterAdminTableBody = $('master-admin-table-body');
-
-let adminToken = sessionStorage.getItem('cs_admin_token') || null;
-
-// Supabase rol kontrolü — sadece role='admin' kullanıcılar /csadmin açabilir
-async function checkAdminRole() {
-  try {
-    if (!supabase) return false;
-
-    // Auth state'in yüklenmesini bekle (getCurrentUser() asenkron geride kalabilir)
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !sessionData?.session?.user) return false;
-
-    const userId = sessionData.session.user.id;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
-
-    if (error || !data) return false;
-    return data.role === 'admin';
-  } catch (e) { return false; }
+// ─── SERVER SETTINGS (lazy-loaded) ───────────────────────────────────────────
+let _serverSettingsPromise = null;
+async function ensureServerSettings() {
+  if (!_serverSettingsPromise) _serverSettingsPromise = import('./ui/serverSettings.js');
+  return _serverSettingsPromise;
 }
-
-window.addEventListener('DOMContentLoaded', async () => {
-  if (window.location.search.includes('admin=1') || window.location.hash === '#csadmin') {
-    // Önce rol kontrolü yap
-    const isAdmin = await checkAdminRole();
-    if (!isAdmin) {
-      // Yetkisiz erişim — ana sayfaya yönlendir
-      sessionStorage.removeItem('cs_admin_token');
-      adminToken = null;
-      notify('Bu sayfaya erişim yetkiniz yok!', 'error');
-      setTimeout(() => { window.location.href = '/oyna'; }, 1500);
-      return;
-    }
-    if (adminToken) {
-      openMasterAdminPanel();
-    } else {
-      adminLoginModal.style.display = 'flex';
-    }
-  }
-});
-
-if (btnAdminLoginCancel) {
-  btnAdminLoginCancel.addEventListener('click', () => {
-    adminLoginModal.style.display = 'none';
-  });
-}
-
-if (btnAdminLoginSubmit) {
-  btnAdminLoginSubmit.addEventListener('click', async () => {
-    const password = adminPasswordInput.value;
-    if (!password) return notify('Şifre giriniz', 'error');
-    try {
-      const res = await fetch(`${API_URL}/api/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
-      const data = await res.json();
-      if (data.success && data.token) {
-        adminToken = data.token;
-        sessionStorage.setItem('cs_admin_token', adminToken);
-        adminLoginModal.style.display = 'none';
-        notify('Admin girişi başarılı!', 'success');
-        openMasterAdminPanel();
-      } else {
-        notify('Hatalı şifre!', 'error');
-      }
-    } catch (e) {
-      notify('Sunucu bağlantı hatası', 'error');
-    }
-  });
-}
-
-if (btnAdminPanelClose) {
-  btnAdminPanelClose.addEventListener('click', () => {
-    masterAdminPanel.style.display = 'none';
-  });
-}
-
-async function openMasterAdminPanel() {
-  masterAdminPanel.style.display = 'flex';
-  masterAdminTableBody.innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;">Yükleniyor...</td></tr>';
-
-  try {
-    const res = await fetch(`${API_URL}/api/servers`);
-    const data = await res.json();
-    if (!data.success) throw new Error('API Hatası');
-
-    const servers = data.servers || [];
-    masterAdminTableBody.innerHTML = servers.map(s => `
-      <tr style="border-bottom:1px solid var(--border);transition:all 0.2s;">
-        <td style="padding:0.5rem;font-weight:bold;color:var(--text-bright);">${s.name}</td>
-        <td style="padding:0.5rem;">
-          <span style="background:${s.isOfficial ? 'rgba(33,150,243,0.1)' : 'rgba(255,152,0,0.1)'};color:${s.isOfficial ? '#2196f3' : '#ff9800'};padding:2px 6px;border-radius:3px;font-size:0.65rem;">
-            ${s.isOfficial ? 'RESMİ' : 'OYUNCU'}
-          </span>
-        </td>
-        <td style="padding:0.5rem;color:var(--cs-yellow);">${s.map || '?'}</td>
-        <td style="padding:0.5rem;">${s.players}/${s.maxplayers}</td>
-        <td style="padding:0.5rem;">${s.port || 'Bekliyor'}</td>
-        <td style="padding:0.5rem;display:flex;gap:0.4rem;">
-          <button class="toolbar-btn" style="border-color:var(--cs-green);color:var(--cs-green);" onclick="openServerSettings('${s.id}')">AYARLAR</button>
-          <button class="toolbar-btn" style="border-color:var(--cs-yellow);color:var(--cs-yellow);" onclick="masterAdminAction('restart', '${s.id}')">RESTART</button>
-          <button class="toolbar-btn danger" onclick="masterAdminAction('delete', '${s.id}')">SİL</button>
-        </td>
-      </tr>
-    `).join('');
-
-    if (servers.length === 0) {
-      masterAdminTableBody.innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;">Aktif sunucu bulunamadı.</td></tr>';
-    }
-  } catch (e) {
-    masterAdminTableBody.innerHTML = `<tr><td colspan="6" style="padding:1rem;text-align:center;color:var(--cs-red);">Bağlantı Hatası</td></tr>`;
-  }
-}
-
-window.masterAdminAction = async function (action, id) {
-  if (!adminToken) return notify('Yetkisiz işlem!', 'error');
-
-  if (action === 'delete') {
-    if (!await window.customConfirm('Bu sunucuyu tamamen silmek istediğine emin misin?', 'ONAY')) return;
-    try {
-      const res = await fetch(`${API_URL}/api/admin/servers/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-token': adminToken }
-      });
-      const data = await res.json();
-      if (data.success) {
-        notify('Sunucu silindi!', 'success');
-        openMasterAdminPanel(); // yenile
-      } else {
-        notify('Silinemedi: ' + data.error, 'error');
-      }
-    } catch (e) { notify('Silme hatası', 'error'); }
-  }
-  else if (action === 'restart') {
-    if (!await window.customConfirm('Bu sunucuyu yeniden başlatmak istediğine emin misin?', 'ONAY')) return;
-    try {
-      // Mevcut restart endpoint'i (şimdilik tokensız da çalışıyor backend'de)
-      const token = await getSessionToken();
-      const res = await fetch(`${API_URL}/api/servers/${id}/restart`, {
-        method: 'POST',
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        notify('Sunucu yeniden başlatılıyor...', 'success');
-        setTimeout(() => openMasterAdminPanel(), 2000); // 2 saniye sonra yenile
-      } else {
-        notify('Restart başarısız: ' + data.error, 'error');
-      }
-    } catch (e) { notify('Restart hatası', 'error'); }
-  }
+window.openServerSettings = async function (...args) {
+  const mod = await ensureServerSettings();
+  return mod.openServerSettings(...args);
 };
 
-// ─── SERVER SETTINGS MODAL ───────────────────────────────────────────────────
-const serverSettingsModal = $('server-settings-modal');
-const btnSettingsClose = $('btn-settings-close');
-const tabRcon = $('tab-rcon');
-const tabGeneral = $('tab-general');
-const tabAmx = $('tab-amx');
-const settingsRconView = $('settings-rcon-view');
-const settingsGeneralView = $('settings-general-view');
-const settingsAmxView = $('settings-amx-view');
+// ─── MASTER ADMIN (lazy-loaded) ──────────────────────────────────────────────
+// Extracted to ./admin/masterAdmin.js — loaded only when ?admin=1 or #csadmin
 
-let currentSettingsServerId = null;
-let _currentSettingsServer = null; // tam server objesi
-
-window.openServerSettings = async function (id, serverObj) {
-  currentSettingsServerId = id;
-  _currentSettingsServer = serverObj || null;
-  serverSettingsModal.style.display = 'flex';
-  switchTab(tabGeneral, settingsGeneralView);
-  if ($('rcon-console-output')) $('rcon-console-output').textContent = 'Hazır. RCON şifresini gir ve komut gönder.';
-  if ($('rcon-command-input')) $('rcon-command-input').value = '';
-
-  // Önce serverObj'den doldur (hemen göstermek için)
-  const sv = serverObj || {};
-  const fillFields = (src) => {
-    if ($('rcon-auth-pass') && src.rcon_password) $('rcon-auth-pass').value = src.rcon_password;
-    if ($('cfg-rcon-pass') && src.rcon_password) $('cfg-rcon-pass').value = src.rcon_password;
-    if ($('cfg-startmoney') && src.start_money) $('cfg-startmoney').value = src.start_money;
-    if ($('cfg-gravity') && src.gravity) $('cfg-gravity').value = src.gravity;
-    if ($('cfg-roundtime') && src.round_time) $('cfg-roundtime').value = src.round_time;
-  };
-  fillFields(sv);
-
-  // GET /api/servers/:id → Supabase'den tam kayıt çek (rcon_password dahil)
-  try {
-    const token = await getSessionToken();
-    if (token) {
-      const res = await fetch(`${API_URL}/api/servers/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const d = await res.json();
-        const full = d.server || d;
-        fillFields(full);
-        // Sunucu adını modal başlığına yaz
-        if ($('settings-modal-title') && full.name) {
-          $('settings-modal-title').textContent = `⚙ ${full.name.toUpperCase()} — YÖNETİM`;
-        }
-      }
-    }
-  } catch (e) { /* sessiz */ }
-};
-
-if (btnSettingsClose) {
-  btnSettingsClose.addEventListener('click', () => {
-    serverSettingsModal.style.display = 'none';
-    // Kapatıldığında oyun focus'unu geri ver
-    if (engineRunning) {
-      const gameCanvas = document.getElementById('canvas');
-      if (gameCanvas) gameCanvas.focus();
-    }
-  });
+async function maybeInitMasterAdmin() {
+  if (!(window.location.search.includes('admin=1') || window.location.hash === '#csadmin')) return;
+  const { initMasterAdmin } = await import('./admin/masterAdmin.js');
+  initMasterAdmin({ API_URL, $, notify, supabase, getSessionToken });
 }
 
-// OYUN MOTORUNUN (Xash3D) TUŞLARI ÇALMASINI ENGELLE
-// Dropdown panel üzerindeki hiçbir keydown/keyup olayının window'a ulaşmasına izin verme
-if (serverSettingsModal) {
-  ['keydown', 'keyup', 'keypress'].forEach(evtType => {
-    serverSettingsModal.addEventListener(evtType, (e) => {
-      e.stopPropagation();
-    });
-  });
-}
-
-// Tab Switching
-const _allSettingsTabs = [tabRcon, tabGeneral, tabAmx].filter(Boolean);
-const _allSettingsViews = [settingsRconView, settingsGeneralView, settingsAmxView].filter(Boolean);
-function switchTab(activeBtn, activeView) {
-  _allSettingsTabs.forEach(t => { t.classList.remove('active'); t.style.borderBottom = 'none'; });
-  _allSettingsViews.forEach(v => { v.style.display = 'none'; });
-  if (activeBtn) { activeBtn.classList.add('active'); activeBtn.style.borderBottom = '2px solid var(--cs-yellow)'; }
-  if (activeView) { activeView.style.display = 'flex'; }
-}
-if (tabRcon) tabRcon.addEventListener('click', () => switchTab(tabRcon, settingsRconView));
-if (tabGeneral) tabGeneral.addEventListener('click', () => switchTab(tabGeneral, settingsGeneralView));
-if (tabAmx) tabAmx.addEventListener('click', () => switchTab(tabAmx, settingsAmxView));
-
-// RCON SEND
-if ($('btn-rcon-send')) {
-  $('btn-rcon-send').addEventListener('click', async () => {
-    const password = $('rcon-auth-pass').value;
-    const command = $('rcon-command-input').value;
-    const out = $('rcon-console-output');
-
-    if (!password) { notify('RCON Şifresi gerekli!', 'error'); return; }
-    if (!command) return;
-
-    out.textContent += `\n] ${command}`;
-    $('rcon-command-input').value = '';
-
-    try {
-      const token = await getSessionToken();
-      const res = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/command`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({ rconPassword: password, command })
-      });
-      const data = await res.json();
-      if (data.success) {
-        const clean = stripCS(data.response);
-        out.textContent += clean ? `\n${clean}` : '\n✓ OK';
-      } else {
-        out.textContent += `\nHATA: ${stripCS(data.error)}`;
-      }
-    } catch (e) {
-      out.textContent += `\nBağlantı hatası!`;
-    }
-    out.scrollTop = out.scrollHeight;
-  });
-}
-
-// ── CS RENK KODU TEMİZLEYİCİ ──────────────────────────────────────────────
-function stripCS(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/\^[0-9]/g, '')           // CS renk kodları: ^0-^9
-    .replace(/\x1b\[[0-9;]*m/g, '')    // ANSI renk kodları
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Kontrol karakterleri
-    .trim();
-}
-
-// ── ORTAK RCON YARDIMCI FONKSİYON ─────────────────────────────────────────
-async function sendRcon(command, successMsg) {
-  const password = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
-  const out = $('rcon-console-output');
-  if (!password) { notify('Önce RCON şifresini girin!', 'error'); return false; }
-  if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return false; }
-  if (out) out.textContent += `\n] ${command}`;
-  try {
-    const token = await getSessionToken();
-    const r = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/command`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ rconPassword: password, command })
-    });
-    const d = await r.json();
-    if (d.success) {
-      const clean = stripCS(d.response);
-      if (out && clean) out.textContent += `\n${clean}`;
-      else if (out) out.textContent += `\n✓ OK`;
-      if (successMsg) notify(successMsg, 'success');
-      if (out) out.scrollTop = out.scrollHeight;
-      return true;
-    } else {
-      if (out) out.textContent += `\nHATA: ${stripCS(d.error)}`;
-      notify('RCON hatası: ' + d.error, 'error');
-      if (out) out.scrollTop = out.scrollHeight;
-      return false;
-    }
-  } catch (e) {
-    if (out) out.textContent += `\nBağlantı hatası!`;
-    notify('Bağlantı hatası!', 'error');
-    if (out) out.scrollTop = out.scrollHeight;
-    return false;
-  }
-}
-
-// ── HIZLI KOMUT BUTONLARI (.rcon-quick) ───────────────────────────────────
-document.querySelectorAll('.rcon-quick').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const cmd = btn.getAttribute('data-cmd');
-    if (!cmd) return;
-    await sendRcon(cmd, `✓ ${cmd}`);
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  maybeInitMasterAdmin();
 });
-
-// ── HARİTA DEĞİŞTİR ───────────────────────────────────────────────────────
-if ($('btn-rcon-map')) {
-  $('btn-rcon-map').addEventListener('click', async () => {
-    const map = ($('rcon-map-input') ? $('rcon-map-input').value : '').trim();
-    if (!map) { notify('Harita adı girin!', 'error'); return; }
-    await sendRcon(`changelevel ${map}`, `Harita değiştiriliyor: ${map}`);
-  });
-}
-
-// ── OYUNCU KICK ───────────────────────────────────────────────────────────
-if ($('btn-rcon-kick')) {
-  $('btn-rcon-kick').addEventListener('click', async () => {
-    const target = ($('rcon-kick-input') ? $('rcon-kick-input').value : '').trim();
-    if (!target) { notify('Oyuncu adı veya #ID girin!', 'error'); return; }
-    const cmd = target.startsWith('#') ? `kick ${target}` : `kick "${target}"`;
-    await sendRcon(cmd, `Oyuncu atıldı: ${target}`);
-  });
-}
-
-// ── OYUNCU BAN ────────────────────────────────────────────────────────────
-if ($('btn-rcon-ban')) {
-  $('btn-rcon-ban').addEventListener('click', async () => {
-    const target = ($('rcon-ban-input') ? $('rcon-ban-input').value : '').trim();
-    if (!target) { notify('IP veya #ID girin!', 'error'); return; }
-    const cmd = target.includes('.') ? `addip 0 ${target}; writeid` : `banid 0 ${target}; writeid`;
-    await sendRcon(cmd, `Banlama yapıldı: ${target}`);
-  });
-}
-
-// ── SUNUCU ŞİFRESİ AYARLA ─────────────────────────────────────────────────
-if ($('btn-rcon-svpass')) {
-  $('btn-rcon-svpass').addEventListener('click', async () => {
-    const pass = ($('rcon-svpass-input') ? $('rcon-svpass-input').value : '').trim();
-    const cmd = pass ? `sv_password "${pass}"` : 'sv_password ""';
-    const msg = pass ? `Sunucu şifresi ayarlandı` : 'Sunucu şifresi kaldırıldı';
-    await sendRcon(cmd, msg);
-  });
-}
-
-// ── GENEL AYARLAR KAYDET (TÜM AYARLAR RCON İLE) ──────────────────────
-if ($('btn-cfg-save')) {
-  $('btn-cfg-save').addEventListener('click', async () => {
-    const btn = $('btn-cfg-save');
-    btn.disabled = true;
-    btn.textContent = 'UYGULANIY0R...';
-    const get = id => $(id) ? $(id).value.trim() : '';
-    const cmds = [];
-    if (get('cfg-startmoney')) cmds.push(`mp_startmoney ${get('cfg-startmoney')}`);
-    if (get('cfg-roundtime')) cmds.push(`mp_roundtime ${get('cfg-roundtime')}`);
-    if (get('cfg-freezetime')) cmds.push(`mp_freezetime ${get('cfg-freezetime')}`);
-    if (get('cfg-c4timer')) cmds.push(`mp_c4timer ${get('cfg-c4timer')}`);
-    if (get('cfg-buytime')) cmds.push(`mp_buytime ${get('cfg-buytime')}`);
-    if (get('cfg-gravity')) cmds.push(`sv_gravity ${get('cfg-gravity')}`);
-    if (get('cfg-maxrounds')) cmds.push(`mp_maxrounds ${get('cfg-maxrounds')}`);
-    if (get('cfg-timelimit')) cmds.push(`mp_timelimit ${get('cfg-timelimit')}`);
-    if (get('cfg-limitteams')) cmds.push(`mp_limitteams ${get('cfg-limitteams')}`);
-    if ($('cfg-friendlyfire')) cmds.push(`mp_friendlyfire ${$('cfg-friendlyfire').value}`);
-    if ($('cfg-autoteambalance')) cmds.push(`mp_autoteambalance ${$('cfg-autoteambalance').value}`);
-    if ($('cfg-autokick')) cmds.push(`mp_autokick ${$('cfg-autokick').value}`);
-    if ($('cfg-tkpunish')) cmds.push(`mp_tkpunish ${$('cfg-tkpunish').value}`);
-    if ($('cfg-svcheats')) cmds.push(`sv_cheats ${$('cfg-svcheats').value}`);
-    const ybQuota = get('cfg-ybquota');
-    if (ybQuota !== '') {
-      cmds.push(`yb_quota ${ybQuota}`);
-      if (ybQuota === '0') {
-        cmds.push('yb kickall');
-        cmds.push('yapb kickall');
-      }
-    }
-    if (get('cfg-ybdiff')) cmds.push(`yb_difficulty ${get('cfg-ybdiff')}`);
-    const svPass = get('cfg-sv-password');
-    cmds.push(svPass ? `sv_password "${svPass}"` : 'sv_password ""');
-    const newRcon = get('cfg-rcon-pass');
-    if (newRcon) cmds.push(`rcon_password "${newRcon}"`);
-    // Tek seferlik gönder
-    const allCmd = cmds.join('; ');
-    const ok = await sendRcon(allCmd, null);
-    if (ok) notify(`${cmds.length} ayar uygulandı!`, 'success');
-    btn.disabled = false;
-    btn.textContent = 'AYARLARI UYGULA (RCON)';
-  });
-}
-
-// ── 5v5 MAÇ MODU — MATCH.CFG YAZ + EXEC ───────────────────────────────
-if ($('btn-match-mode')) {
-  $('btn-match-mode').addEventListener('click', async () => {
-    const btn = $('btn-match-mode');
-    const rconPass = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
-    if (!rconPass) { notify('RCON sekmesinde şifrenizi girin!', 'error'); switchTab(tabRcon, settingsRconView); return; }
-    if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return; }
-    btn.textContent = 'MATCH.CFG YAZILIYOR...';
-    btn.disabled = true;
-
-    const matchCfgContent = `// CS 1.5 Clan Match Config - BrowserCS
-hostname "CS 1.5 Clan Match Server"
-sv_password "mac123"
-sv_cheats 0
-sv_lan 0
-sv_pausable 1
-sv_voiceenable 1
-sv_alltalk 0
-sv_gravity 800
-sv_maxspeed 320
-sv_airaccelerate 10
-sv_aim 0
-mp_friendlyfire 1
-mp_autoteambalance 0
-mp_limitteams 0
-mp_autokick 0
-mp_tkpunish 0
-mp_startmoney 800
-mp_buytime 0.25
-mp_freezetime 6
-mp_roundtime 5
-mp_c4timer 35
-mp_timelimit 0
-mp_maxrounds 15
-mp_winlimit 0
-mp_flashlight 1
-mp_footsteps 1
-mp_fadetoblack 0
-mp_forcechasecam 2
-allow_spectators 1
-log on
-mp_logmessages 1
-mp_logdetail 3
-say "== CLAN MATCH CFG LOADED =="
-say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"
-sv_restartround 3
-`;
-
-    try {
-      const token = await getSessionToken();
-      // Önce dosyayı server'a yaz
-      const writeRes = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/write-cfg`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ filename: 'match', content: matchCfgContent })
-      });
-      const writeData = await writeRes.json();
-      if (!writeData.success) throw new Error(writeData.error || 'CFG yazılamıyor');
-
-      // Sonra RCON ile exec et
-      const execOk = await sendRcon('exec match.cfg', null);
-      if (execOk) {
-        notify('⚔ 5v5 Maç CFG yüklendi! Sunucu 3 saniyede yeniden başlayacak.', 'success');
-      }
-    } catch (e) {
-      notify('Match CFG hatası: ' + e.message, 'error');
-    }
-    btn.disabled = false;
-    btn.textContent = '⚔ 5v5 MAÇ MODU';
-  });
-}
-
-// ── NORMAL MODA DÖN — NORMAL.CFG YAZ + EXEC ──────────────────────────────
-if ($('btn-normal-mode')) {
-  $('btn-normal-mode').addEventListener('click', async () => {
-    const btn = $('btn-normal-mode');
-    const rconPass = $('rcon-auth-pass') ? $('rcon-auth-pass').value : '';
-    if (!rconPass) { notify('RCON sekmesinde şifrenizi girin!', 'error'); switchTab(tabRcon, settingsRconView); return; }
-    if (!currentSettingsServerId) { notify('Sunucu ID bulunamadı!', 'error'); return; }
-    btn.textContent = 'NORMAL.CFG YAZILIYOR...';
-    btn.disabled = true;
-
-    // DB'deki kayıtlı ayarları kullan (varsa), yoksa pub default'ları
-    const startMoney = $('cfg-startmoney')?.value || '16000';
-    const roundTime = $('cfg-roundtime')?.value || '5';
-    const freezeTime = $('cfg-freezetime')?.value || '6';
-    const gravity = $('cfg-gravity')?.value || '800';
-    const timelimit = $('cfg-timelimit')?.value || '30';
-
-    const normalCfgContent = `// CS 1.5 Normal Pub Config - BrowserCS
-sv_cheats 0
-sv_lan 0
-sv_gravity ${gravity}
-sv_maxspeed 320
-mp_friendlyfire 0
-mp_autoteambalance 1
-mp_limitteams 2
-mp_autokick 1
-mp_tkpunish 1
-mp_startmoney ${startMoney}
-mp_buytime 1.5
-mp_freezetime ${freezeTime}
-mp_roundtime ${roundTime}
-mp_c4timer 35
-mp_timelimit ${timelimit}
-mp_maxrounds 0
-mp_winlimit 0
-mp_flashlight 1
-mp_footsteps 1
-mp_fadetoblack 0
-mp_forcechasecam 0
-allow_spectators 1
-sv_password ""
-log off
-say "== NORMAL MOD AKTIF =="
-say "FF:OFF | MONEY:${startMoney} | ROUND:${roundTime}dk | TIME:${timelimit}dk"
-sv_restartround 3
-`;
-
-    try {
-      const token = await getSessionToken();
-      const writeRes = await fetch(`${API_URL}/api/servers/${currentSettingsServerId}/write-cfg`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ filename: 'normal', content: normalCfgContent })
-      });
-      const writeData = await writeRes.json();
-      if (!writeData.success) throw new Error(writeData.error || 'CFG yazılamıyor');
-
-      const execOk = await sendRcon('exec normal.cfg', null);
-      if (execOk) {
-        notify('↩ Normal mod aktif! Sunucu 3 saniyede yeniden başlayacak.', 'success');
-      }
-    } catch (e) {
-      notify('Normal CFG hatası: ' + e.message, 'error');
-    }
-    btn.disabled = false;
-    btn.textContent = '↩ NORMAL MODA DÖN';
-  });
-}
 
 // ── Sidebar Admin Panel Butonları (Gerçek RCON) ─────────────────────────────
 const btnAdminChangeMap = $('btn-admin-changemap');
@@ -4096,6 +2119,12 @@ if (btnAdminChangeMap) {
     const containerId = await getActiveContainerId();
     if (!containerId) { notify('Aktif sunucu bulunamadı!', 'error'); return; }
     try {
+      notify(`Harita indiriliyor: ${map}...`, 'info');
+      const bspOk = await ensureMapBspInVfs(map);
+      if (!bspOk) {
+        notify(`Harita indirilemedi, map change iptal: ${map}`, 'error');
+        return;
+      }
       const token = await getSessionToken();
       const r = await fetch(`${API_URL}/api/servers/${containerId}/command`, {
         method: 'POST',
@@ -4159,7 +2188,7 @@ if (btnAdminStop) {
     if (!containerId) { notify('Aktif sunucu bulunamadı!', 'error'); return; }
     try {
       const token = await getSessionToken();
-      const adminTok = sessionStorage.getItem('cs_admin_token');
+      const adminTok = sessionStorage.getItem('cs_master_admin_token');
       const r = await fetch(`${API_URL}/api/admin/servers/${containerId}`, {
         method: 'DELETE',
         headers: { 'x-admin-token': adminTok || '', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) }
@@ -4205,7 +2234,7 @@ if (btnCreateServer) {
       const maxP = maxPlayersSelect ? parseInt(maxPlayersSelect.value) : 16;
 
       const token = await getSessionToken();
-      const res = await fetch(`${API_URL}/api/create-server`, {
+      const res = await fetch(`${API_URL}/api/start-server`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4234,6 +2263,16 @@ if (btnCreateServer) {
   });
 }
 
+window.__bcsAddLoadingLog = (msg, cls) => addLoadingLog(msg, cls);
+window.__bcsAddConsoleLog = (msg, cls) => addConsoleLog(msg, cls);
+window.__bcsSetEngineStatus = (msg, st) => setEngineStatus(msg, st);
+window.__bcsSetProgress = (pct, msg) => setProgress(pct, msg);
+window.__bcsFetchWithProgress = (url, label) => fetchWithProgress(url, label);
+window.__bcsAppendPerfConfig = (buf) => appendBrowserCSPerfConfig(buf);
+window.__bcsStartFPSCounter = () => startFPSCounter();
+window.__bcsRunEngineCommandRaw = (cmd) => runEngineCommandRaw(cmd);
+window.__bcsDebugLog = (...args) => browserCSDebugLog(...args);
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 async function checkWasmFiles() {
@@ -4251,27 +2290,27 @@ async function runSplash() {
   }, 6000);
   await new Promise(r => setTimeout(r, 200));
 
-  // WebGL2 kontrolü
-  setSplash('WebGL2 desteği kontrol ediliyor...', 20);
+  // Grafik desteği kontrolü
+  setSplash('Tarayıcı kontrol ediliyor...', 20);
   const testCanvas = document.createElement('canvas');
   const hasWebGL2 = !!testCanvas.getContext('webgl2');
   if (!hasWebGL2) {
-    notify('⚠ WebGL2 desteklenmiyor! Chrome veya Firefox güncel sürüm gerekli.', 'error');
+    notify('⚠ Tarayıcınız oyunu desteklemiyor. Chrome veya Firefox’un güncel sürümünü kullanın.', 'error');
   }
 
   // SharedArrayBuffer kontrolü
-  setSplash('WASM SharedArrayBuffer kontrol ediliyor...', 35);
+  setSplash('Tarayıcı güvenliği kontrol ediliyor...', 35);
   const hasSAB = typeof SharedArrayBuffer !== 'undefined';
   if (!hasSAB) {
-    notify('⚠ SharedArrayBuffer yok — COOP/COEP headers eksik olabilir.', 'error');
+    notify('⚠ Tarayıcı kısıtlaması var — sayfayı yenileyin veya Chrome/Edge deneyin.', 'error');
   }
 
 
   // Asset server bağlantısı
-  setSplash('Asset server\'a bağlanılıyor...', 50);
+  setSplash('Sunucuya bağlanılıyor...', 50);
   const serverOk = await loadMapList();
 
-  setSplash('WASM dosyaları kontrol ediliyor...', 75);
+  setSplash('Oyun dosyaları kontrol ediliyor...', 75);
   // WASM dosyaları /wasm/ altında — public/ statik olarak serve edilir
   // const wasmOk = await checkWasmFiles();
   const wasmOk = true;
@@ -4336,7 +2375,7 @@ window.dismissWelcomeMOTD = function () {
 };
 
 window.connectToServer = async function (port, mapName, isHost = false) {
-  if (engineRunning) {
+  if (state.engineRunning) {
     // WebRTC relay kapanmis olabilir. En guvenilir cozum:
     // baglanti bilgisini sessionStorage'a kaydet + sayfayi yenile.
     if (!isHost && port) {
@@ -4354,19 +2393,39 @@ window.connectToServer = async function (port, mapName, isHost = false) {
     return;
   }
 
+  // AMXX helpers live in lazy serverSettings module
+  await ensureServerSettings();
+
+  // Misafirse tüm eski admin şifre cache'ini sil — nick ile admin olunamaz
+  if (!getCurrentUser()) {
+    if (typeof window.clearAmxPasswordCache === 'function') window.clearAmxPasswordCache();
+  }
+
+  // Admin badge + _pw: sadece üye oturumunda /api/me/server-admin ile
+  if (port && !isHost) {
+    try {
+      if (typeof window.prefetchAmxAdminsForPort === 'function') {
+        await window.prefetchAmxAdminsForPort(port);
+      }
+    } catch (e) { /* ignore */ }
+  }
+
   // Mikrofon izni iste (Xash3D voice support için)
   try {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('[Audio] Microphone permission granted.');
+      browserCSDebugLog('[Audio] Microphone permission granted.');
     }
   } catch (err) {
     console.warn('[Audio] Microphone permission denied or not available:', err);
     if (typeof notify === 'function') notify('Mikrofon erişimi reddedildi, sesli iletişim çalışmayacak.', 'warn');
   }
 
-  // Açık modalları kapat
-  document.querySelectorAll('.modal, .modal-overlay, [id$="-modal"]').forEach(el => el.style.display = 'none');
+  // Açık modalları kapat (maç modu modalını koru)
+  document.querySelectorAll('.modal, .modal-overlay, #login-modal, #premium-modal, #guest-name-modal, #welcome-motd').forEach(el => {
+    if (el.id === 'match-pass-modal') return;
+    el.style.display = 'none';
+  });
 
   // Arayüzü gizle, oyunu göster
   const sidebar = $('sidebar');
@@ -4436,6 +2495,26 @@ window.connectToServer = async function (port, mapName, isHost = false) {
 // --- INIT ---
 runSplash();
 initAuth();
+// Auth sonrası admin-şifre bildirimlerini kontrol et
+setTimeout(() => {
+  if (typeof checkAdminPasswordNotices === 'function') {
+    checkAdminPasswordNotices();
+  }
+}, 1800);
+setTimeout(() => {
+  if (typeof checkAdminPasswordNotices === 'function') {
+    checkAdminPasswordNotices();
+  }
+}, 5000);
+
+(function openPremiumModalFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('modal') === 'premium') {
+    const modal = document.getElementById('premium-modal');
+    if (modal) modal.style.display = 'flex';
+    window.history.replaceState({}, '', '/oyna');
+  }
+})();
 
 // ── AUTO-CONNECT: sayfa yenilendikten sonra bekleyen baglanti varsa otomatik baglan ──
 (function checkAutoConnect() {
@@ -4455,36 +2534,6 @@ initAuth();
     }, 1500);
   } catch(e) { sessionStorage.removeItem('_csAutoConnect'); }
 })();
-
-const btnAdminSaveStripe = $('btn-admin-save-stripe');
-if (btnAdminSaveStripe) {
-  btnAdminSaveStripe.addEventListener('click', async () => {
-    const secret = $('admin-stripe-secret').value;
-    const webhook = $('admin-stripe-webhook').value;
-    if (!secret) return notify('Lütfen geçerli bir anahtar girin', 'error');
-    const adminTok = sessionStorage.getItem('cs_admin_token');
-    if (!adminTok) return notify('Admin girişi yapmalısınız!', 'error');
-    try {
-      // Backend'de env'e kaydetmek için admin endpoint
-      const r = await fetch(`${API_URL}/api/admin/stripe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminTok },
-        body: JSON.stringify({ stripeSecretKey: secret, stripeWebhookSecret: webhook })
-      });
-      const d = await r.json();
-      if (d.success) {
-        notify('Stripe ayarları backend\'e kaydedildi!', 'success');
-      } else {
-        // Backend endpoint yoksa veya hata döndürdüyse sadece session’a yaz
-        sessionStorage.setItem('cs_stripe_secret', secret);
-        notify('Stripe kaydedildi (yerel session). Backend hatası: ' + (d.error || '?'), 'warn');
-      }
-    } catch (e) {
-      notify('Bağlantı hatası: ' + e.message, 'error');
-    }
-  });
-}
-
 
 // Direct listeners - module scripts run after DOM is ready
 (async () => {
@@ -4531,15 +2580,6 @@ if (btnAdminSaveStripe) {
         const loginModal = document.getElementById('login-modal');
         if (loginModal) loginModal.style.display = 'flex';
         window.customAlert('Sunucu kiralayabilmek için önce üye girişi yapmalısınız.', 'BİLGİ');
-      } else if (isUserPremium()) {
-        // VIP kullanıcı için doğrudan sunucu oluşturma ekranına yönlendir
-        const modal = document.getElementById('premium-modal');
-        if (modal) modal.style.display = 'flex';
-        // Premium modalında btn-buy-premium'a otomatik tıkla
-        setTimeout(() => {
-          const buyBtn = document.getElementById('btn-buy-premium');
-          if (buyBtn) buyBtn.click();
-        }, 100);
       } else {
         const modal = document.getElementById('premium-modal');
         if (modal) modal.style.display = 'flex';
@@ -4569,75 +2609,116 @@ if (btnAdminSaveStripe) {
 
 
 // ================================================================
-// MATCH MODE PASSWORD MODAL - override existing btn-match-mode
+// MATCH MODE PASSWORD MODAL
 // ================================================================
-(function overrideMatchModeBtn() {
+(function initMatchModeModal() {
   const origBtn = document.getElementById('btn-match-mode');
   if (!origBtn) return;
-  // Remove all old listeners by cloning
-  const newBtn = origBtn.cloneNode(true);
-  origBtn.parentNode.replaceChild(newBtn, origBtn);
 
-  newBtn.addEventListener('click', () => {
-    const rconPass = document.getElementById('rcon-auth-pass') ? document.getElementById('rcon-auth-pass').value : '';
-    if (!rconPass) { if (typeof notify === 'function') notify('RCON sekmesinde sifrenizi girin!', 'error'); return; }
-    if (typeof currentSettingsServerId === 'undefined' || !currentSettingsServerId) {
-      if (typeof notify === 'function') notify('Sunucu ID bulunamadi!', 'error'); return;
-    }
-    const modal = document.getElementById('match-pass-modal');
-    const choiceRow = document.getElementById('match-pass-choice-row');
-    const passInput = document.getElementById('match-pass-input');
-    const confirmBtn = document.getElementById('match-pass-confirm');
-    if (!modal) return;
-    choiceRow.style.display = 'flex';
-    passInput.style.display = 'none';
-    passInput.value = '';
-    confirmBtn.style.display = 'none';
-    modal.classList.add('show');
-  });
-
-  // YES - show password field
   const passYes = document.getElementById('match-pass-yes');
-  if (passYes) passYes.addEventListener('click', () => {
-    document.getElementById('match-pass-choice-row').style.display = 'none';
-    const pi = document.getElementById('match-pass-input');
-    pi.style.display = 'block'; pi.focus();
-    document.getElementById('match-pass-confirm').style.display = 'block';
-  });
-
-  // NO - proceed without password
   const passNo = document.getElementById('match-pass-no');
-  if (passNo) passNo.addEventListener('click', async () => {
-    document.getElementById('match-pass-modal').classList.remove('show');
-    await window._execMatchCfgWithPass('');
-  });
-
-  // CONFIRM with password
   const passConf = document.getElementById('match-pass-confirm');
-  if (passConf) passConf.addEventListener('click', async () => {
-    const pw = (document.getElementById('match-pass-input').value || '').trim();
-    document.getElementById('match-pass-modal').classList.remove('show');
-    await window._execMatchCfgWithPass(pw);
+  const passInp = document.getElementById('match-pass-input');
+  const modal = document.getElementById('match-pass-modal');
+
+  [passYes, passNo, passConf].forEach(btn => {
+    if (btn) btn.type = 'button';
   });
 
-  // Enter key
-  const passInp = document.getElementById('match-pass-input');
-  if (passInp) passInp.addEventListener('keydown', async (e) => {
-    if (e.key !== 'Enter') return;
-    const pw = (passInp.value || '').trim();
-    document.getElementById('match-pass-modal').classList.remove('show');
-    await window._execMatchCfgWithPass(pw);
+  origBtn.addEventListener('click', () => {
+    const rconPass = document.getElementById('rcon-auth-pass')?.value || '';
+    if (!rconPass) {
+      notify('RCON sekmesinde şifrenizi girin!', 'error');
+      return;
+    }
+    if (!currentSettingsServerId) {
+      notify('Sunucu ID bulunamadı!', 'error');
+      return;
+    }
+    if (!showMatchPassModal()) {
+      notify('Maç modu penceresi bulunamadı!', 'error');
+    }
   });
+
+  if (passYes) {
+    passYes.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const choiceRow = document.getElementById('match-pass-choice-row');
+      const confirmBtn = document.getElementById('match-pass-confirm');
+      if (choiceRow) choiceRow.style.display = 'none';
+      if (passInp) {
+        passInp.style.display = 'block';
+        passInp.focus();
+      }
+      if (confirmBtn) confirmBtn.style.display = 'block';
+    });
+  }
+
+  async function startMatchMode(password) {
+    hideMatchPassModal();
+    if (passConf) {
+      passConf.disabled = true;
+      passConf.textContent = 'BAŞLATILIYOR...';
+    }
+    try {
+      await window._execMatchCfgWithPass(password);
+    } finally {
+      if (passConf) {
+        passConf.disabled = false;
+        passConf.textContent = '⚔ MAÇ MODUNU BAŞLAT';
+      }
+    }
+  }
+
+  if (passNo) {
+    passNo.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startMatchMode('');
+    });
+  }
+
+  if (passConf) {
+    passConf.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const pw = (passInp?.value || '').trim();
+      startMatchMode(pw);
+    });
+  }
+
+  if (passInp) {
+    passInp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const pw = (passInp.value || '').trim();
+        startMatchMode(pw);
+      }
+      if (e.key === 'Escape') hideMatchPassModal();
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) hideMatchPassModal();
+    });
+    const panel = document.getElementById('match-pass-panel');
+    if (panel) {
+      panel.addEventListener('click', (e) => e.stopPropagation());
+    }
+  }
 })();
 
 window._execMatchCfgWithPass = async function (svPassword) {
   const btn = document.getElementById('btn-match-mode');
   if (btn) { btn.textContent = 'MATCH.CFG YAZILIYOR...'; btn.disabled = true; }
 
+  const safePassword = sanitizeCfgPassword(svPassword);
   const lines = [
     '// CS 1.5 Clan Match Config - BrowserCS',
     'hostname "CS 1.5 Clan Match Server"',
-    'sv_password "' + svPassword + '"',
+    'sv_password "' + safePassword + '"',
     'sv_cheats 0', 'sv_lan 0', 'sv_pausable 1',
     'sv_voiceenable 1', 'sv_alltalk 0',
     'sv_gravity 800', 'sv_maxspeed 320',
@@ -4652,6 +2733,7 @@ window._execMatchCfgWithPass = async function (svPassword) {
     'mp_footsteps 1', 'mp_fadetoblack 0',
     'mp_forcechasecam 2', 'allow_spectators 1',
     'log on', 'mp_logmessages 1', 'mp_logdetail 3',
+    'browsercs_match 1', 'browsercs_match_maxplayers 10',
     'say "== CLAN MATCH CFG LOADED =="',
     'say "FF:ON | MONEY:800 | FREEZE:6 | ROUND:5 | C4:35"',
     'sv_restartround 3'
@@ -4660,21 +2742,24 @@ window._execMatchCfgWithPass = async function (svPassword) {
 
   try {
     const token = typeof getSessionToken === 'function' ? await getSessionToken() : null;
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = 'Bearer ' + token;
+    if (!token) throw new Error('Oturum bulunamadı — lütfen tekrar giriş yapın.');
+    const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
     const writeRes = await fetch(API_URL + '/api/servers/' + currentSettingsServerId + '/write-cfg', {
       method: 'POST', headers, body: JSON.stringify({ filename: 'match', content: matchCfgContent })
     });
-    const writeData = await writeRes.json();
-    if (!writeData.success) throw new Error(writeData.error || 'CFG yazilamiyor');
-    const execOk = await sendRcon('exec match.cfg', null);
-    if (execOk && typeof notify === 'function') {
-      notify(svPassword ? ('Mac modu aktif! Sifre: ' + svPassword) : '5v5 Mac CFG yuklendi!', 'success');
+    const writeData = await writeRes.json().catch(() => ({}));
+    if (!writeRes.ok || !writeData.success) {
+      throw new Error(writeData.error || ('CFG yazılamadı (HTTP ' + writeRes.status + ')'));
+    }
+    const execOk = await execModeCfg('match', writeData);
+    if (execOk) {
+      notify(safePassword ? ('Maç modu aktif! Şifre: ' + safePassword) : '5v5 Maç CFG yüklendi! Round 3 saniye içinde yeniden başlayacak.', 'success');
     }
   } catch (e) {
-    if (typeof notify === 'function') notify('Match CFG hatasi: ' + e.message, 'error');
+    notify('Maç modu hatası: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⚔ 5v5 MAÇ MODU'; }
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'MAC MODU'; }
 };
 
 // ================================================================
@@ -4683,17 +2768,21 @@ window._execMatchCfgWithPass = async function (svPassword) {
 (function initEscPauseMenu() {
   const escMenu = document.getElementById('esc-pause-menu');
   const btnResume = document.getElementById('esc-btn-resume');
+  const btnRetry = document.getElementById('esc-btn-retry');
   const btnEscSet = document.getElementById('esc-btn-settings');
   const btnDisconn = document.getElementById('esc-btn-disconnect');
   const gCanvas = document.getElementById('canvas');
   if (!escMenu || !gCanvas) return;
 
   document.addEventListener('pointerlockchange', () => {
-    if (typeof engineRunning === 'undefined' || !engineRunning) return;
+    if (!state.engineRunning) return;
+    const consoleOpenNow = document.getElementById('console-panel')?.classList.contains('open');
     if (document.pointerLockElement === gCanvas) {
       escMenu.classList.remove('show');
-    } else {
+    } else if (!consoleOpenNow) {
       setTimeout(() => {
+        // Kalite / toolbar tıklaması geçici unlock — ESC menüyü açma
+        if (window._browserCSIgnorePointerLockLoss) return;
         const kickEl = document.getElementById('kick-overlay');
         const reconEl = document.getElementById('reconnect-overlay');
         const kickOpen = kickEl && kickEl.classList.contains('show');
@@ -4704,8 +2793,18 @@ window._execMatchCfgWithPass = async function (svPassword) {
         const tm = document.getElementById('custom-textmenu');
         const tmOpen = tm && tm.style.display !== 'none';
         const sb = document.getElementById('custom-scoreboard');
-        const sbOpen = sb && sb.style.display !== 'none';
-        if (!kickOpen && !reconOpen && !reconActive && !tmOpen && !sbOpen && (typeof engineRunning !== 'undefined') && engineRunning) {
+        const sbOpen = sb && sb.style.display !== 'none' && sb.style.display !== '';
+        const motd = document.getElementById('welcome-motd');
+        const motdOpen = motd && motd.classList.contains('visible');
+        if (
+          !kickOpen &&
+          !reconOpen &&
+          !reconActive &&
+          !tmOpen &&
+          !sbOpen &&
+          !motdOpen &&
+          state.engineRunning
+        ) {
           escMenu.classList.add('show');
         }
       }, 80);
@@ -4718,15 +2817,142 @@ window._execMatchCfgWithPass = async function (svPassword) {
     gCanvas.focus();
   });
 
-  if (btnEscSet) btnEscSet.addEventListener('click', () => {
+  if (btnRetry) btnRetry.addEventListener('click', () => {
     escMenu.classList.remove('show');
-    const sb = document.getElementById('btn-open-settings');
-    if (sb) sb.click();
+    if (window.BrowserCSReconnect && typeof window.BrowserCSReconnect.retryNow === 'function') {
+      window.BrowserCSReconnect.retryNow();
+      notify('Sunucuya yeniden bağlanılıyor...', 'info');
+    } else if (typeof window.executeEngineCommand === 'function') {
+      window.executeEngineCommand('setinfo _vgui_menus 0');
+      window.executeEngineCommand('retry');
+      notify('retry komutu gönderildi.', 'info');
+      try { gCanvas.requestPointerLock(); } catch (e) { }
+    }
   });
 
-  if (btnDisconn) btnDisconn.addEventListener('click', () => {
-    if (confirm('Sunucudan cikmak istediginize emin misiniz?')) location.reload();
+  if (btnEscSet) btnEscSet.addEventListener('click', () => {
+    escMenu.classList.remove('show');
+    if (typeof window.openConsolePanel === 'function') {
+      window.openConsolePanel();
+    } else if (typeof window.toggleConsole === 'function') {
+      window.toggleConsole(true);
+    }
   });
+
+  if (btnDisconn) {
+    btnDisconn.addEventListener('click', () => {
+      if (confirm('Sunucudan çıkmak istediğinize emin misiniz?')) {
+        window.leaveBrowserCSServer({ message: 'Sunucudan çıkılıyor...' });
+      }
+    });
+  }
+})();
+
+/**
+ * Sunucudan düzgün çıkış:
+ * 1) reconnect'i durdur
+ * 2) engine disconnect
+ * 3) WebRTC üzerinden disconnect paketi + kanalı kapat (sunucu oyuncuyu düşürür)
+ * 4) sunucu listesine dön
+ */
+window.leaveBrowserCSServer = function leaveBrowserCSServer(opts = {}) {
+  if (window._browserCSLeaving) {
+    return;
+  }
+  window._browserCSLeaving = true;
+  window._browserCSInGameFlag = false;
+  window._browserCSScoreboardSeen = false;
+
+  try {
+    window.stopBrowserCSPromoLoop?.();
+    window._browserCSPendingAdminBanner = null;
+    document.getElementById('admin-join-banner')?.classList.remove('show', 'hiding');
+    document.getElementById('browsercs-promo-banner')?.classList.remove('show', 'hiding');
+  } catch (e) { /* ignore */ }
+
+  try {
+    if (window.BrowserCSReconnect?.nonRetryable) {
+      window.BrowserCSReconnect.nonRetryable('Oyuncu sunucudan ayrıldı');
+    }
+  } catch (e) { /* ignore */ }
+
+  try {
+    document.getElementById('esc-pause-menu')?.classList.remove('show');
+    document.getElementById('reconnect-overlay')?.classList.remove('show');
+    document.getElementById('kick-overlay')?.classList.remove('show');
+    document.exitPointerLock?.();
+  } catch (e) { /* ignore */ }
+
+  if (typeof notify === 'function') {
+    notify(opts.message || 'Sunucu listesine dönülüyor...', 'info');
+  }
+
+  // 1) Engine'e normal disconnect (netchan) — OOB 0xff disconnect KULLANMA
+  // OOB disconnect tüm 127.0.0.1 WebRTC oyuncularını düşürebiliyordu.
+  try {
+    if (state.xash) {
+      state.xash._suppressDisconnectEvent = true;
+    }
+    if (typeof window.executeEngineCommand === 'function') {
+      window.executeEngineCommand('disconnect');
+    }
+  } catch (e) { /* ignore */ }
+
+  const goLobby = () => {
+    try {
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.hash = '';
+      if (url.pathname.includes('/oyna')) {
+        window.location.replace(url.pathname.endsWith('/') ? url.pathname : `${url.pathname}/`);
+      } else {
+        window.location.replace('/oyna/');
+      }
+    } catch (e) {
+      window.location.href = '/oyna/';
+    }
+  };
+
+  // 2) Kısa bekle → sadece kendi WebRTC kanalını kapat → lobi
+  const delay = typeof opts.delayMs === 'number' ? opts.delayMs : 350;
+  setTimeout(() => {
+    try {
+      if (state.xash) {
+        state.xash._suppressDisconnectEvent = true;
+        try { state.xash.dc?.close?.(); } catch (e) { /* ignore */ }
+        if (typeof state.xash._resetWebRTCConnection === 'function') {
+          state.xash._resetWebRTCConnection();
+        } else if (typeof state.xash._cleanupWebRTC === 'function') {
+          try { state.xash._cleanupWebRTC(); } catch (e) { /* ignore */ }
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    setTimeout(goLobby, 200);
+  }, delay);
+};
+
+assertEngineBridges();
+
+// Sekme/kapanışta sadece kendi kanalını kapat (OOB disconnect yok)
+window.addEventListener('pagehide', () => {
+  if (window._browserCSLeaving) return;
+  try {
+    if (state.xash?.dc?.readyState === 'open') {
+      try { state.xash.dc.close(); } catch (e) { /* ignore */ }
+    }
+  } catch (e) { /* ignore */ }
+});
+
+// Toolbar: Sunuculara Dön → sunucu listesi
+(function initToolbarLeaveButtons() {
+  const btnQuit = document.getElementById('btn-quit');
+  if (btnQuit) {
+    btnQuit.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.leaveBrowserCSServer();
+    });
+  }
 })();
 
 // ================================================================
@@ -4763,7 +2989,7 @@ window._execMatchCfgWithPass = async function (svPassword) {
     const _origAdd = window.addConsoleLog;
     window.addConsoleLog = function (msg, type) {
       _origAdd(msg, type);
-      if (typeof engineRunning === 'undefined' || !engineRunning || !msg) return;
+      if (!state.engineRunning || !msg) return;
       const lower = msg.toLowerCase();
       for (const p of KICK_PATTERNS) {
         if (p.r.test(lower)) {
@@ -4776,12 +3002,21 @@ window._execMatchCfgWithPass = async function (svPassword) {
       }
     };
   }
-  if (btnKickRecon) btnKickRecon.addEventListener('click', () => {
+  if (btnKickRecon) btnKickRecon.addEventListener('click', async () => {
     kickOverlay.classList.remove('show');
-    if (typeof xash !== 'undefined' && typeof engineRunning !== 'undefined' && engineRunning) {
-      if (typeof executeEngineCommand === 'function') {
-        executeEngineCommand('setinfo _vgui_menus 0');
-        executeEngineCommand('connect 10.0.0.1:27015');
+    if (state.xash && state.engineRunning) {
+      try {
+        if (state.xash?.ensureDcReady) {
+          await state.xash.ensureDcReady(120000);
+        }
+        if (typeof window.executeEngineCommand === 'function') {
+          window.executeEngineCommand('setinfo _vgui_menus 0');
+          const port = window._browserCSConnectPort || '27015';
+          window.executeEngineCommand(`connect 10.0.0.1:${port}`);
+        }
+      } catch (err) {
+        console.warn('[Kick] WebRTC reconnect failed:', err);
+        if (window.BrowserCSReconnect?.retryNow) window.BrowserCSReconnect.retryNow();
       }
     } else { location.reload(); }
   });
@@ -5005,6 +3240,14 @@ window.openAuthGate = function (msgOverride) {
     if (menuBg) { menuBg.style.opacity = '0'; setTimeout(function() { menuBg.style.display = 'none'; }, 650); }
   }
   function showMenuBg() {
+    // Uzak sunucuya bağlanırken / bağlanmışken menü splash gösterme
+    if (window.BrowserCSReconnect?.reconnecting) return;
+    if (window.BrowserCSReconnect?.sessionJoined) return;
+    if (window._browserCSInGameFlag) return;
+    if (window._browserCSConnectPort && !window._browserCSLeaving) {
+      // Join akışı sürüyor — engine "menu" event'i gelse bile splash yok
+      if (!window.BrowserCSReconnect?.exhausted) return;
+    }
     if (menuBg) { menuBg.style.display = 'block'; setTimeout(function() { menuBg.style.opacity = '1'; }, 10); }
   }
 
@@ -5052,7 +3295,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!canvas) return;
 
   document.addEventListener("pointerlockchange", () => {
-    console.log(
+    browserCSDebugLog(
       "[Browser] Pointer lock:",
       document.pointerLockElement === canvas
         ? "aktif"
@@ -5061,7 +3304,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.addEventListener("fullscreenchange", () => {
-    console.log(
+    browserCSDebugLog(
       "[Browser] Fullscreen:",
       document.fullscreenElement
         ? "aktif"
@@ -5081,32 +3324,48 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// --- BROWSERCS: Damage Indicator Overlay ---
-window.onDamageInfoReceived = function(damage, hitgroup, flags) {
+// --- BROWSERCS: Damage Indicator Overlay (pooled — no createElement per hit) ---
+const _dmgIndicatorPool = [];
+const _DMG_POOL_MAX = 6;
+
+function _acquireDmgEl() {
+  let el = _dmgIndicatorPool.pop();
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'damage-indicator';
+  }
+  return el;
+}
+
+function _releaseDmgEl(el) {
+  if (!el) return;
+  el.className = 'damage-indicator';
+  el.textContent = '';
+  el.style.removeProperty('--dx');
+  el.style.removeProperty('--dy');
+  if (_dmgIndicatorPool.length < _DMG_POOL_MAX) _dmgIndicatorPool.push(el);
+}
+
+window.onDamageInfoReceived = function (damage, hitgroup, flags) {
   const container = document.getElementById('damage-indicator-container');
   if (!container) return;
 
-  const dmgEl = document.createElement('div');
-  dmgEl.className = 'damage-indicator';
-  dmgEl.innerText = '-' + damage;
-
-  // Add a slight random offset so multiple numbers don't overlap completely
-  const offsetX = (Math.random() * 60 - 30) + 'px';
-  const offsetY = (Math.random() * 60 - 30) + 'px';
-  dmgEl.style.setProperty('--dx', offsetX);
-  dmgEl.style.setProperty('--dy', offsetY);
-
-  // If headshot, make it red and bigger
-  if (hitgroup === 1) { // HITGROUP_HEAD = 1
-    dmgEl.classList.add('headshot');
+  while (container.childElementCount >= _DMG_POOL_MAX) {
+    const old = container.firstElementChild;
+    if (!old) break;
+    container.removeChild(old);
+    _releaseDmgEl(old);
   }
 
+  const dmgEl = _acquireDmgEl();
+  dmgEl.className = 'damage-indicator' + (hitgroup === 1 ? ' headshot' : '');
+  dmgEl.textContent = '-' + damage;
+  dmgEl.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+  dmgEl.style.setProperty('--dy', (Math.random() * 60 - 30) + 'px');
   container.appendChild(dmgEl);
 
-  // Remove after animation completes (1000ms matching CSS)
   setTimeout(() => {
-    if (dmgEl.parentNode === container) {
-      container.removeChild(dmgEl);
-    }
+    if (dmgEl.parentNode === container) container.removeChild(dmgEl);
+    _releaseDmgEl(dmgEl);
   }, 1000);
 };
