@@ -10,6 +10,7 @@ import { API_URL, ASSET_URL } from './api.js';
 import { $, notify } from './dom.js';
 import './ui/modals.js';
 import './game/frameDiagnostics.js';
+import { startRenderStability } from './game/renderStability.js';
 import { isBrowserCSProtocolLog } from './ui/hudBridge.js';
 import { BrowserCSReconnect } from './net/reconnect.js';
 import { state } from './game/state.js';
@@ -20,12 +21,17 @@ import { initEngine, changeMap } from './game/engine.js';
 import { toggleConsole } from './game/console.js';
 import { isDeathmatchServer, buildModePill } from './game/serverMeta.js';
 
-// Fix for Xash3D Emscripten Black Sky Bug: Force WebGL alpha to false
+// Fix for Xash3D Emscripten Black Sky Bug + compositor jitter:
+// alpha:false, desynchronized (low-latency present), high-performance GPU.
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   if (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2') {
     attributes = attributes || {};
     attributes.alpha = false;
+    attributes.antialias = false;
+    attributes.powerPreference = 'high-performance';
+    attributes.desynchronized = true;
+    attributes.preserveDrawingBuffer = false;
   }
   return originalGetContext.call(this, type, attributes);
 };
@@ -41,7 +47,9 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   let pollTicks = 0;
 
   const PatchedAudioContext = function (options) {
-    const ctx = new OriginalAudioContext(options);
+    // 'playback' = larger buffers, fewer ScriptProcessor wakes → less FPS oscillation
+    const opts = Object.assign({ latencyHint: 'playback' }, options || {});
+    const ctx = new OriginalAudioContext(opts);
     allAudioContexts.push(ctx);
     return ctx;
   };
@@ -509,12 +517,21 @@ Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, sockl
   }
   this._heapViews();
   const data = packet.data;
-  const finalData = data instanceof Uint8Array
-    ? data
-    : new Uint8Array(data.buffer || data, data.byteOffset || 0, data.byteLength || data.length || 0);
-
-  const copyLen = Math.min(bufLen, finalData.length);
-  if (copyLen > 0) this._heapU8.set(finalData.subarray(0, copyLen), bufPtr);
+  let copyLen = 0;
+  if (data instanceof ArrayBuffer) {
+    copyLen = Math.min(bufLen, data.byteLength);
+    if (copyLen > 0) {
+      // One short-lived view; bytes go into WASM heap (no second packet alloc)
+      this._heapU8.set(new Uint8Array(data, 0, copyLen), bufPtr);
+    }
+  } else if (data instanceof Uint8Array) {
+    copyLen = Math.min(bufLen, data.byteLength);
+    if (copyLen > 0) this._heapU8.set(data.subarray(0, copyLen), bufPtr);
+  } else if (data && data.length != null) {
+    const finalData = new Uint8Array(data.buffer || data, data.byteOffset || 0, data.byteLength || data.length || 0);
+    copyLen = Math.min(bufLen, finalData.length);
+    if (copyLen > 0) this._heapU8.set(finalData.subarray(0, copyLen), bufPtr);
+  }
 
   if (sockaddrPtr) {
     const port = packet.port;
@@ -527,6 +544,12 @@ Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, sockl
     this._heap8[sockaddrPtr + 7] = packet.ip[3];
   }
   if (socklenPtr) this._heap32[socklenPtr >> 2] = 16;
+  // Recycle envelope object (not the ArrayBuffer — WebRTC owns that)
+  if (!this._inPktPool) this._inPktPool = [];
+  if (this._inPktPool.length < 96) {
+    packet.data = null;
+    this._inPktPool.push(packet);
+  }
   return copyLen;
 };
 
@@ -835,7 +858,10 @@ class Xash3DWebSocket extends Xash3D {
         this._keepAliveInterval = setInterval(() => {
           if (this.dc && this.dc.readyState === 'open') {
             try {
-              this.dc.send(new Uint8Array([0x00, 0x42, 0x43, 0x53, 0x4B])); // \0BCSK
+              if (!this._keepAlivePkt) {
+                this._keepAlivePkt = new Uint8Array([0x00, 0x42, 0x43, 0x53, 0x4B]); // \0BCSK
+              }
+              this.dc.send(this._keepAlivePkt);
             } catch (e) { /* ignore */ }
           }
         }, 15000);
@@ -888,10 +914,11 @@ class Xash3DWebSocket extends Xash3D {
         const raw = e.data;
         if (!raw) return;
 
+        // Prefer ArrayBuffer as-is (view only at recvfrom). Avoid extra copies.
         let data;
         if (raw instanceof ArrayBuffer) {
           if (raw.byteLength === 0) return;
-          data = new Uint8Array(raw);
+          data = raw;
         } else if (raw instanceof Uint8Array) {
           if (raw.byteLength === 0) return;
           data = raw;
@@ -904,7 +931,8 @@ class Xash3DWebSocket extends Xash3D {
 
         this.packetCountRecv++;
         if (this.packetCountRecv <= 20) {
-          browserCSDebugLog(`[Ağ Log - Alınan #${this.packetCountRecv}] ${data.byteLength} byte`);
+          const n = data.byteLength != null ? data.byteLength : data.length;
+          browserCSDebugLog(`[Ağ Log - Alınan #${this.packetCountRecv}] ${n} byte`);
         }
 
         const srcIp = this.isHost ? [10, 0, 0, 2] : [10, 0, 0, 1];
@@ -912,11 +940,12 @@ class Xash3DWebSocket extends Xash3D {
         const srcPort = this.isHost ? 27005 : clientPort;
 
         try {
-          this.net.incoming.enqueue({
-            ip: srcIp,
-            port: srcPort,
-            data
-          });
+          let pkt = this.net._inPktPool && this.net._inPktPool.pop();
+          if (!pkt) pkt = { ip: null, port: 0, data: null };
+          pkt.ip = srcIp;
+          pkt.port = srcPort;
+          pkt.data = data;
+          this.net.incoming.enqueue(pkt);
         } catch (err) {
           console.error('[Ağ Log] Xash3D enqueue hatası:', err);
         }
@@ -2589,6 +2618,8 @@ setTimeout(() => {
 
   // ── Online Oyuncu Sayıcısı ────────────────────────────────────
   async function updateOnlineCounter() {
+    // Oyun açıkken fetch/JSON main thread'i gereksiz yormasın (FPS salınımı)
+    if (state.engineRunning) return;
     try {
       const res = await fetch(`${API_URL}/api/stats`);
       const data = await res.json();

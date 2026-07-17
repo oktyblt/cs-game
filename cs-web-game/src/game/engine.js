@@ -8,6 +8,7 @@ import { getStoredAmxPassword } from '../net/amxPassword.js';
 import { state } from './state.js';
 import { isDeathmatchServer } from './serverMeta.js';
 import { fsMkdirP, ensureMapBspInVfs, recoverMissingMapBsp, extractMissingMapFromLog, normalizeMapName } from './vfs.js';
+import { startRenderStability } from './renderStability.js';
 
 /**
  * Her join'de tüm harita WAD'larını (~60MB+) WASM VFS'e yazmak aşırı lag/GC yapıyordu.
@@ -446,6 +447,9 @@ export async function initEngine(mapName, connectPort = null, isHost = false) {
     // ── Adım 2: Xash3D WASM instance oluştur ────────────────────────────────
     setProgress(65, 'Oyun motoru hazırlanıyor...');
 
+    // Retina 2× fillrate salınımını kes; buffer = CSS boyutu
+    startRenderStability(gameCanvas);
+
     // Grafik desteği kontrolü
     const checkGL = gameCanvas.getContext('webgl2') || gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
     if (!checkGL) {
@@ -513,7 +517,7 @@ export async function initEngine(mapName, connectPort = null, isHost = false) {
       '+cl_bobup', '0.5',
       '+r_drawviewmodel', '1',
       '+hud_fastswitch', '1',
-      '+gl_clear', '1',
+      '+gl_clear', '0',
       '+r_novis', '0',
       '+setinfo', '_vgui_menus', '0',
     ];
@@ -1004,11 +1008,12 @@ export async function initEngine(mapName, connectPort = null, isHost = false) {
                 || (window._motdServerMeta && window._motdServerMeta.serverName)
                 || 'BrowserCS';
               if (window.updateBrowserCSScoreboard) {
+                // Avoid JSON.stringify round-trip alloc on hot scoreboard path
                 window.updateBrowserCSScoreboard(
-                  JSON.stringify(payload.players || []),
+                  payload.players || [],
                   resolvedServerName,
                   payload.localPlayerId,
-                  JSON.stringify(payload.teams || [])
+                  payload.teams || []
                 );
               }
             } catch (e) {

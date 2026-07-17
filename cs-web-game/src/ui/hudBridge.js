@@ -433,14 +433,19 @@ window.updateBrowserCSScoreboard = function (playersJson, serverName, localPlaye
     if (window.BrowserCSReconnect?.reconnecting) {
       window.BrowserCSReconnect.connected();
     }
-    const rawPlayers = JSON.parse(playersJson).filter((p) => {
+    const parsedPlayers = typeof playersJson === 'string'
+      ? JSON.parse(playersJson)
+      : (playersJson || []);
+    const rawPlayers = (Array.isArray(parsedPlayers) ? parsedPlayers : []).filter((p) => {
       const name = String(p.name || '').trim();
       const lower = name.toLowerCase();
       return !(!name || lower === 'unnamed' || lower === 'unnamed player');
     });
     let teams = [];
-    if (teamsJson) {
+    if (typeof teamsJson === 'string' && teamsJson) {
       try { teams = JSON.parse(teamsJson); } catch (_) {}
+    } else if (Array.isArray(teamsJson)) {
+      teams = teamsJson;
     }
 
     const forceReset =
