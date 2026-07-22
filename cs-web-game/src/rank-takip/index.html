@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rank Takip — BrowserCS Aylık Kill Sıralaması</title>
+  <meta name="description" content="BrowserCS Rank Takip: her sunucunun kendi aylık Top 20 kill sıralaması. Canlı güncellenir." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://browsercs.com/rank-takip/" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <meta property="og:title" content="Rank Takip — BrowserCS" />
+  <meta property="og:description" content="Sunucu bazlı aylık Top 20 kill sıralaması." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://browsercs.com/rank-takip/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/site.css" />
+  <style>
+    .rank-page { max-width: var(--max); margin: 0 auto; padding: calc(var(--nav-h) + 2rem) 1.25rem 4rem; }
+    .rank-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; margin: 1.5rem 0 1rem; }
+    .rank-toolbar label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.35rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .rank-toolbar select {
+      min-width: 280px; padding: 0.55rem 0.75rem; border-radius: 4px;
+      background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-bright);
+      font-family: var(--font-ui); font-size: 1rem;
+    }
+    .rank-status { color: var(--text-dim); font-size: 0.9rem; margin-left: auto; }
+    .rank-panel {
+      background: var(--bg-panel); border: 1px solid var(--border-soft); border-radius: 8px;
+      padding: 1rem 1.25rem; backdrop-filter: blur(8px);
+    }
+    .rank-meta { color: var(--cs-yellow); font-family: var(--font-title); font-size: 0.75rem; letter-spacing: 0.08em; margin-bottom: 0.85rem; }
+    .rank-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+    .rank-table th {
+      text-align: left; color: var(--text-dim); font-weight: 600; font-size: 0.75rem;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 0.4rem; border-bottom: 1px solid var(--border-soft);
+    }
+    .rank-table td { padding: 0.65rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .rank-pos { color: var(--cs-yellow); font-family: var(--font-title); font-weight: 700; width: 3rem; }
+    .rank-name { color: var(--text-bright); font-weight: 600; }
+    .rank-vip {
+      display: inline-block;
+      margin-left: 0.45rem;
+      padding: 0.12rem 0.42rem;
+      border-radius: 3px;
+      font-family: var(--font-title);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      vertical-align: middle;
+      line-height: 1.2;
+    }
+    .rank-vip-silver {
+      color: #0b0e13;
+      background: #e7edf1;
+      box-shadow: 0 0 10px rgba(220,232,238,0.35);
+    }
+    .rank-vip-gold {
+      color: #0b0e13;
+      background: #ffd700;
+      box-shadow: 0 0 10px rgba(255,215,0,0.4);
+    }
+    .rank-vip-platinum {
+      color: #0b0e13;
+      background: #1de9b6;
+      box-shadow: 0 0 10px rgba(29,233,182,0.4);
+    }
+    .rank-kills { color: #7dffa0; font-weight: 700; }
+    .rank-deaths, .rank-kd { color: var(--text-dim); }
+    tr.rank-top .rank-name { color: var(--cs-yellow); }
+    .rank-empty { padding: 2rem 0.5rem; color: var(--text-dim); text-align: center; }
+    .rank-rules {
+      margin-top: 1.25rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-soft);
+      border-left: 3px solid var(--cs-yellow);
+      border-radius: 8px;
+      padding: 1rem 1.15rem 1.05rem;
+    }
+    .rank-rules-title {
+      margin: 0 0 0.65rem;
+      font-family: var(--font-title);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cs-yellow);
+    }
+    .rank-rules-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .rank-rules-list li {
+      position: relative;
+      padding-left: 1rem;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+    .rank-rules-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      border-radius: 1px;
+      background: var(--cs-yellow);
+      opacity: 0.85;
+    }
+    .rank-rules-list strong { color: var(--text-bright); font-weight: 700; }
+    .rank-rules-foot {
+      margin: 0.85rem 0 0;
+      color: var(--text-dim);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Ana menü">
+    <a class="site-brand" href="/">
+      <img class="site-brand-mark" src="/assets/bcs-mark.png" width="34" height="34" alt="" />
+      <span class="site-brand-text">BrowserCS<small>BCS</small></span>
+    </a>
+    <div class="site-nav-links">
+      <a href="/">Anasayfa</a>
+      <a href="/sunucular">Sunucular</a>
+      <a href="/haritalar">Haritalar</a>
+      <a href="/rank-takip/" aria-current="page">Rank Takip</a>
+      <a href="/nasil-oynanir/">Rehber</a>
+      <a href="/vip/">VIP</a>
+      <a href="/sunucu-kirala">Kirala</a>
+      <a class="nav-cta" href="/oyna">Oyna</a>
+    </div>
+  </nav>
+
+  <header class="hero hero-compact">
+    <div class="hero-bg" style="background-image:url('/browsercs-bg.png')" role="img" aria-label="BrowserCS"></div>
+    <div class="hero-inner">
+      <p class="hero-brand">Rank Takip</p>
+      <h1 class="hero-title">Aylık kill sıralaması</h1>
+      <p class="hero-lead">Her sunucunun kendi Top 20 listesi. Geçmiş ayları yıl yıl inceleyin · canlı ay sürekli güncellenir.</p>
+    </div>
+  </header>
+
+  <main class="rank-page">
+    <div class="rank-toolbar">
+      <div>
+        <label for="rank-server-select">Sunucu</label>
+        <select id="rank-server-select"></select>
+      </div>
+      <div>
+        <label for="rank-year-select">Yıl</label>
+        <select id="rank-year-select" style="min-width:120px"></select>
+      </div>
+      <div>
+        <label for="rank-month-select">Ay</label>
+        <select id="rank-month-select" style="min-width:180px"></select>
+      </div>
+      <div class="rank-status" id="rank-status">Yükleniyor…</div>
+    </div>
+    <div class="rank-panel" id="rank-table"></div>
+    <aside class="rank-rules" aria-labelledby="rank-rules-title">
+      <h2 id="rank-rules-title" class="rank-rules-title">Rank nasıl işler?</h2>
+      <ul class="rank-rules-list">
+        <li>Rank yalnızca <strong>üye girişi</strong> yapan hesaplara yazılır.</li>
+        <li><strong>Misafir</strong> oyuncular sunucuda oynayabilir; sıralamaya hiç yazılmaz.</li>
+        <li>Üye bir misafiri öldürürse kill, üye hesaba sayılır.</li>
+        <li>Misafir birini öldürürse misafire rank yazılmaz; kurban üyeyse ölümü hesaba işlenebilir.</li>
+        <li>Sıralama <strong>hesap bazlıdır</strong> — oyun içi nick değişikliği rank’ı sıfırlamaz.</li>
+      </ul>
+      <p class="rank-rules-foot">Her sunucunun kendi aylık Top 20’si vardır; ay bitince sezon arşivlenir. Bot kill’leri sayılmaz. Oynamak için <a href="/oyna">Oyna</a>.</p>
+    </aside>
+
+    <aside class="rank-rules rank-rewards" aria-labelledby="rank-rewards-title" style="margin-top:1rem;border-left-color:#c9a227;">
+      <h2 id="rank-rewards-title" class="rank-rules-title" style="color:#e8c547;">Aylık Top 10 VIP Hediyesi</h2>
+      <p style="margin:0 0 0.75rem;color:var(--text-primary);font-size:0.95rem;line-height:1.5;">
+        Her ayın sonunda o sunucunun <strong>Top 10</strong> oyuncusuna otomatik <strong>1 aylık VIP</strong> tanımlanır.
+        Zaten VIP’sen paket süresi uzatılır; daha yüksek paketiniz varsa korunur.
+      </p>
+      <div class="rank-reward-grid" style="display:grid;gap:0.55rem;">
+        <div style="display:flex;gap:0.75rem;align-items:center;padding:0.55rem 0.7rem;background:rgba(180,220,230,0.06);border:1px solid rgba(180,220,230,0.22);border-radius:6px;">
+          <span style="font-family:var(--font-title);font-weight:800;color:#b8e0ea;min-width:3.2rem;">1–3</span>
+          <div>
+            <strong style="color:#d8f0f6;">Platinum VIP</strong>
+            <div style="font-size:0.82rem;color:var(--text-dim);">30 gün · [BCS] clan tag · tüm Gold ayrıcalıkları</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center;padding:0.55rem 0.7rem;background:rgba(232,197,71,0.07);border:1px solid rgba(232,197,71,0.28);border-radius:6px;">
+          <span style="font-family:var(--font-title);font-weight:800;color:#e8c547;min-width:3.2rem;">4–6</span>
+          <div>
+            <strong style="color:#f0d878;">Gold VIP</strong>
+            <div style="font-size:0.82rem;color:var(--text-dim);">30 gün · klasik modeller · altın silah görünümü</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center;padding:0.55rem 0.7rem;background:rgba(200,210,220,0.07);border:1px solid rgba(200,210,220,0.25);border-radius:6px;">
+          <span style="font-family:var(--font-title);font-weight:800;color:#c8d2dc;min-width:3.2rem;">7–10</span>
+          <div>
+            <strong style="color:#e7edf1;">Silver VIP</strong>
+            <div style="font-size:0.82rem;color:var(--text-dim);">30 gün · VIP rozeti · rezerve slot · votekick bağışıklığı</div>
+          </div>
+        </div>
+      </div>
+      <p class="rank-rules-foot" style="margin-top:0.85rem;">Ödüller sunucu bazlıdır; ay kapandığında otomatik işlenir. Detaylı paketler: <a href="/vip/">VIP</a>.</p>
+    </aside>
+  </main>
+
+  <script type="module">
+    import { mountRankTakipPanel } from './rankTakip.js';
+    mountRankTakipPanel({
+      selectEl: document.getElementById('rank-server-select'),
+      yearEl: document.getElementById('rank-year-select'),
+      monthEl: document.getElementById('rank-month-select'),
+      tableEl: document.getElementById('rank-table'),
+      statusEl: document.getElementById('rank-status'),
+      pollMs: 10000,
+    });
+  </script>
+</body>
+</html>

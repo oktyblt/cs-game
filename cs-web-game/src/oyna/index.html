@@ -14,11 +14,18 @@
   <meta property="og:url" content="https://browsercs.com/oyna" />
   <meta property="og:image" content="https://browsercs.com/og-image.jpg" />
   <meta property="og:type" content="website" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Non-blocking: aksi halde Chrome sekme spinner'ı oyun açıkken de kalabiliyor -->
   <link
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap"
-    rel="stylesheet" />
+    rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap"
+      rel="stylesheet" />
+  </noscript>
   
   <script type="module" src="/main.js"></script>
 <link rel="stylesheet" href="./oyna.css">
@@ -48,14 +55,17 @@
 
     <!-- HEADER -->
     <header id="header">
-      <div class="header-logo"><span class="cs-w">BROWSER</span>CS<span class="ver-tag">v1.5 ENGINE</span></div>
-      <div class="header-div"></div>
+      <div class="header-logo">
+        <img class="header-logo-mark" src="/assets/bcs-mark.png" width="28" height="28" alt="" />
+        <span class="cs-w">BROWSER</span>CS<span class="ver-tag">v1.5 ENGINE</span>
+      </div>
+      <div class="header-div header-desktop-only"></div>
       <div class="header-status">
         <div class="status-dot orange" id="engine-dot"></div>
         <span id="engine-status-text">Engine hazırlanıyor...</span>
       </div>
       <div class="header-spacer"></div>
-      <div style="display:flex;gap:0.5rem;margin-right:1rem;">
+      <div class="header-help-links header-desktop-only" style="display:flex;gap:0.5rem;margin-right:1rem;">
         <button onclick="document.getElementById('about-modal').style.display='flex'" class="toolbar-btn"
           style="border:none;background:transparent;color:var(--text-dim);font-weight:bold;">Hakkımızda</button>
         <button onclick="document.getElementById('faq-modal').style.display='flex'" class="toolbar-btn"
@@ -70,24 +80,27 @@
         <div class="h-badge" id="badge-premium"
           style="display:none;background:var(--cs-yellow);color:var(--bg-deep);border-color:var(--cs-yellow);font-weight:bold;">
           PREMIUM</div>
-        <div style="font-family:var(--font-ui);font-size:0.88rem;color:var(--text-bright);" id="user-display-name">
+        <div class="h-badge badge-vip" id="badge-vip" style="display:none;" title="VIP abonelik">VIP</div>
+        <div style="font-family:var(--font-ui);font-size:0.88rem;color:var(--text-bright);display:flex;align-items:center;gap:0.35rem;">
+          <span id="user-display-name"></span>
+          <span class="nick-vip-star" id="nick-vip-star" style="display:none;" title="VIP">★</span>
         </div>
         <button class="toolbar-btn" id="btn-dashboard"
           style="margin-right:0.5rem;border-color:var(--cs-yellow);color:var(--cs-yellow);">PANEL</button><button
           class="toolbar-btn danger" id="btn-logout">Çıkış</button>
       </div>
-      <div class="header-div"></div>
-      <div class="h-badge"
+      <div class="header-div header-desktop-only"></div>
+      <div class="h-badge header-stat-badge header-desktop-only"
         style="border-color:var(--cs-green);color:var(--cs-green);display:flex;align-items:center;gap:0.3rem;"
         title="Aktif Sunucular">
         🟢 <span id="online-server-count">?</span> Sunucu
       </div>
-      <div class="h-badge"
+      <div class="h-badge header-stat-badge header-desktop-only"
         style="border-color:var(--cs-yellow);color:var(--cs-yellow);display:flex;align-items:center;gap:0.3rem;"
         title="Online Oyuncu Sayısı">
         👥 <span id="online-player-count">?</span> Oyuncu
       </div>
-      <div class="h-badge">Tarayıcıda</div>
+      <div class="h-badge header-desktop-only">Tarayıcıda</div>
     </header>
 
     <!-- CUSTOM HTML SCOREBOARD -->
@@ -179,13 +192,15 @@
       <div
         style="background:var(--bg-card);border:1px solid var(--cs-yellow);padding:2rem;border-radius:8px;text-align:center;width:300px;">
         <h2 style="color:var(--cs-yellow);font-family:var(--font-title);margin-bottom:1rem;">MASTER ADMIN</h2>
-        <input type="password" id="admin-password-input" class="room-input" placeholder="Admin Şifresi"
-          style="margin-bottom:1rem;" />
-        <div style="display:flex;gap:0.5rem;">
-          <button class="toolbar-btn" id="btn-admin-login-cancel" style="flex:1;">İPTAL</button>
-          <button class="toolbar-btn" id="btn-admin-login-submit"
-            style="flex:1;border-color:var(--cs-yellow);color:var(--cs-yellow);">GİRİŞ</button>
-        </div>
+        <form id="admin-login-form" autocomplete="on" onsubmit="return false;">
+          <input type="password" id="admin-password-input" name="password" class="room-input" placeholder="Admin Şifresi"
+            style="margin-bottom:1rem;" autocomplete="current-password" />
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" class="toolbar-btn" id="btn-admin-login-cancel" style="flex:1;">İPTAL</button>
+            <button type="submit" class="toolbar-btn" id="btn-admin-login-submit"
+              style="flex:1;border-color:var(--cs-yellow);color:var(--cs-yellow);">GİRİŞ</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -205,22 +220,22 @@
       </div>
       <div style="flex:1;min-height:0;display:flex;">
         <nav style="width:200px;flex-shrink:0;border-right:1px solid var(--border);padding:1rem 0.75rem;display:flex;flex-direction:column;gap:0.25rem;overflow-y:auto;">
-          <button type="button" class="ma-nav-btn active" data-ma-view="dashboard">Dashboard</button>
+          <button type="button" class="ma-nav-btn active" data-ma-view="dashboard">Genel Bakış</button>
           <button type="button" class="ma-nav-btn" data-ma-view="servers">Aktif Sunucular</button>
           <button type="button" class="ma-nav-btn" data-ma-view="orders">Siparişler</button>
-          <button type="button" class="ma-nav-btn" data-ma-view="users">Kullanıcılar</button>
+          <button type="button" class="ma-nav-btn" data-ma-view="users">Kullanıcılar / VIP</button>
           <button type="button" class="ma-nav-btn" data-ma-view="admins">Sunucu Adminleri</button>
           <button type="button" class="ma-nav-btn" data-ma-view="visitors">Ziyaretçiler</button>
+          <button type="button" class="ma-nav-btn" data-ma-view="site">Site</button>
+          <button type="button" class="ma-nav-btn" data-ma-view="maps">Haritalar</button>
           <button type="button" class="ma-nav-btn" data-ma-view="system">Sistem</button>
         </nav>
         <div style="flex:1;min-width:0;padding:1rem 1.25rem;display:flex;flex-direction:column;overflow:hidden;">
           <!-- DASHBOARD -->
           <div class="ma-view active" id="ma-view-dashboard">
-            <div class="ma-toolbar">
-              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">GENEL BAKIŞ</h2>
+            <div class="ma-dash" id="ma-dashboard-root">
+              <div class="ma-dash-loading">Yükleniyor...</div>
             </div>
-            <div id="ma-overview-stats" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;"></div>
-            <div id="admin-visitor-stats-mini" style="display:flex;flex-wrap:wrap;gap:0.75rem;"></div>
           </div>
 
           <!-- SERVERS -->
@@ -228,6 +243,7 @@
             <div class="ma-toolbar">
               <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">AKTİF SUNUCULAR</h2>
               <input class="ma-input" id="ma-servers-filter" placeholder="İsim / port / sahip ara..." style="min-width:200px;">
+              <button class="toolbar-btn" id="btn-admin-restart-all-servers" style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.4rem 0.8rem;font-size:0.75rem;" title="Tüm Docker sunucularını yeniden başlat">TÜMÜNÜ YENİDEN BAŞLAT</button>
             </div>
             <div class="ma-table-wrap">
               <table class="ma-table">
@@ -237,7 +253,7 @@
                     <th>TÜR</th>
                     <th>DURUM</th>
                     <th>HARİTA</th>
-                    <th>OYUNCU</th>
+                    <th>OYUNCU (G+B)</th>
                     <th>PORT</th>
                     <th>SAHİP</th>
                     <th>CREATED</th>
@@ -274,25 +290,90 @@
           <!-- USERS -->
           <div class="ma-view" id="ma-view-users">
             <div class="ma-toolbar">
-              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">KULLANICILAR</h2>
+              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">KULLANICILAR / VIP</h2>
               <input class="ma-input" id="ma-users-search" placeholder="Kullanıcı ara..." style="min-width:180px;">
               <button class="toolbar-btn" id="btn-admin-refresh-users" style="padding:0.4rem 0.8rem;font-size:0.75rem;">YENİLE</button>
             </div>
+            <div class="ma-vip-prices" id="ma-vip-prices">
+              <span class="ma-vip-price-chip silver">Silver <b>49₺</b>/ay</span>
+              <span class="ma-vip-price-chip gold">Gold <b>99₺</b>/ay</span>
+              <span class="ma-vip-price-chip platinum">Platinum <b>199₺</b>/ay</span>
+            </div>
+            <div class="ma-vip-kpis" id="ma-vip-kpis">
+              <div class="ma-stat"><div class="label">AKTİF SILVER</div><div class="value" id="ma-vip-kpi-silver">—</div></div>
+              <div class="ma-stat"><div class="label">AKTİF GOLD</div><div class="value" id="ma-vip-kpi-gold">—</div></div>
+              <div class="ma-stat"><div class="label">AKTİF PLATINUM</div><div class="value" id="ma-vip-kpi-platinum">—</div></div>
+              <div class="ma-stat"><div class="label">7 GÜN İÇİNDE BİTEN</div><div class="value" id="ma-vip-kpi-soon" style="color:var(--cs-red);">—</div></div>
+            </div>
+            <div class="ma-toolbar" style="margin-top:0.85rem;">
+              <h3 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.85rem;margin:0;flex:1;">BEKLEYEN VIP SİPARİŞLERİ (HAVALE/EFT)</h3>
+              <button class="toolbar-btn" id="btn-admin-refresh-vip-orders" style="padding:0.35rem 0.7rem;font-size:0.7rem;">YENİLE</button>
+            </div>
+            <p style="font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);margin:0 0 0.6rem;line-height:1.5;">
+              ENPARA havale/EFT — sipariş no açıklamada olmalı. Onaylayınca paket 30 gün otomatik tanımlanır.
+            </p>
+            <div id="admin-vip-orders-list" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.9rem;"></div>
+            <p class="ma-vip-hint" style="margin:0 0 0.75rem;">VIP abonelik = Silver 49₺ / Gold 99₺ / Platinum 199₺. Paket ataması <strong>DÜZENLE</strong> ile yapılır. Platinum kullanıcı otomatik sabit <code>[BCS]</code> clan tag alır (oyuncu <code>/clantag</code> ile aç/kapa yapar).</p>
             <div class="ma-table-wrap">
               <table class="ma-table">
                 <thead>
                   <tr>
                     <th>KULLANICI</th>
+                    <th>VIP</th>
+                    <th>BİTİŞ</th>
                     <th>ROL</th>
-                    <th>PREMIUM</th>
+                    <th>DURUM</th>
                     <th>CÜZDAN</th>
                     <th>SUNUCU</th>
-                    <th>KAYIT</th>
                     <th>İŞLEMLER</th>
                   </tr>
                 </thead>
                 <tbody id="ma-users-table-body"></tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- USER EDIT MODAL (Master Admin) -->
+          <div id="ma-user-edit-modal" class="ma-modal" style="display:none;" aria-hidden="true">
+            <div class="ma-modal-card">
+              <div class="ma-modal-title">KULLANICI DÜZENLE</div>
+              <input type="hidden" id="ma-edit-user-id" />
+              <div class="ma-vip-grant-row" style="margin-bottom:0.65rem;">
+                <label class="ma-field"><span>Kullanıcı adı</span><input class="ma-input" id="ma-edit-username" autocomplete="off" /></label>
+                <label class="ma-field"><span>Rol</span>
+                  <select class="ma-input" id="ma-edit-role">
+                    <option value="user">user</option>
+                    <option value="vip">vip (etiket)</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </label>
+                <label class="ma-field"><span>Cüzdan</span><input class="ma-input" id="ma-edit-wallet" type="number" min="0" style="width:6rem;" /></label>
+                <label class="ma-field" style="flex-direction:row;align-items:center;gap:0.4rem;padding-top:1.1rem;">
+                  <input type="checkbox" id="ma-edit-premium" /> <span>Premium bayrağı</span>
+                </label>
+              </div>
+              <div class="ma-vip-grant" style="margin:0 0 0.75rem;">
+                <div class="ma-vip-grant-title">VIP paket (zorunlu seçim)</div>
+                <div class="ma-vip-grant-row">
+                  <label class="ma-field ma-field-required"><span>Paket *</span>
+                    <select class="ma-input ma-tier-select" id="ma-edit-vip-tier" required>
+                      <option value="none">Yok — abonelik yok</option>
+                      <option value="silver">Silver — 49₺/ay</option>
+                      <option value="gold">Gold — 99₺/ay</option>
+                      <option value="platinum">Platinum — 199₺/ay</option>
+                    </select>
+                  </label>
+                  <label class="ma-field"><span>Gün</span><input class="ma-input" id="ma-edit-vip-days" type="number" min="1" max="366" value="30" style="width:5rem;" /></label>
+                  <label class="ma-field"><span>veya bitiş</span><input class="ma-input" id="ma-edit-vip-expires" type="datetime-local" /></label>
+                </div>
+                <p style="font-size:0.62rem;color:var(--text-dim);margin:0.4rem 0 0;">Platinum seçilirse kullanıcı otomatik sabit <code>[BCS]</code> clan tag alır (oyun içinde <code>/clantag</code> ile aç/kapa).</p>
+                <label class="ma-field" style="margin-top:0.55rem;display:block;"><span>VIP not</span><input class="ma-input" id="ma-edit-vip-notes" placeholder="komp / sipariş…" style="width:100%;" /></label>
+              </div>
+              <label class="ma-field" style="display:block;margin-bottom:0.75rem;"><span>Admin notları</span><textarea class="ma-input" id="ma-edit-admin-notes" rows="2" style="width:100%;resize:vertical;"></textarea></label>
+              <div class="ma-vip-grant-actions" style="justify-content:flex-end;">
+                <button type="button" class="toolbar-btn" id="btn-ma-edit-cancel" style="padding:0.45rem 0.85rem;">VAZGEÇ</button>
+                <button type="button" class="toolbar-btn" id="btn-ma-edit-save" style="border-color:var(--cs-green);color:var(--cs-green);padding:0.45rem 0.85rem;">KAYDET</button>
+              </div>
             </div>
           </div>
 
@@ -323,11 +404,112 @@
 
           <!-- VISITORS -->
           <div class="ma-view" id="ma-view-visitors">
-            <div class="ma-toolbar">
-              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">ZİYARETÇİ İSTATİSTİKLERİ</h2>
-              <button class="toolbar-btn" id="btn-admin-refresh-visitors" style="padding:0.4rem 0.8rem;font-size:0.75rem;">YENİLE</button>
+            <div class="ma-toolbar ma-vis-toolbar">
+              <h2 class="ma-vis-title">ZİYARETÇİ TAKİP</h2>
+              <select id="ma-vis-range" class="ma-input" title="Tarih aralığı">
+                <option value="1">Bugün</option>
+                <option value="7" selected>Son 7 gün</option>
+                <option value="30">Son 30 gün</option>
+              </select>
+              <select id="ma-vis-type" class="ma-input" title="Ziyaretçi türü">
+                <option value="all">Tümü</option>
+                <option value="real">Gerçek</option>
+                <option value="bot">Bot</option>
+                <option value="ai">AI</option>
+              </select>
+              <input id="ma-vis-search" class="ma-input" type="search" placeholder="Ara: IP, sayfa, ülke, ajan…" style="min-width:11rem;flex:1;" />
+              <select id="ma-vis-page" class="ma-input" title="Sayfa filtresi">
+                <option value="">Tüm sayfalar</option>
+              </select>
+              <label class="ma-vis-autorefresh" title="30 sn’de bir yenile">
+                <input type="checkbox" id="ma-vis-autorefresh" checked />
+                Canlı
+              </label>
+              <button type="button" class="toolbar-btn" id="btn-admin-refresh-visitors" style="padding:0.4rem 0.8rem;font-size:0.75rem;">YENİLE</button>
             </div>
-            <div id="admin-visitor-stats" style="display:flex;flex-direction:column;gap:0.8rem;font-family:var(--font-ui);font-size:0.8rem;color:var(--text-dim);max-width:520px;"></div>
+            <div id="admin-visitor-stats" class="ma-vis-root"></div>
+          </div>
+
+          <!-- SITE CMS -->
+          <div class="ma-view" id="ma-view-site">
+            <div class="ma-toolbar">
+              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">SITE YÖNETİMİ</h2>
+              <button type="button" class="toolbar-btn" id="btn-ma-site-save" style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.4rem 0.9rem;">KAYDET</button>
+            </div>
+            <div id="ma-site-form" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;max-width:960px;">
+              <label class="ma-field"><span>Site adı</span><input id="ma-site-name" class="room-input" /></label>
+              <label class="ma-field"><span>Slogan</span><input id="ma-site-tagline" class="room-input" /></label>
+              <label class="ma-field" style="grid-column:1/-1;"><span>SEO başlık</span><input id="ma-site-seo-title" class="room-input" /></label>
+              <label class="ma-field" style="grid-column:1/-1;"><span>SEO açıklama</span><textarea id="ma-site-seo-desc" class="room-input" rows="2"></textarea></label>
+              <label class="ma-field"><span>MOTD başlık</span><input id="ma-site-motd-title" class="room-input" /></label>
+              <label class="ma-field"><span>Promo başlık</span><input id="ma-site-promo-title" class="room-input" /></label>
+              <label class="ma-field" style="grid-column:1/-1;"><span>MOTD metin</span><textarea id="ma-site-motd-body" class="room-input" rows="3"></textarea></label>
+              <label class="ma-field" style="grid-column:1/-1;"><span>Promo alt yazı</span><input id="ma-site-promo-sub" class="room-input" /></label>
+              <label class="ma-field" style="grid-column:1/-1;"><span>Duyuru bandı</span><input id="ma-site-announce" class="room-input" placeholder="Boş bırak = kapalı" /></label>
+              <label class="ma-field"><span>Discord URL</span><input id="ma-site-discord" class="room-input" /></label>
+              <label class="ma-field" style="display:flex;align-items:center;gap:0.5rem;padding-top:1.2rem;">
+                <input type="checkbox" id="ma-site-announce-on" /> <span>Duyuruyu göster</span>
+              </label>
+              <label class="ma-field" style="display:flex;align-items:center;gap:0.5rem;">
+                <input type="checkbox" id="ma-site-maintenance" /> <span>Bakım modu</span>
+              </label>
+              <label class="ma-field" style="grid-column:1/-1;"><span>Bakım mesajı</span><input id="ma-site-maintenance-msg" class="room-input" /></label>
+            </div>
+            <p id="ma-site-updated" style="margin:0.8rem 0 0;font-size:0.7rem;color:var(--text-dim);font-family:var(--font-hud);"></p>
+
+            <div style="margin-top:1.4rem;">
+              <div class="ma-toolbar" style="margin-bottom:0.5rem;">
+                <h3 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.9rem;margin:0;flex:1;">SITEMAP SAYFALARI</h3>
+                <button type="button" class="toolbar-btn" id="btn-ma-page-add" style="padding:0.35rem 0.7rem;">+ SAYFA</button>
+              </div>
+              <p style="font-size:0.7rem;color:var(--text-dim);margin:0 0 0.6rem;">Statik URL’ler (/, /oyna/, /rank-takip/ …). Sitemap’e dahil etmek için kutuyu işaretle.</p>
+              <div style="overflow:auto;max-height:220px;border:1px solid var(--border);border-radius:6px;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.7rem;font-family:var(--font-ui);">
+                  <thead>
+                    <tr style="background:rgba(240,160,0,0.08);color:var(--cs-yellow);text-align:left;">
+                      <th style="padding:0.4rem;">path</th>
+                      <th style="padding:0.4rem;">başlık</th>
+                      <th style="padding:0.4rem;">freq</th>
+                      <th style="padding:0.4rem;">öncelik</th>
+                      <th style="padding:0.4rem;text-align:center;">sitemap</th>
+                      <th style="padding:0.4rem;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="ma-pages-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MAPS CMS -->
+          <div class="ma-view" id="ma-view-maps">
+            <div class="ma-toolbar">
+              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">HARİTA KATALOĞU</h2>
+              <button type="button" class="toolbar-btn" id="btn-ma-map-add" style="padding:0.4rem 0.8rem;">+ EKLE</button>
+              <button type="button" class="toolbar-btn" id="btn-ma-maps-save" style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.4rem 0.9rem;">KAYDET</button>
+            </div>
+            <p style="font-size:0.72rem;color:var(--text-dim);margin:0 0 0.75rem;max-width:920px;">
+              Oyun listesi, sitemap ve SEO alanları. <b>Playable</b> = /api/site/maps’te görünür. <b>Sitemap</b> = SEO URL üretir.
+              Statik HTML sayfa dosyası ayrıca deploy gerektirir.
+            </p>
+            <div style="overflow:auto;max-height:min(60vh,560px);border:1px solid var(--border);border-radius:6px;">
+              <table style="width:100%;border-collapse:collapse;font-size:0.72rem;font-family:var(--font-ui);">
+                <thead>
+                  <tr style="background:rgba(240,160,0,0.08);color:var(--cs-yellow);text-align:left;">
+                    <th style="padding:0.45rem;">name</th>
+                    <th style="padding:0.45rem;">slug</th>
+                    <th style="padding:0.45rem;">açıklama</th>
+                    <th style="padding:0.45rem;">mod</th>
+                    <th style="padding:0.45rem;">SEO title</th>
+                    <th style="padding:0.45rem;text-align:center;">play</th>
+                    <th style="padding:0.45rem;text-align:center;">sitemap</th>
+                    <th style="padding:0.45rem;text-align:center;">özel</th>
+                    <th style="padding:0.45rem;"></th>
+                  </tr>
+                </thead>
+                <tbody id="ma-maps-table-body"></tbody>
+              </table>
+            </div>
           </div>
 
           <!-- SYSTEM -->
@@ -335,7 +517,28 @@
             <div class="ma-toolbar">
               <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;flex:1;">SİSTEM</h2>
             </div>
-            <div style="display:flex;flex-direction:column;gap:1rem;max-width:520px;">
+            <div style="display:flex;flex-direction:column;gap:1rem;max-width:640px;">
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1.25rem;">
+                <div style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.95rem;margin-bottom:0.5rem;">SEO / SITEMAP</div>
+                <p style="font-family:var(--font-ui);font-size:0.75rem;color:var(--text-dim);line-height:1.5;margin:0 0 0.85rem;">
+                  Site + harita katalogundan güncel <code>sitemap.xml</code> üretir. Pages deploy’daki statik dosyayı da güncellemek için XML’i indirip commit edin veya
+                  <code>/api/site/sitemap.xml</code> kullanın.
+                </p>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                  <button class="toolbar-btn" id="btn-ma-sitemap-regen" style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.5rem 1rem;">SITEMAP ÜRET</button>
+                  <button class="toolbar-btn" id="btn-ma-sitemap-copy" style="padding:0.5rem 1rem;">XML KOPYALA</button>
+                  <button class="toolbar-btn" id="btn-ma-sitemap-download" style="padding:0.5rem 1rem;">İNDİR</button>
+                  <a class="toolbar-btn" id="btn-ma-sitemap-open" href="#" target="_blank" rel="noopener" style="padding:0.5rem 1rem;text-decoration:none;">AÇ</a>
+                </div>
+                <pre id="ma-sitemap-preview" style="display:none;margin:0.75rem 0 0;max-height:180px;overflow:auto;font-size:0.65rem;background:#05080c;padding:0.6rem;border-radius:4px;color:#9ab;"></pre>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1.25rem;">
+                <div style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.95rem;margin-bottom:0.5rem;">SUNUCULAR</div>
+                <p style="font-family:var(--font-ui);font-size:0.75rem;color:var(--text-dim);line-height:1.5;margin:0 0 0.85rem;">
+                  Tüm oyun sunucularını (resmi + kiralık) Docker üzerinden yeniden başlatır. Oyuncular kısa süre düşer.
+                </p>
+                <button class="toolbar-btn" id="btn-admin-restart-all-servers-system" style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.5rem 1rem;">TÜM SUNUCULARI YENİDEN BAŞLAT</button>
+              </div>
               <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1.25rem;">
                 <div style="color:var(--cs-red);font-family:var(--font-title);font-size:0.95rem;margin-bottom:0.5rem;">TEHLİKELİ BÖLGE</div>
                 <p style="font-family:var(--font-ui);font-size:0.75rem;color:var(--text-dim);line-height:1.5;margin:0 0 0.85rem;">
@@ -407,8 +610,11 @@
           <div class="room-field" style="margin-bottom:0;">
             <label style="font-size:0.6rem;">RCON ŞİFRESİ <span id="rcon-pass-saved-badge"
                 style="display:none;color:#4caf50;font-size:0.55rem;">✓ KAYITLI</span></label>
-            <input type="password" id="rcon-auth-pass" class="room-input"
-              style="font-size:0.75rem;padding:0.35rem 0.5rem;" placeholder="Sunucunun RCON şifresini girin" />
+            <form id="rcon-auth-form" autocomplete="off" onsubmit="return false;">
+              <input type="password" id="rcon-auth-pass" name="rcon" class="room-input"
+                style="font-size:0.75rem;padding:0.35rem 0.5rem;" placeholder="Sunucunun RCON şifresini girin"
+                autocomplete="off" />
+            </form>
           </div>
 
           <!-- Hızlı Komut Butonları -->
@@ -471,7 +677,7 @@
               AT (KICK)</label>
             <div style="display:flex;gap:0.35rem;">
               <input type="text" id="rcon-kick-input" class="room-input"
-                style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="Oyuncu adı veya #ID" />
+                style="flex:1;font-size:0.72rem;padding:0.3rem 0.5rem;" placeholder="#7 veya tam nick (kısmi isim tehlikeli)" />
               <button class="toolbar-btn" id="btn-rcon-kick"
                 style="border-color:var(--cs-red);color:var(--cs-red);font-size:0.65rem;">🚫 KICK</button>
             </div>
@@ -723,7 +929,7 @@
           <div>
             <label
               style="font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.08em;display:block;margin-bottom:0.35rem;">AMXX
-              HIZLI KOMUTLAR</label>
+              HIZLI KOMUTLAR <span style="opacity:0.7;font-weight:normal;">(oyundayken client menü)</span></label>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.3rem;">
               <button class="toolbar-btn amx-quick" data-cmd="amxmodmenu">AMXX Menü</button>
               <button class="toolbar-btn amx-quick" data-cmd="amx_mapmenu">Harita Menüsü</button>
@@ -757,6 +963,7 @@
         <div class="filter-tabs">
           <button class="filter-tab active" id="tab-servers">SUNUCULAR</button>
           <button class="filter-tab" id="tab-maps">HARİTALAR</button>
+          <button class="filter-tab" id="tab-rank">RANK TAKİP</button>
         </div>
         <input type="search" class="map-search" id="map-search" placeholder="de_dust2, cs_assault..." />
       </div>
@@ -772,6 +979,19 @@
             style="font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);text-align:center;padding:1rem;">
             Sunucu aranıyor...</div>
         </div>
+      </div>
+      <div class="map-list" id="rank-panel" style="display:none;padding:0.55rem;">
+        <div style="font-family:var(--font-title);font-size:0.72rem;color:var(--cs-yellow);letter-spacing:0.08em;margin-bottom:0.45rem;">RANK TAKİP · AYLIK TOP 20</div>
+        <select id="rank-server-select" class="room-select"
+          style="width:100%;margin-bottom:0.45rem;background:var(--bg-deep);border:1px solid var(--border-bright);color:var(--text-bright);font-family:var(--font-hud);font-size:0.78rem;padding:0.4rem 0.5rem;border-radius:4px;"></select>
+        <div id="rank-status" style="font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);margin-bottom:0.4rem;">—</div>
+        <div id="rank-table" style="max-height:55vh;overflow:auto;font-size:0.72rem;"></div>
+        <p style="margin:0.55rem 0 0;font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);line-height:1.45;">
+          Üye kill’leri sayılır. Misafir rank alamaz. Ay sonunda Top 10’a VIP hediye:
+          1–3 Platinum · 4–6 Gold · 7–10 Silver (30 gün).
+        </p>
+        <a href="/rank-takip/" target="_blank" rel="noopener"
+          style="display:inline-block;margin-top:0.35rem;font-family:var(--font-hud);font-size:0.65rem;color:var(--cs-yellow);">Kurallar + ödüller →</a>
       </div>
       <div class="map-list" id="admin-panel" style="display:none;padding:0.6rem;">
         <div class="admin-section-title">SUNUCU YÖNETİMİ (RCON)</div>
@@ -974,6 +1194,8 @@
           <div class="keybind-row"><span>Genel Chat</span><span class="keybind-key">Y</span></div>
           <div class="keybind-row"><span>Takım Chat</span><span class="keybind-key">U</span></div>
           <div class="keybind-row"><span>Silah</span><span class="keybind-key">1-5</span></div>
+          <div class="keybind-row"><span>El menüsü</span><span class="keybind-key">H</span></div>
+          <div class="keybind-row"><span>Bıçak</span><span class="keybind-key">3</span></div>
         </div>
 
         <!-- Neon banners: admin join + BROWSERCS promo -->
@@ -1093,11 +1315,13 @@
             <span id="sjp-icon">🔒</span>
             <div id="sjp-title">ŞİFRELİ SUNUCU</div>
             <div id="sjp-subtitle">Bu sunucuya erişmek için şifre gereklidir</div>
-            <input type="password" id="sjp-input" placeholder="Sunucu şifresini girin..." maxlength="24" autocomplete="off" />
-            <div id="sjp-error"></div>
-            <div id="sjp-attempts"></div>
-            <button id="sjp-confirm">🔓 BAĞLAN</button>
-            <button id="sjp-cancel">✕ İPTAL</button>
+            <form id="sjp-form" autocomplete="off" onsubmit="return false;" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+              <input type="password" id="sjp-input" name="server-password" placeholder="Sunucu şifresini girin..." maxlength="24" autocomplete="off" />
+              <div id="sjp-error"></div>
+              <div id="sjp-attempts"></div>
+              <button type="submit" id="sjp-confirm">🔓 BAĞLAN</button>
+              <button type="button" id="sjp-cancel">✕ İPTAL</button>
+            </form>
           </div>
         </div>
 
@@ -1242,13 +1466,15 @@
       <h2
         style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;text-align:center;">
         GİRİŞ YAP</h2>
-      <input type="email" id="login-email" class="room-input" placeholder="E-posta"
-        style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
-      <input type="password" id="login-pass" class="room-input" placeholder="Şifre"
-        style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
-      <button class="toolbar-btn" id="btn-submit-login"
-        style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">GİRİŞ</button>
-      <button onclick="document.getElementById('login-modal').style.display='none'"
+      <form id="login-form" autocomplete="on" onsubmit="return false;">
+        <input type="email" id="login-email" name="email" class="room-input" placeholder="E-posta"
+          style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;" autocomplete="username">
+        <input type="password" id="login-pass" name="password" class="room-input" placeholder="Şifre"
+          style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;" autocomplete="current-password">
+        <button type="submit" class="toolbar-btn" id="btn-submit-login"
+          style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">GİRİŞ</button>
+      </form>
+      <button type="button" onclick="document.getElementById('login-modal').style.display='none'"
         style="margin-top:0.7rem;width:100%;padding:0.6rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);cursor:pointer;">İPTAL</button>
     </div>
   </div>
@@ -1260,15 +1486,17 @@
       <h2
         style="font-family:var(--font-hud);color:var(--cs-yellow);font-size:1.1rem;margin-bottom:1rem;text-align:center;">
         KAYIT OL</h2>
-      <input type="text" id="reg-username" class="room-input" placeholder="Kullanıcı Adı"
-        style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
-      <input type="email" id="reg-email" class="room-input" placeholder="E-posta"
-        style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;">
-      <input type="password" id="reg-pass" class="room-input" placeholder="Şifre"
-        style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;">
-      <button class="toolbar-btn" id="btn-submit-register"
-        style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">KAYIT OL</button>
-      <button onclick="document.getElementById('register-modal').style.display='none'"
+      <form id="register-form" autocomplete="on" onsubmit="return false;">
+        <input type="text" id="reg-username" name="username" class="room-input" placeholder="Kullanıcı Adı"
+          style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;" autocomplete="username">
+        <input type="email" id="reg-email" name="email" class="room-input" placeholder="E-posta"
+          style="width:100%;margin-bottom:0.8rem;box-sizing:border-box;" autocomplete="email">
+        <input type="password" id="reg-pass" name="password" class="room-input" placeholder="Şifre"
+          style="width:100%;margin-bottom:1.2rem;box-sizing:border-box;" autocomplete="new-password">
+        <button type="submit" class="toolbar-btn" id="btn-submit-register"
+          style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">KAYIT OL</button>
+      </form>
+      <button type="button" onclick="document.getElementById('register-modal').style.display='none'"
         style="margin-top:0.7rem;width:100%;padding:0.6rem;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font-ui);cursor:pointer;">İPTAL</button>
     </div>
   </div>
@@ -1285,9 +1513,41 @@
           style="background:transparent;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">&times;</button>
       </div>
 
-      <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+      <div id="dash-profile-card"
+        style="background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;margin-bottom:1.25rem;">
+        <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.65rem;letter-spacing:0.06em;">PROFİL / KULLANICI ADI</div>
+        <p style="margin:0 0 0.65rem;font-family:var(--font-ui);font-size:0.8rem;color:var(--text-dim);line-height:1.45;">
+          Kullanıcı adını değiştirebilirsin. Aynı ad (büyük/küçük harf fark etmez) başka hesapta kullanılamaz.
+        </p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="dash-username-input" maxlength="24" autocomplete="username"
+            placeholder="Yeni kullanıcı adı"
+            style="flex:1;min-width:180px;padding:0.55rem 0.7rem;border-radius:4px;border:1px solid var(--border-bright);background:var(--bg-panel);color:var(--text-bright);font-family:var(--font-ui);font-size:0.95rem;" />
+          <button type="button" class="toolbar-btn" id="btn-dash-save-username"
+            style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.55rem 1.1rem;font-weight:bold;">KAYDET</button>
+        </div>
+        <div id="dash-username-msg" style="margin-top:0.5rem;font-family:var(--font-ui);font-size:0.78rem;min-height:1.1em;"></div>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+        <div id="dash-vip-card"
+          style="flex:1;min-width:200px;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+          <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">VIP ABONELİK</div>
+          <div id="dash-vip-status"
+            style="font-family:var(--font-ui);font-size:0.8rem;color:var(--text-dim);text-align:center;margin-bottom:0.8rem;">
+            Yükleniyor…</div>
+          <div id="dash-vip-pay-hint"
+            style="display:none;font-family:var(--font-ui);font-size:0.72rem;color:var(--cs-yellow);text-align:center;margin-bottom:0.65rem;line-height:1.4;">
+            Ödeme yakında (kart / PayTR / iyzico). Şimdilik Master Admin / destek ile tanımlanır.</div>
+          <div style="display:flex;gap:0.45rem;flex-wrap:wrap;justify-content:center;">
+            <button type="button" class="toolbar-btn" id="btn-dash-vip-buy"
+              style="border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.55rem 1.1rem;font-weight:bold;">SATIN AL</button>
+            <a href="/vip/" class="toolbar-btn" id="btn-dash-vip-link"
+              style="border-color:var(--border);color:var(--text-dim);padding:0.55rem 1rem;font-weight:bold;text-decoration:none;">PAKETLER</a>
+          </div>
+        </div>
         <div
-          style="flex:1;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+          style="flex:1;min-width:200px;background:var(--bg-deep);border:1px solid var(--border);padding:1rem;border-radius:4px;display:flex;flex-direction:column;justify-content:center;align-items:center;">
           <div style="font-family:var(--font-hud);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">SUNUCU
             KİRALAMA</div>
           <div
@@ -1508,6 +1768,112 @@
           <button id="btn-custom-prompt-cancel" class="cs-modal-btn">İPTAL</button>
           <button id="btn-custom-prompt-ok" class="cs-modal-btn primary">ONAYLA</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rank Top 10 VIP hediye popup — kişi başı 1 kez -->
+  <div id="bcs-rank-gift-overlay" role="dialog" aria-modal="true" aria-labelledby="bcs-rank-gift-title" hidden>
+    <style>
+      #bcs-rank-gift-overlay {
+        position: fixed; inset: 0; z-index: 9200;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(5, 8, 12, 0.8); backdrop-filter: blur(5px); padding: 1rem;
+      }
+      #bcs-rank-gift-overlay[hidden] { display: none !important; }
+      .bcs-rg-card {
+        width: min(480px, 94vw); border-radius: 14px; overflow: hidden;
+        background: linear-gradient(165deg, #121820 0%, #0b0e13 55%, #101820 100%);
+        border: 1px solid rgba(232, 197, 71, 0.35);
+        box-shadow: 0 20px 70px rgba(0,0,0,0.7), 0 0 40px rgba(232,197,71,0.12);
+        font-family: 'Rajdhani', sans-serif;
+        animation: bcsRgIn 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
+      }
+      @keyframes bcsRgIn {
+        from { opacity: 0; transform: translateY(16px) scale(0.96); }
+        to { opacity: 1; transform: none; }
+      }
+      .bcs-rg-visual { position: relative; height: 150px; overflow: hidden; }
+      .bcs-rg-visual img { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(0.88) saturate(0.95); }
+      .bcs-rg-visual::after {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(180deg, transparent 35%, rgba(11,14,19,0.95) 100%);
+      }
+      .bcs-rg-ribbon {
+        position: absolute; top: 12px; left: 12px; z-index: 2;
+        font-family: 'Orbitron', sans-serif; font-size: 0.6rem; font-weight: 700;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #0b0e13; background: linear-gradient(90deg, #f0d878, #c9a227);
+        padding: 0.28rem 0.55rem; border-radius: 3px;
+      }
+      .bcs-rg-close {
+        position: absolute; top: 10px; right: 10px; z-index: 3;
+        width: 30px; height: 30px; border-radius: 50%;
+        border: 1px solid rgba(231,237,241,0.35); background: rgba(11,14,19,0.72);
+        color: #e7edf1; font-size: 15px; cursor: pointer;
+      }
+      .bcs-rg-body { padding: 1rem 1.2rem 1.25rem; }
+      .bcs-rg-title {
+        margin: 0 0 0.35rem; font-family: 'Orbitron', sans-serif;
+        font-size: 1.05rem; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase;
+        color: #f0d878; text-align: center;
+      }
+      .bcs-rg-sub {
+        margin: 0 0 0.9rem; text-align: center; color: #b8c4cd;
+        font-size: 0.95rem; line-height: 1.5;
+      }
+      .bcs-rg-tiers { display: grid; gap: 0.45rem; margin: 0 0 1rem; }
+      .bcs-rg-tier {
+        display: grid; grid-template-columns: 56px 1fr auto; gap: 0.65rem; align-items: center;
+        padding: 0.5rem 0.65rem; border-radius: 6px;
+        border: 1px solid rgba(231,237,241,0.14); background: rgba(255,255,255,0.03);
+      }
+      .bcs-rg-tier img {
+        width: 56px; height: 56px; object-fit: cover; border-radius: 4px;
+        border: 1px solid rgba(231,237,241,0.2);
+      }
+      .bcs-rg-tier strong { display: block; color: #e7edf1; font-size: 0.95rem; }
+      .bcs-rg-tier span { color: #8fa3b0; font-size: 0.78rem; }
+      .bcs-rg-tier em {
+        font-style: normal; font-family: 'Orbitron', sans-serif; font-size: 0.68rem;
+        font-weight: 700; letter-spacing: 0.06em; color: #e8c547;
+      }
+      .bcs-rg-cta {
+        display: block; text-align: center; text-decoration: none;
+        font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        padding: 0.65rem 1rem; border-radius: 5px; color: #0b0e13;
+        background: linear-gradient(90deg, #f0d878, #c9a227);
+      }
+      .bcs-rg-cta:hover { filter: brightness(1.08); }
+    </style>
+    <div class="bcs-rg-card">
+      <div class="bcs-rg-visual">
+        <span class="bcs-rg-ribbon">Aylık Rank Ödülü</span>
+        <button type="button" class="bcs-rg-close" id="bcs-rank-gift-close" aria-label="Kapat">✕</button>
+        <img src="/assets/vip/vip-classic-models-banner.webp" alt="VIP modeller" width="480" height="150" />
+      </div>
+      <div class="bcs-rg-body">
+        <h2 class="bcs-rg-title" id="bcs-rank-gift-title">Top 10’a 1 Aylık VIP Hediye</h2>
+        <p class="bcs-rg-sub">Her sunucunun aylık sıralamasında ilk 10’a giren üyelere otomatik VIP tanımlanır. Zaten VIP’sen süre uzar.</p>
+        <div class="bcs-rg-tiers">
+          <div class="bcs-rg-tier">
+            <img src="/assets/vip/vip-classic-models-banner.webp" alt="Platinum" />
+            <div><strong>Platinum VIP</strong><span>Clan tag · tüm üst ayrıcalıklar</span></div>
+            <em>1–3</em>
+          </div>
+          <div class="bcs-rg-tier">
+            <img src="/assets/vip/vip-golden-weapons-banner.webp" alt="Gold" />
+            <div><strong>Gold VIP</strong><span>Klasik modeller · altın silahlar</span></div>
+            <em>4–6</em>
+          </div>
+          <div class="bcs-rg-tier">
+            <img src="/assets/vip/vip-classic-models-banner.webp" alt="Silver" />
+            <div><strong>Silver VIP</strong><span>Rozet · rezerve slot · votekick koruması</span></div>
+            <em>7–10</em>
+          </div>
+        </div>
+        <a class="bcs-rg-cta" href="/rank-takip/" id="bcs-rank-gift-cta">Rank Takip &amp; Kurallar</a>
       </div>
     </div>
   </div>

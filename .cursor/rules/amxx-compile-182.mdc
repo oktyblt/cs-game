@@ -1,0 +1,42 @@
+---
+description: BrowserCS AMXX plugins must be compiled ONLY with AMX Mod X 1.8.1/1.8.2
+globs: cs-server-manager/amxmodx/**/*
+alwaysApply: true
+---
+
+# AMXX compile — 1.8.x ONLY
+
+Live servers run **AMX Mod X 1.8.2**. Compiling with AMXX **1.10** produces `.amxx` files that fail with:
+
+`[AMXX] Load error 17 (invalid file format or version)`
+
+That silently disables VIP / maprotate on **all** official servers.
+
+## Mandatory workflow
+
+1. **Never** run `/home/ubuntu/cstrike/addons/amxmodx/scripting/amxxpc` alone for BrowserCS plugins (wrong/broken 1.10 path historically).
+2. **Always** use the wrapper:
+
+```bash
+./cs-server-manager/scripts/compile-amxx.sh browsercs_vip.sma --deploy
+# or
+./cs-server-manager/scripts/compile-amxx.sh --all --deploy
+```
+
+3. Canonical remote compiler (must print `1.8.1` / `1.8.2` in banner):
+
+`/home/ubuntu/browsercs-live-addons-20260715_103444/amxx182-root/addons/amxmodx/scripting`
+
+Requires `amxxpc` **and** `amxxpc32.so` + `LD_LIBRARY_PATH` set to that directory.
+
+4. Mac cannot run the 32-bit Linux `amxxpc` — compile on EC2 via the script (SSH).
+
+5. SMA sources may contain UTF-8; the script ASCII-sanitizes before compile (Pawn 1.8 rejects smart quotes / Turkish letters in practice).
+
+6. After deploy, verify logs show plugin load (not Load error 17), e.g.:
+
+`[BrowserCS VIP] vX.Y.Z enabled=1`
+
+## If VIP “disappears” on all servers
+
+Check `addons/amxmodx/logs/error_*.log` for `Load error 17`, then restore last good `.amxx` backup under `plugins/*.bak_*` **or** re-run `compile-amxx.sh --all --deploy`.

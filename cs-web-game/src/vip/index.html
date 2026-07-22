@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIP Abonelik — BrowserCS Silver · Gold · Platinum</title>
+  <meta name="description" content="BrowserCS klasik VIP abonelik: Silver 49₺, Gold 99₺, Platinum 199₺ / ay. Rezerve slot, klasik VIP modelleri, altın silahlar, sabit [BCS] clan tag — spawn kit yok. Havale/EFT ile satın al." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://browsercs.com/vip/" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <meta property="og:title" content="VIP Abonelik — BrowserCS" />
+  <meta property="og:description" content="Silver 49₺ · Gold 99₺ · Platinum 199₺. Klasik CS VIP — P2W silah yok." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://browsercs.com/vip/" />
+  <meta property="og:image" content="https://browsercs.com/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://browsercs.com/og-image.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/site.css" />
+  <style>
+    .vip-grid {
+      display: grid;
+      gap: 1.25rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px) {
+      .vip-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+    }
+    .vip-pkg {
+      border: 1px solid var(--border-soft);
+      background:
+        linear-gradient(165deg, rgba(240,160,0,0.06), transparent 42%),
+        var(--bg-panel, #0e141c);
+      padding: 1.35rem 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .vip-pkg.featured {
+      border-color: rgba(240,160,0,0.45);
+      box-shadow: 0 0 0 1px rgba(240,160,0,0.12);
+    }
+    .vip-pkg h2 {
+      font-family: var(--font-title);
+      font-size: 1.15rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 0.35rem;
+      color: var(--text-bright);
+    }
+    .vip-pkg.silver h2 { color: #c8d0d8; }
+    .vip-pkg.gold h2 { color: var(--cs-yellow); }
+    .vip-pkg.platinum h2 { color: #9ec0ff; }
+    .vip-pkg .vip-price {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      color: var(--text-bright);
+      margin: 0.2rem 0 0.85rem;
+    }
+    .vip-pkg .vip-price small {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      font-family: var(--font-ui);
+    }
+    .vip-pkg ul {
+      list-style: none;
+      margin: 0 0 1.25rem;
+      padding: 0;
+      flex: 1;
+    }
+    .vip-pkg li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+    .vip-pkg li::before {
+      content: '— ';
+      color: var(--cs-yellow);
+    }
+    .vip-compare {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    .vip-compare th,
+    .vip-compare td {
+      border-bottom: 1px solid var(--border-soft);
+      padding: 0.65rem 0.5rem;
+      text-align: left;
+    }
+    .vip-compare th {
+      font-family: var(--font-title);
+      color: var(--cs-yellow);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      font-size: 0.8rem;
+    }
+    .vip-compare td:not(:first-child) { text-align: center; color: var(--text-dim); }
+    .vip-compare .yes { color: var(--cs-yellow); }
+    .vip-note {
+      border: 1px solid rgba(240,160,0,0.28);
+      background: rgba(240,160,0,0.06);
+      padding: 1rem 1.15rem;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    .vip-note strong { color: var(--cs-yellow); }
+    .vip-badge-note {
+      border: 1px solid rgba(158,192,255,0.28);
+      background: rgba(158,192,255,0.06);
+      padding: 0.9rem 1.1rem;
+      color: var(--text-primary);
+      line-height: 1.55;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    .vip-badge-note .chip {
+      display: inline-block;
+      font-family: var(--font-title);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      padding: 0.1rem 0.45rem;
+      border-radius: 3px;
+      font-weight: 700;
+      margin: 0 0.15rem;
+    }
+    .vip-badge-note .chip.silver { color: #0b0e13; background: #e7edf1; }
+    .vip-badge-note .chip.gold { color: #0b0e13; background: #ffd700; }
+    .vip-badge-note .chip.platinum { color: #0b0e13; background: #1de9b6; }
+    .vip-feature-row {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+    @media (min-width: 860px) {
+      .vip-feature-row { grid-template-columns: 280px 1fr; }
+      .vip-feature-row.reverse { direction: rtl; }
+      .vip-feature-row.reverse > * { direction: ltr; }
+    }
+    /* Kare küçük görsel — banner'lar dikeyde çok yer kaplıyordu.
+     * width+height sabit: aspect-ratio desteklemeyen/eski onbellekli
+     * tarayicilarda bile KESIN 280x280 kare. */
+    .vip-feature-row img {
+      width: 280px !important;
+      height: 280px !important;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      display: block;
+      margin: 0 auto;
+    }
+    .vip-feature-row h3 {
+      font-family: var(--font-title);
+      color: var(--cs-yellow);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 1.05rem;
+      margin: 0 0 0.6rem;
+    }
+    .vip-feature-row p {
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin: 0 0 0.6rem;
+    }
+    .vip-feature-row .tag-req {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      border: 1px solid var(--border-soft);
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Product",
+        "name": "BrowserCS VIP Abonelik",
+        "description": "Klasik CS 1.5 VIP: Silver, Gold, Platinum. Rezerve slot, bağışıklık, klasik modeller.",
+        "brand": { "@type": "Brand", "name": "BrowserCS" },
+        "offers": [
+          { "@type": "Offer", "name": "Silver VIP", "price": "49", "priceCurrency": "TRY", "url": "https://browsercs.com/vip/" },
+          { "@type": "Offer", "name": "Gold VIP", "price": "99", "priceCurrency": "TRY", "url": "https://browsercs.com/vip/" },
+          { "@type": "Offer", "name": "Platinum VIP", "price": "199", "priceCurrency": "TRY", "url": "https://browsercs.com/vip/" }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": "https://browsercs.com/" },
+          { "@type": "ListItem", "position": 2, "name": "VIP Abonelik", "item": "https://browsercs.com/vip/" }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Ana menü">
+    <a class="site-brand" href="/">
+      <img class="site-brand-mark" src="/assets/bcs-mark.png" width="34" height="34" alt="" />
+      <span class="site-brand-text">BrowserCS<small>BCS</small></span>
+    </a>
+    <div class="site-nav-links">
+      <a href="/">Anasayfa</a>
+      <a href="/sunucular">Sunucular</a>
+      <a href="/haritalar">Haritalar</a>
+      <a href="/rank-takip/">Rank Takip</a>
+      <a href="/nasil-oynanir/">Rehber</a>
+      <a href="/vip/" aria-current="page">VIP</a>
+      <a href="/sunucu-kirala">Kirala</a>
+      <a class="nav-cta" href="/oyna/">Oyna</a>
+    </div>
+  </nav>
+
+  <header class="hero hero-compact">
+    <div class="hero-bg" style="background-image:url('/browsercs-bg.png')" role="img" aria-label="BrowserCS"></div>
+    <div class="hero-inner">
+      <p class="hero-brand">BrowserCS VIP</p>
+      <h1 class="hero-title">Klasik abonelik</h1>
+      <p class="hero-lead">Scoreboard’da VIP, rezerve slot, votekick bağışıklığı, klasik VIP modelleri, altın silahlar. Spawn kit yok — sadece klasik CS ayrıcalıkları.</p>
+      <div class="cta-row">
+        <a class="cta cta-primary vip-cta" href="/oyna/?vip=1" data-vip-cta data-vip-tier="gold">Giriş yap</a>
+        <a class="cta cta-ghost" href="#paketler">Paketler</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="section" id="paketler">
+    <div class="section-inner">
+      <h2 style="font-family:var(--font-title);color:var(--cs-yellow);letter-spacing:0.06em;text-transform:uppercase;margin:0 0 1.25rem;">Paketler</h2>
+      <div class="vip-badge-note">
+        Oyun içinde herkes sadece <strong>VIP</strong> rozetini görür — Silver / Gold / Platinum ayrımı yazıyla değil,
+        <span class="chip silver">GÜMÜŞ</span>, <span class="chip gold">ALTIN</span> ve <span class="chip platinum">TURKUAZ</span>
+        parlak renklerle scoreboard ve isim üstünde belirir. Platinum ayrıca sabit <strong>[BCS]</strong> clan tag alır,
+        <code>/clantag</code> yazarak açıp kapatabilirsin.
+      </div>
+      <div class="vip-explain" style="display:grid;gap:0.85rem;margin:0 0 1.35rem;">
+        <p style="margin:0;color:var(--text-dim);line-height:1.55;">
+          <strong style="color:var(--cs-yellow);">VIP ODA nedir?</strong>
+          Sunucu listesinde <strong>♛ VIP ODA</strong> olarak görünen özel resmi odadır.
+          Sadece <strong>Gold</strong> ve <strong>Platinum</strong> üyeler girebilir; Silver ve misafir atılır.
+          Amaç: kalabalık herkese açık odalardan ayrı, VIP’lerle maç oynamak.
+        </p>
+        <p style="margin:0;color:var(--text-dim);line-height:1.55;">
+          <strong style="color:var(--cs-yellow);">Ayda 4 votemap hakkı nedir?</strong>
+          Platinum üyeler her ay <strong>4 kez</strong> resmi sunucuların harita oylamasına (votemap) bir harita önerebilir.
+          Önerdiğin harita sıradaki oylama menüsünde <em>(VIP)</em> olarak görünür; herkes oy verir, kazanırsa oynanır.
+          Otomatik zorla değişmez — oylamaya girer.
+        </p>
+      </div>
+      <div class="vip-grid" id="vip-packages">
+        <article class="vip-pkg silver">
+          <h2>Silver</h2>
+          <p class="vip-price">49₺ <small>/ ay</small></p>
+          <ul>
+            <li>Scoreboard’da VIP rozeti (gümüş renk)</li>
+            <li>Dolu sunucuda rezerve slot hakkı</li>
+            <li>Votekick ile atılamazsın</li>
+            <li>Rank listesinde VIP rozeti</li>
+          </ul>
+          <a class="cta cta-ghost vip-cta" href="/oyna/?vip=1" data-vip-cta data-vip-tier="silver">Giriş yap</a>
+        </article>
+        <article class="vip-pkg gold featured">
+          <h2>Gold</h2>
+          <p class="vip-price">99₺ <small>/ ay</small></p>
+          <ul>
+            <li>Silver’daki tüm ayrıcalıklar</li>
+            <li>VIP ODA’ya giriş (sadece Gold/Platinum)</li>
+            <li>Klasik VIP oyuncu modelleri (/vipmodel)</li>
+            <li>Round başı ekstra para + ücretsiz kevlar</li>
+            <li>Altın silah görünümü</li>
+            <li>/vip durum menüsü</li>
+          </ul>
+          <a class="cta cta-primary vip-cta" href="/oyna/?vip=1" data-vip-cta data-vip-tier="gold">Giriş yap</a>
+        </article>
+        <article class="vip-pkg platinum">
+          <h2>Platinum</h2>
+          <p class="vip-price">199₺ <small>/ ay</small></p>
+          <ul>
+            <li>Gold’daki tüm ayrıcalıklar</li>
+            <li>Öncelikli rezerve slot</li>
+            <li>Sabit [BCS] clan tag (/clantag ile aç/kapa)</li>
+            <li>Daha yüksek round parası veya CT defuse kiti</li>
+            <li>Voteban / mute koruması</li>
+            <li>Ayda 4 kez votemap’e harita önerisi</li>
+            <li>Sunucu kiralama indirimi</li>
+          </ul>
+          <a class="cta cta-ghost vip-cta" href="/oyna/?vip=1" data-vip-cta data-vip-tier="platinum">Giriş yap</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="harita-oner">
+    <div class="section-inner">
+      <h2 style="font-family:var(--font-title);color:var(--cs-yellow);letter-spacing:0.06em;text-transform:uppercase;margin:0 0 0.75rem;">Platinum · Harita öner</h2>
+      <p style="color:var(--text-dim);max-width:40rem;margin:0 0 1rem;line-height:1.55;">
+        Aktif Platinum hesabınla giriş yaptıysa burada ayda 4 hakkını kullanabilirsin.
+        Öneri sıradaki resmi votemap’e eklenir.
+      </p>
+      <div id="vip-map-suggest-box" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end;">
+        <div>
+          <label for="vip-map-select" style="display:block;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.35rem;">Harita</label>
+          <select id="vip-map-select" style="min-width:12rem;padding:0.55rem 0.7rem;border-radius:4px;border:1px solid var(--border-soft);background:rgba(0,0,0,0.35);color:var(--text-bright);font-family:var(--font-ui);">
+            <option value="">Yükleniyor…</option>
+          </select>
+        </div>
+        <button type="button" class="cta cta-primary" id="vip-map-suggest-btn">Öner</button>
+        <p id="vip-map-suggest-status" style="margin:0;color:var(--text-dim);font-size:0.92rem;align-self:center;"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="section-inner prose">
+      <h2>Karşılaştırma</h2>
+      <div style="overflow-x:auto;">
+        <table class="vip-compare">
+          <thead>
+            <tr>
+              <th>Özellik</th>
+              <th>Silver</th>
+              <th>Gold</th>
+              <th>Platinum</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>VIP rozet / scoreboard</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td>Rezerve slot</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">Öncelikli</td></tr>
+            <tr><td>Votekick bağışıklığı</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓+</td></tr>
+            <tr><td>VIP ODA girişi</td><td>—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td>Klasik modeller / kevlar / para</td><td>—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td>Altın silahlar</td><td>—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td>Sabit [BCS] clan tag</td><td>—</td><td>—</td><td class="yes">✓</td></tr>
+            <tr><td>Ayda 4 votemap harita önerisi</td><td>—</td><td>—</td><td class="yes">✓</td></tr>
+            <tr><td>Kiralama indirimi</td><td>—</td><td>—</td><td class="yes">✓</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="section-inner">
+      <h2 style="font-family:var(--font-title);color:var(--cs-yellow);letter-spacing:0.06em;text-transform:uppercase;margin:0 0 1.75rem;">Özellikler</h2>
+
+      <div class="vip-feature-row">
+        <div>
+          <img src="/assets/vip/vip-classic-models-banner.webp?v=sq" alt="Klasik VIP oyuncu modelleri — CT ve T" loading="lazy" width="280" height="280" />
+        </div>
+        <div>
+          <span class="tag-req">Gold · Platinum</span>
+          <h3>Klasik VIP Modelleri</h3>
+          <p>Nostaljik CS 1.5/1.6 arşivinden özenle seçilmiş oyuncu modelleri — <code>/vipmodel</code> yazarak takımına
+            uygun olanı seçersin. CT iken sadece CT modelleri, T iken sadece T modelleri listelenir; takım kimliği
+            asla bozulmaz, karşı takım kılığına girme yok.</p>
+          <p>Seçtiğin model, sunucudaki <strong>herkes tarafından görülür</strong> — sahte skin değil, gerçek klasik
+            oyuncu modeli değişimi.</p>
+        </div>
+      </div>
+
+      <div class="vip-feature-row reverse">
+        <div>
+          <img src="/assets/vip/vip-golden-weapons-banner.webp?v=sq" alt="Altın silah modelleri" loading="lazy" width="280" height="280" />
+        </div>
+        <div>
+          <span class="tag-req">Gold · Platinum</span>
+          <h3>Altın Silahlar</h3>
+          <p>Gold/Platinum olarak bir silahı <strong>ilk kez kuşandığın anda</strong> (satın alsan da yerden alsan da)
+            o silah "altın" olur — hem elindeki hem de diğer oyuncuların gördüğü model değişir. Denge bozulmaz:
+            görsel bir ayrıcalıktır, hasar/isabet/fiyat aynen klasik CS kurallarına göre çalışır.</p>
+          <p>Altın bir silahı yere düşürürsen, onu alan <strong>herkes</strong> (misafir dahil) altın haliyle
+            kullanabilir — ama VIP olmayan biri normal aldığı silahı asla kendiliğinden altına çeviremez.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+      <div class="vip-note" style="margin-bottom:1rem;">
+        <strong>Ödeme — Havale / EFT:</strong> Giriş yaptıktan sonra bir paket seçip <strong>Satın Al</strong>'a bas.
+        Oyna panelinde sana özel bir sipariş numarası ve banka hesap bilgisi gösterilir. Açıklamaya sipariş
+        numarasını yazarak havale/EFT yaparsın; ödeme onaylandığında paketin <strong>otomatik olarak 30 gün</strong>
+        için tanımlanır. Kart / PayTR / iyzico entegrasyonu yakında.
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <nav aria-label="Alt menü">
+        <a href="/">Ana</a>
+        <a href="/oyna/">Oyna</a>
+        <a href="/vip/">VIP</a>
+        <a href="/sunucular">Sunucular</a>
+        <a href="/haritalar">Haritalar</a>
+        <a href="/sunucu-kirala">Kirala</a>
+      </nav>
+      <p>&copy; 2026 BrowserCS. Bağımsız nostalji projesi. Valve veya Steam ile resmi bağlantısı yoktur.</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var API = 'https://backend.browsercs.com';
+
+      /** Same-origin Supabase auth key: sb-<projectRef>-auth-token */
+      function hasSupabaseSession() {
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (!k || k.indexOf('sb-') !== 0 || k.indexOf('auth-token') === -1) continue;
+            var raw = localStorage.getItem(k);
+            if (!raw) continue;
+            var parsed = JSON.parse(raw);
+            if (!parsed) continue;
+            var session = parsed.access_token
+              ? parsed
+              : (parsed.currentSession || parsed.session || null);
+            var token = session && session.access_token;
+            var refresh = session && session.refresh_token;
+            if (token || refresh) return true;
+          }
+        } catch (e) { /* ignore */ }
+        return false;
+      }
+
+      function wireVipCtas() {
+        var loggedIn = hasSupabaseSession();
+        document.querySelectorAll('[data-vip-cta]').forEach(function (a) {
+          var tier = a.getAttribute('data-vip-tier') || 'gold';
+          if (loggedIn) {
+            a.textContent = 'Satın al';
+            a.setAttribute('href', '/oyna/?vip=' + encodeURIComponent(tier));
+            a.setAttribute('title', 'Oyna VIP paneli — satın al / talep');
+          } else {
+            a.textContent = 'Giriş yap';
+            a.setAttribute('href', '/oyna/?vip=1');
+            a.removeAttribute('title');
+          }
+        });
+      }
+
+      wireVipCtas();
+      window.addEventListener('storage', wireVipCtas);
+
+      fetch(API + '/api/vip/prices')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.success || !data.prices) return;
+          var p = data.prices;
+          var root = document.getElementById('vip-packages');
+          if (!root) return;
+          var map = { silver: p.silver, gold: p.gold, platinum: p.platinum };
+          root.querySelectorAll('.vip-pkg').forEach(function (el) {
+            var key = el.classList.contains('platinum') ? 'platinum'
+              : el.classList.contains('gold') ? 'gold' : 'silver';
+            var priceEl = el.querySelector('.vip-price');
+            if (priceEl && map[key] != null) {
+              priceEl.innerHTML = map[key] + '₺ <small>/ ay</small>';
+            }
+            if (data.features && data.features[key] && Array.isArray(data.features[key])) {
+              var ul = el.querySelector('ul');
+              if (ul) {
+                ul.innerHTML = data.features[key].map(function (f) {
+                  return '<li>' + String(f).replace(/</g, '&lt;') + '</li>';
+                }).join('');
+              }
+            }
+          });
+          wireVipCtas();
+          fillMapSelect((data.mapSuggest && data.mapSuggest.allowedMaps) || null);
+        })
+        .catch(function () { fillMapSelect(null); });
+
+      function authToken() {
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (!k || k.indexOf('sb-') !== 0 || k.indexOf('auth-token') === -1) continue;
+            var raw = localStorage.getItem(k);
+            if (!raw) continue;
+            var parsed = JSON.parse(raw);
+            var session = parsed.access_token
+              ? parsed
+              : (parsed.currentSession || parsed.session || null);
+            if (session && session.access_token) return session.access_token;
+          }
+        } catch (e) { /* ignore */ }
+        return '';
+      }
+
+      function fillMapSelect(maps) {
+        var sel = document.getElementById('vip-map-select');
+        if (!sel) return;
+        var list = maps && maps.length ? maps : [
+          'de_dust2','de_inferno','de_aztec','de_dust','fy_iceworld',
+          'de_nuke','cs_assault','cs_office','de_train','de_cbble'
+        ];
+        sel.innerHTML = list.map(function (m) {
+          return '<option value="' + m + '">' + m + '</option>';
+        }).join('');
+      }
+
+      function refreshMapSuggestStatus() {
+        var status = document.getElementById('vip-map-suggest-status');
+        var token = authToken();
+        if (!status) return;
+        if (!token) {
+          status.textContent = 'Öneri için giriş yap (Platinum).';
+          return;
+        }
+        fetch(API + '/api/me/vip/map-suggest', {
+          headers: { Authorization: 'Bearer ' + token }
+        })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (x) {
+            if (!x.ok) {
+              status.textContent = (x.d && x.d.error) || 'Platinum VIP gerekli';
+              return;
+            }
+            var u = x.d.usage || {};
+            status.textContent = 'Bu ay: ' + (u.used || 0) + '/' + (u.quota || 4) + ' kullanıldı · kalan ' + (u.remaining || 0);
+          })
+          .catch(function () {
+            status.textContent = 'Kota okunamadı';
+          });
+      }
+
+      var suggestBtn = document.getElementById('vip-map-suggest-btn');
+      if (suggestBtn) {
+        suggestBtn.addEventListener('click', function () {
+          var status = document.getElementById('vip-map-suggest-status');
+          var sel = document.getElementById('vip-map-select');
+          var token = authToken();
+          if (!token) {
+            if (status) status.textContent = 'Önce giriş yap.';
+            return;
+          }
+          var map = sel && sel.value;
+          if (!map) return;
+          suggestBtn.disabled = true;
+          fetch(API + '/api/me/vip/map-suggest', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token
+            },
+            body: JSON.stringify({ map: map })
+          })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (x) {
+              if (status) status.textContent = x.ok ? (x.d.message || 'Öneri alındı') : (x.d.error || 'Hata');
+              refreshMapSuggestStatus();
+            })
+            .catch(function () {
+              if (status) status.textContent = 'İstek başarısız';
+            })
+            .finally(function () { suggestBtn.disabled = false; });
+        });
+      }
+
+      fillMapSelect(null);
+      refreshMapSuggestStatus();
+    })();
+  </script>
+</body>
+</html>

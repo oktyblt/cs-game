@@ -29,3 +29,413 @@
           padding:0.4rem 0.6rem;border-radius:4px;font-family:var(--font-ui);font-size:0.75rem;
         }
         #master-admin-panel select.ma-input { cursor:pointer; }
+        #master-admin-panel .ma-field {
+          display:flex;flex-direction:column;gap:0.3rem;
+          font-family:var(--font-ui);font-size:0.72rem;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-field span { letter-spacing:0.04em; }
+        #master-admin-panel .ma-field .room-input,
+        #master-admin-panel .ma-field textarea.room-input {
+          width:100%;box-sizing:border-box;
+        }
+        #master-admin-panel #ma-view-site,
+        #master-admin-panel #ma-view-maps,
+        #master-admin-panel #ma-view-system {
+          overflow:auto;
+        }
+
+        /* ── Genel Bakış (dashboard) ── */
+        #master-admin-panel .ma-dash {
+          flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:1.1rem;
+          padding-bottom:0.5rem;
+        }
+        #master-admin-panel .ma-dash-loading,
+        #master-admin-panel .ma-dash-error {
+          color:var(--text-dim);font-family:var(--font-ui);font-size:0.78rem;padding:1.5rem 0.25rem;
+        }
+        #master-admin-panel .ma-dash-error { color:var(--cs-red); }
+
+        #master-admin-panel .ma-dash-hero {
+          position:relative;overflow:hidden;border:1px solid rgba(240,160,0,0.22);
+          border-radius:8px;padding:1.15rem 1.25rem 1.2rem;
+          background:
+            radial-gradient(ellipse 80% 120% at 100% 0%, rgba(240,160,0,0.14), transparent 55%),
+            radial-gradient(ellipse 60% 80% at 0% 100%, rgba(57,255,20,0.06), transparent 50%),
+            linear-gradient(145deg, #0c121a 0%, #101820 55%, #0a1016 100%);
+        }
+        #master-admin-panel .ma-dash-hero::after {
+          content:"";position:absolute;inset:0;pointer-events:none;opacity:0.35;
+          background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+          background-size:100% 4px;
+        }
+        #master-admin-panel .ma-dash-hero-inner {
+          position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:flex-end;
+          justify-content:space-between;gap:1rem;
+        }
+        #master-admin-panel .ma-dash-kicker {
+          font-family:var(--font-hud);font-size:0.62rem;letter-spacing:0.16em;
+          color:rgba(240,160,0,0.75);margin:0 0 0.35rem;
+        }
+        #master-admin-panel .ma-dash-title {
+          font-family:var(--font-title);font-size:1.35rem;color:var(--cs-yellow);
+          margin:0;letter-spacing:0.04em;line-height:1.15;
+        }
+        #master-admin-panel .ma-dash-sub {
+          font-family:var(--font-ui);font-size:0.72rem;color:var(--text-dim);
+          margin:0.4rem 0 0;max-width:36rem;line-height:1.45;
+        }
+        #master-admin-panel .ma-dash-pulse {
+          display:flex;align-items:center;gap:0.55rem;
+          background:rgba(0,0,0,0.28);border:1px solid rgba(57,255,20,0.25);
+          border-radius:6px;padding:0.55rem 0.85rem;
+        }
+        #master-admin-panel .ma-dash-pulse-dot {
+          width:8px;height:8px;border-radius:50%;background:var(--cs-green);
+          box-shadow:0 0 10px rgba(57,255,20,0.7);
+          animation:ma-pulse 1.6s ease-in-out infinite;
+        }
+        @keyframes ma-pulse {
+          0%, 100% { opacity:1; transform:scale(1); }
+          50% { opacity:0.45; transform:scale(0.85); }
+        }
+        #master-admin-panel .ma-dash-pulse-label {
+          font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);letter-spacing:0.08em;
+        }
+        #master-admin-panel .ma-dash-pulse-value {
+          font-family:var(--font-title);font-size:1.15rem;color:var(--cs-green);line-height:1;
+        }
+
+        #master-admin-panel .ma-dash-section { display:flex;flex-direction:column;gap:0.65rem; }
+        #master-admin-panel .ma-dash-section-head {
+          display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem;
+        }
+        #master-admin-panel .ma-dash-section-title {
+          font-family:var(--font-hud);font-size:0.68rem;letter-spacing:0.14em;
+          color:var(--text-dim);margin:0;
+        }
+        #master-admin-panel .ma-dash-section-hint {
+          font-family:var(--font-ui);font-size:0.65rem;color:rgba(160,176,192,0.55);
+        }
+
+        #master-admin-panel .ma-dash-grid {
+          display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:0.7rem;
+        }
+        #master-admin-panel .ma-metric {
+          position:relative;overflow:hidden;
+          background:linear-gradient(165deg, rgba(17,23,32,0.95), rgba(10,14,20,0.98));
+          border:1px solid var(--border);border-radius:7px;padding:0.9rem 0.95rem 0.85rem;
+          transition:border-color 0.15s ease, transform 0.15s ease;
+        }
+        #master-admin-panel .ma-metric:hover {
+          border-color:var(--border-bright);transform:translateY(-1px);
+        }
+        #master-admin-panel .ma-metric::before {
+          content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+          background:var(--metric-accent, var(--cs-yellow));
+        }
+        #master-admin-panel .ma-metric[data-tone="green"] { --metric-accent: var(--cs-green); }
+        #master-admin-panel .ma-metric[data-tone="yellow"] { --metric-accent: var(--cs-yellow); }
+        #master-admin-panel .ma-metric[data-tone="red"] { --metric-accent: var(--cs-red); }
+        #master-admin-panel .ma-metric[data-tone="blue"] { --metric-accent: #4ea1ff; }
+        #master-admin-panel .ma-metric[data-tone="muted"] { --metric-accent: #5a6d80; }
+        #master-admin-panel .ma-metric-label {
+          font-family:var(--font-hud);font-size:0.6rem;letter-spacing:0.1em;
+          color:var(--text-dim);margin:0 0 0.45rem;
+        }
+        #master-admin-panel .ma-metric-value {
+          font-family:var(--font-title);font-size:1.55rem;line-height:1;
+          color:var(--text-bright);margin:0;
+        }
+        #master-admin-panel .ma-metric[data-tone="green"] .ma-metric-value { color:var(--cs-green); }
+        #master-admin-panel .ma-metric[data-tone="yellow"] .ma-metric-value { color:var(--cs-yellow); }
+        #master-admin-panel .ma-metric[data-tone="red"] .ma-metric-value { color:var(--cs-red); }
+        #master-admin-panel .ma-metric-foot {
+          margin-top:0.45rem;font-family:var(--font-ui);font-size:0.62rem;color:rgba(160,176,192,0.65);
+        }
+
+        #master-admin-panel .ma-traffic {
+          display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.65rem;
+        }
+        @media (max-width:900px) {
+          #master-admin-panel .ma-traffic { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        }
+        #master-admin-panel .ma-traffic-card {
+          border:1px solid var(--border);border-radius:7px;padding:0.85rem 0.9rem;
+          background:rgba(8,12,18,0.85);
+        }
+        #master-admin-panel .ma-traffic-card .t-label {
+          font-family:var(--font-hud);font-size:0.58rem;letter-spacing:0.12em;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-traffic-card .t-value {
+          font-family:var(--font-title);font-size:1.35rem;color:var(--text-bright);margin:0.35rem 0 0.25rem;
+        }
+        #master-admin-panel .ma-traffic-card .t-split {
+          display:flex;flex-wrap:wrap;gap:0.45rem 0.7rem;
+          font-family:var(--font-ui);font-size:0.62rem;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-traffic-card .t-split b { color:var(--text-bright);font-weight:600; }
+
+        #master-admin-panel .ma-dash-actions {
+          display:flex;flex-wrap:wrap;gap:0.5rem;
+        }
+        #master-admin-panel .ma-dash-action {
+          appearance:none;cursor:pointer;
+          font-family:var(--font-hud);font-size:0.68rem;letter-spacing:0.08em;
+          color:var(--text-bright);background:rgba(255,255,255,0.03);
+          border:1px solid var(--border);border-radius:5px;padding:0.55rem 0.85rem;
+          transition:border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        #master-admin-panel .ma-dash-action:hover {
+          border-color:rgba(240,160,0,0.45);color:var(--cs-yellow);
+          background:rgba(240,160,0,0.07);
+        }
+        #master-admin-panel .ma-dash-action[data-warn="1"] {
+          border-color:rgba(231,76,60,0.35);color:#f5a9a0;
+        }
+        #master-admin-panel .ma-dash-action[data-warn="1"]:hover {
+          border-color:rgba(231,76,60,0.6);color:var(--cs-red);
+          background:rgba(231,76,60,0.08);
+        }
+
+        /* ── Ziyaretçi takip / analytics ── */
+        #master-admin-panel .ma-vis-toolbar { margin-bottom:0.75rem; }
+        #master-admin-panel .ma-vis-title {
+          color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin:0;
+          letter-spacing:0.04em;flex-shrink:0;
+        }
+        #master-admin-panel .ma-vis-autorefresh {
+          display:inline-flex;align-items:center;gap:0.35rem;
+          font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);
+          letter-spacing:0.06em;cursor:pointer;user-select:none;
+        }
+        #master-admin-panel .ma-vis-root {
+          flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:1rem;
+          font-family:var(--font-ui);font-size:0.8rem;color:var(--text-dim);padding-bottom:0.5rem;
+        }
+        #master-admin-panel .ma-vis-hero {
+          position:relative;overflow:hidden;border:1px solid rgba(240,160,0,0.2);
+          border-radius:8px;padding:1rem 1.15rem;
+          background:
+            radial-gradient(ellipse 70% 110% at 100% 0%, rgba(57,255,20,0.08), transparent 55%),
+            linear-gradient(145deg, #0c121a 0%, #101820 55%, #0a1016 100%);
+        }
+        #master-admin-panel .ma-vis-hero-inner {
+          display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:0.85rem;
+        }
+        #master-admin-panel .ma-vis-kicker {
+          font-family:var(--font-hud);font-size:0.6rem;letter-spacing:0.14em;
+          color:rgba(240,160,0,0.75);margin:0 0 0.3rem;
+        }
+        #master-admin-panel .ma-vis-h1 {
+          font-family:var(--font-title);font-size:1.2rem;color:var(--cs-yellow);
+          margin:0;letter-spacing:0.04em;
+        }
+        #master-admin-panel .ma-vis-sub {
+          margin:0.35rem 0 0;font-size:0.7rem;color:var(--text-dim);max-width:34rem;line-height:1.4;
+        }
+        #master-admin-panel .ma-vis-kpi {
+          display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:0.55rem;
+        }
+        #master-admin-panel .ma-vis-panel {
+          background:linear-gradient(165deg, rgba(17,23,32,0.95), rgba(10,14,20,0.98));
+          border:1px solid var(--border);border-radius:7px;padding:0.75rem 0.85rem;min-width:0;
+        }
+        #master-admin-panel .ma-vis-panel-head {
+          display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem;
+          margin-bottom:0.55rem;
+        }
+        #master-admin-panel .ma-vis-panel-title {
+          font-family:var(--font-hud);font-size:0.65rem;letter-spacing:0.12em;
+          color:var(--cs-yellow);margin:0;
+        }
+        #master-admin-panel .ma-vis-panel-hint {
+          font-size:0.6rem;color:rgba(160,176,192,0.55);
+        }
+        #master-admin-panel .ma-vis-charts {
+          display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:0.75rem;
+        }
+        @media (max-width:980px) {
+          #master-admin-panel .ma-vis-charts { grid-template-columns:1fr; }
+        }
+        #master-admin-panel .ma-vis-chart-svg {
+          width:100%;height:160px;display:block;
+        }
+        #master-admin-panel .ma-vis-chart-svg.tall { height:140px; }
+        #master-admin-panel .ma-vis-legend {
+          display:flex;flex-wrap:wrap;gap:0.55rem 0.9rem;margin-top:0.45rem;
+          font-family:var(--font-ui);font-size:0.62rem;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-vis-legend i {
+          display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:0.3rem;vertical-align:middle;
+        }
+        #master-admin-panel .ma-vis-grid4 {
+          display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;
+        }
+        #master-admin-panel .ma-vis-rank-row {
+          display:flex;align-items:center;gap:0.5rem;padding:0.28rem 0;
+          border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.7rem;
+        }
+        #master-admin-panel .ma-vis-rank-row:last-child { border-bottom:0; }
+        #master-admin-panel .ma-vis-rank-name {
+          flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+          color:var(--text-bright);
+        }
+        #master-admin-panel .ma-vis-rank-bar {
+          flex:0 0 42%;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;
+        }
+        #master-admin-panel .ma-vis-rank-fill {
+          height:100%;background:linear-gradient(90deg, rgba(240,160,0,0.85), rgba(57,255,20,0.55));
+          border-radius:2px;
+        }
+        #master-admin-panel .ma-vis-rank-count {
+          flex-shrink:0;min-width:1.6rem;text-align:right;color:var(--cs-yellow);font-variant-numeric:tabular-nums;
+        }
+        #master-admin-panel .ma-vis-empty {
+          color:var(--text-dim);font-size:0.7rem;padding:0.55rem 0;
+        }
+        #master-admin-panel .ma-vis-badge {
+          display:inline-block;font-family:var(--font-hud);font-size:0.58rem;letter-spacing:0.06em;
+          padding:0.12rem 0.35rem;border-radius:3px;border:1px solid transparent;
+        }
+        #master-admin-panel .ma-vis-badge[data-t="real"] {
+          color:var(--cs-green);border-color:rgba(57,255,20,0.3);background:rgba(57,255,20,0.08);
+        }
+        #master-admin-panel .ma-vis-badge[data-t="bot"] {
+          color:#f59e0b;border-color:rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);
+        }
+        #master-admin-panel .ma-vis-badge[data-t="ai"] {
+          color:#7dd3fc;border-color:rgba(125,211,252,0.35);background:rgba(125,211,252,0.08);
+        }
+        #master-admin-panel .ma-vis-table-wrap {
+          border:1px solid var(--border);border-radius:7px;overflow:hidden;background:rgba(8,12,18,0.85);
+        }
+        #master-admin-panel .ma-vis-table-wrap .ma-vis-panel-head {
+          padding:0.65rem 0.85rem;margin:0;border-bottom:1px solid var(--border);
+        }
+        #master-admin-panel .ma-vis-table-scroll { overflow:auto;max-height:340px; }
+        #master-admin-panel .ma-vis-table-scroll.tall { max-height:420px; }
+        #master-admin-panel .ma-vis-pager {
+          display:flex;align-items:center;justify-content:space-between;gap:0.5rem;
+          padding:0.5rem 0.85rem;border-top:1px solid var(--border);
+          font-size:0.65rem;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-vis-pager-btns { display:flex;gap:0.35rem; }
+        #master-admin-panel .ma-vis-pager-btns button {
+          appearance:none;cursor:pointer;font-family:var(--font-hud);font-size:0.6rem;
+          letter-spacing:0.06em;color:var(--text-bright);
+          background:rgba(255,255,255,0.03);border:1px solid var(--border);
+          border-radius:4px;padding:0.3rem 0.55rem;
+        }
+        #master-admin-panel .ma-vis-pager-btns button:disabled {
+          opacity:0.4;cursor:not-allowed;
+        }
+        #master-admin-panel .ma-vis-pager-btns button:not(:disabled):hover {
+          border-color:rgba(240,160,0,0.45);color:var(--cs-yellow);
+        }
+        #master-admin-panel table.ma-table th.ma-vis-sortable {
+          cursor:pointer;user-select:none;
+        }
+        #master-admin-panel table.ma-table th.ma-vis-sortable:hover { color:var(--cs-yellow); }
+        #master-admin-panel .ma-vis-mono {
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.62rem;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-vis-split {
+          display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:0.75rem;
+        }
+        @media (max-width:980px) {
+          #master-admin-panel .ma-vis-split { grid-template-columns:1fr; }
+        }
+        #master-admin-panel .ma-vis-loading {
+          color:var(--text-dim);font-size:0.75rem;padding:1.25rem 0.25rem;
+        }
+        #master-admin-panel .ma-vis-error {
+          color:var(--cs-red);font-size:0.75rem;padding:1.25rem 0.25rem;
+        }
+        #master-admin-panel .ma-vis-type-split {
+          display:flex;flex-wrap:wrap;gap:0.4rem 0.75rem;margin-top:0.35rem;
+          font-size:0.62rem;color:var(--text-dim);
+        }
+        #master-admin-panel .ma-vis-type-split b { color:var(--text-bright);font-weight:600; }
+
+        /* ── VIP / Abonelik ── */
+        #master-admin-panel #ma-view-vip { overflow:auto; }
+        #master-admin-panel .ma-vip-prices {
+          display:flex;flex-wrap:wrap;gap:0.45rem;margin:0 0 0.75rem;
+        }
+        #master-admin-panel .ma-vip-price-chip {
+          font-family:var(--font-hud);font-size:0.68rem;padding:0.35rem 0.65rem;
+          border-radius:4px;border:1px solid var(--border);color:var(--text-dim);
+          background:rgba(0,0,0,0.25);
+        }
+        #master-admin-panel .ma-vip-price-chip b { color:var(--text-bright);font-weight:700; }
+        #master-admin-panel .ma-vip-price-chip.silver { border-color:rgba(180,190,200,0.45);color:#c8d0d8; }
+        #master-admin-panel .ma-vip-price-chip.gold { border-color:rgba(240,160,0,0.45);color:var(--cs-yellow); }
+        #master-admin-panel .ma-vip-price-chip.platinum { border-color:rgba(140,180,255,0.45);color:#9ec0ff; }
+        #master-admin-panel .ma-vip-kpis {
+          display:flex;flex-wrap:wrap;gap:0.65rem;margin:0 0 0.9rem;
+        }
+        #master-admin-panel .ma-vip-grant {
+          background:var(--bg-card);border:1px solid var(--border);border-radius:6px;
+          padding:0.85rem 1rem;margin:0 0 0.85rem;
+        }
+        #master-admin-panel .ma-vip-grant-title {
+          font-family:var(--font-hud);font-size:0.72rem;color:var(--cs-yellow);
+          letter-spacing:0.06em;margin:0 0 0.65rem;
+        }
+        #master-admin-panel .ma-vip-grant-row {
+          display:flex;flex-wrap:wrap;gap:0.55rem;align-items:flex-end;
+        }
+        #master-admin-panel .ma-vip-grant-actions {
+          display:flex;gap:0.4rem;align-items:center;padding-bottom:0.1rem;
+        }
+        #master-admin-panel .ma-vip-hint {
+          font-family:var(--font-ui);font-size:0.68rem;color:var(--text-dim);
+          margin:0.65rem 0 0;line-height:1.45;
+        }
+        #master-admin-panel .ma-vip-check {
+          display:flex;align-items:center;gap:0.35rem;
+          font-family:var(--font-ui);font-size:0.7rem;color:var(--text-dim);cursor:pointer;
+        }
+        #master-admin-panel .ma-vip-tier {
+          display:inline-block;padding:0.15rem 0.4rem;border-radius:3px;
+          font-size:0.65rem;font-family:var(--font-hud);letter-spacing:0.04em;
+        }
+        #master-admin-panel .ma-vip-tier.silver { background:rgba(180,190,200,0.15);color:#c8d0d8; }
+        #master-admin-panel .ma-vip-tier.gold { background:rgba(240,160,0,0.15);color:var(--cs-yellow); }
+        #master-admin-panel .ma-vip-tier.platinum { background:rgba(140,180,255,0.15);color:#9ec0ff; }
+        #master-admin-panel .ma-vip-tier.none,
+        #master-admin-panel .ma-vip-tier.legacy { background:rgba(255,80,80,0.12);color:#f08080; }
+        #master-admin-panel .ma-vip-actions { display:flex;flex-wrap:wrap;gap:0.3rem; }
+        #master-admin-panel .ma-user-actions { display:flex;flex-wrap:wrap;gap:0.28rem; }
+        #master-admin-panel .ma-field { display:flex;flex-direction:column;gap:0.25rem; }
+        #master-admin-panel .ma-field > span {
+          font-family:var(--font-hud);font-size:0.62rem;color:var(--text-dim);letter-spacing:0.04em;
+        }
+        #master-admin-panel .ma-field-required > span { color:var(--cs-yellow); }
+        #master-admin-panel .ma-tier-select {
+          min-width:11rem;border-color:rgba(240,160,0,0.55)!important;
+          box-shadow:0 0 0 1px rgba(240,160,0,0.18);
+        }
+        #master-admin-panel .ma-ban-badge {
+          display:inline-block;padding:0.12rem 0.35rem;border-radius:3px;
+          font-size:0.6rem;font-family:var(--font-hud);background:rgba(220,50,50,0.2);color:var(--cs-red);
+        }
+        #master-admin-panel .ma-ok-badge {
+          display:inline-block;padding:0.12rem 0.35rem;border-radius:3px;
+          font-size:0.6rem;font-family:var(--font-hud);color:var(--text-dim);
+        }
+        #master-admin-panel .ma-modal,
+        .ma-modal {
+          position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;
+          background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);padding:1rem;
+        }
+        #master-admin-panel .ma-modal-card,
+        .ma-modal .ma-modal-card {
+          width:min(640px,100%);max-height:90vh;overflow:auto;
+          background:var(--bg-card,#12161e);border:1px solid var(--border);border-radius:8px;
+          padding:1rem 1.1rem;box-shadow:0 12px 40px rgba(0,0,0,0.45);
+        }
+        #master-admin-panel .ma-modal-title,
+        .ma-modal .ma-modal-title {
+          font-family:var(--font-title);color:var(--cs-yellow);font-size:1.05rem;margin:0 0 0.85rem;
+        }

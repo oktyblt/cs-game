@@ -3,7 +3,8 @@
  * Yeni özellikler buraya değil; ilgili module'e eklenir:
  *   admin/, ui/, net/, game/, api.js, dom.js
  */
-import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium, isUserAdmin } from "./auth.js";
+import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium, isUserAdmin, getBanBlockMessage } from "./auth.js";
+import { validatePublicNickname } from "./nick.js";
 import { buyServer, supabase } from './supabase.js';
 import { Xash3D, Net } from 'xash3d-fwgs';
 import { API_URL, ASSET_URL } from './api.js';
@@ -11,8 +12,12 @@ import { $, notify } from './dom.js';
 import './ui/modals.js';
 import './game/frameDiagnostics.js';
 import { startRenderStability } from './game/renderStability.js';
+import { BrowserCSNetBridge, netWorkerEnabled, workerWebRtcAvailable } from './net/netBridge.js';
+import { getIceServers } from './net/iceServers.js';
 import { isBrowserCSProtocolLog } from './ui/hudBridge.js';
 import { BrowserCSReconnect } from './net/reconnect.js';
+import './net/rankTicket.js';
+import './net/vipTicket.js';
 import { state } from './game/state.js';
 import { assertEngineBridges } from './game/engineBridge.js';
 import { loadMapList, renderMapList, selectMap, getMapType, formatSize } from './game/maps.js';
@@ -20,9 +25,10 @@ import { ensureMapBspInVfs, recoverMissingMapBsp, extractMissingMapFromLog, norm
 import { initEngine, changeMap } from './game/engine.js';
 import { toggleConsole } from './game/console.js';
 import { isDeathmatchServer, buildModePill } from './game/serverMeta.js';
+import { initRankGiftPopup } from './ui/rankGiftPopup.js';
 
-// Fix for Xash3D Emscripten Black Sky Bug + compositor jitter:
-// alpha:false, desynchronized (low-latency present), high-performance GPU.
+// Fix for Xash3D Emscripten Black Sky Bug + compositor jitter.
+// desynchronized:true tears/flickers on Windows Chrome — keep compositor-synced.
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   if (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2') {
@@ -30,15 +36,15 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
     attributes.alpha = false;
     attributes.antialias = false;
     attributes.powerPreference = 'high-performance';
-    attributes.desynchronized = true;
+    attributes.desynchronized = false;
     attributes.preserveDrawingBuffer = false;
   }
   return originalGetContext.call(this, type, attributes);
 };
 
 // Fix for Browser AudioContext Autoplay Policy that silences game sounds.
-// Browsers suspend AudioContext until a user gesture happens.
-// We track all AudioContext instances and resume them on first click/keydown.
+// Keep native SDL ScriptProcessor — AudioWorklet rAF pump underruns under WASM
+// hitches and cuts gun/footstep sounds short.
 (function () {
   const OriginalAudioContext = window.AudioContext || window.webkitAudioContext;
   if (!OriginalAudioContext) return;
@@ -47,8 +53,8 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   let pollTicks = 0;
 
   const PatchedAudioContext = function (options) {
-    // 'playback' = larger buffers, fewer ScriptProcessor wakes → less FPS oscillation
-    const opts = Object.assign({ latencyHint: 'playback' }, options || {});
+    // interactive = lower output latency for game SFX (was 'playback' → more buffering/lag)
+    const opts = Object.assign({ latencyHint: 'interactive' }, options || {});
     const ctx = new OriginalAudioContext(opts);
     allAudioContexts.push(ctx);
     return ctx;
@@ -72,7 +78,6 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
   document.addEventListener('keydown', resumeAll, { capture: true });
   document.addEventListener('touchstart', resumeAll, { capture: true });
 
-  // Late SDL2 contexts: poll sparsely, then stop once running + resumed
   audioPollTimer = setInterval(() => {
     pollTicks += 1;
     const stillSuspended = resumeAll();
@@ -193,13 +198,44 @@ HTMLCanvasElement.prototype.getContext = function (type, attributes) {
 // --- WASM RUNTIME ERROR HANDLER ---
 // Game DLL veya engine WASM crash olduğunda (memory access out of bounds vb.)
 // sayfayı kurtarıp kullanıcıya bilgi ver.
+//
+// "İlk girişte bazen WASM crash" — bu genelde motor tam başlarken (Host_Main
+// ilk mainloop tick'inde) oluşan nadir bir bellek erişim hatası; oyuncu henüz
+// oyuna girmemiş oluyor. Böyle bir durumda kullanıcıyı "sayfayı yenile" ile
+// baş başa bırakmak yerine, aynı sunucu/map bilgisiyle OTOMATİK olarak bir kez
+// yeniden dene (reload + auto-reconnect). Aynı port'ta art arda ikinci kez
+// olursa sonsuz reload döngüsüne girmemek için manuel overlay'e düşülür.
 window.addEventListener('error', (event) => {
   if (event.error instanceof WebAssembly.RuntimeError) {
     originalError && originalError.call(console, '[WASM Crash]', event.error.message);
     if (typeof addConsoleLog === 'function') {
       addConsoleLog(`Oyun çöktü: ${event.error.message} — Yeniden bağlanmak için sayfayı yenileyin.`, 'err');
     }
-    // Kullanıcıya UI mesajı göster
+
+    const alreadyInGame = !!(window.BrowserCSReconnect && window.BrowserCSReconnect.sessionJoined);
+    const port = window._browserCSConnectPort || '';
+    const retryGuardKey = `_csWasmBootCrashRetried_${port || 'none'}`;
+    const canAutoRetry = !alreadyInGame && !sessionStorage.getItem(retryGuardKey);
+
+    if (canAutoRetry) {
+      try {
+        sessionStorage.setItem(retryGuardKey, '1');
+        const pw = window._pendingServerPassword || sessionStorage.getItem('_csLastPw_' + port) || '';
+        sessionStorage.setItem('_csAutoConnect', JSON.stringify({
+          port: port,
+          map: state.currentMap || 'de_dust2',
+          password: pw
+        }));
+        if (typeof notify === 'function') {
+          notify('Motor başlarken bir sorun oluştu, otomatik olarak yeniden bağlanılıyor...', 'warn');
+        }
+        setTimeout(() => window.location.reload(), 600);
+        event.preventDefault();
+        return;
+      } catch (_) { /* sessionStorage yoksa manuel overlay'e düş */ }
+    }
+
+    // Kullanıcıya UI mesajı göster (oyun içi crash veya ikinci ardışık boot crash)
     const overlay = document.getElementById('fatal-error-overlay');
     if (overlay) {
       overlay.style.display = 'flex';
@@ -208,6 +244,17 @@ window.addEventListener('error', (event) => {
     }
     event.preventDefault(); // default crash davranışını engelle
   }
+});
+
+// Başarılı oyuna giriş — bu port için boot-crash retry kilidini kaldır,
+// böylece ileride tekrar (nadiren) olursa bir defa daha otomatik denenebilir.
+window.addEventListener('xash3d-ingame', () => {
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith('_csWasmBootCrashRetried_')) sessionStorage.removeItem(key);
+    }
+  } catch (_) { /* ignore */ }
 });
 
 
@@ -490,12 +537,8 @@ Net.prototype._outPoolRing = null;
 Net.prototype._outPoolIdx = 0;
 Net.prototype._allocOutPacket = function (len) {
   if (!this._outPoolRing) {
-    this._outPoolRing = [
-      new Uint8Array(4096),
-      new Uint8Array(4096),
-      new Uint8Array(4096),
-      new Uint8Array(4096),
-    ];
+    // 16 slots: sendtoBatch can emit many packets in one frame
+    this._outPoolRing = Array.from({ length: 16 }, () => new Uint8Array(4096));
     this._outPoolIdx = 0;
   }
   let buf = this._outPoolRing[this._outPoolIdx];
@@ -508,7 +551,33 @@ Net.prototype._allocOutPacket = function (len) {
   return buf.subarray(0, len);
 };
 
+/** Reuse inbound payload buffers (WebRTC allocates a fresh ArrayBuffer every packet) */
+Net.prototype._inBytePool = null;
+Net.prototype._allocInBytes = function (len) {
+  if (!this._inBytePool) this._inBytePool = [];
+  let buf = this._inBytePool.pop();
+  if (!buf || buf.byteLength < len) {
+    buf = new Uint8Array(Math.max(len, 1536));
+  }
+  return buf;
+};
+Net.prototype._freeInBytes = function (buf) {
+  if (!buf || !this._inBytePool) return;
+  if (this._inBytePool.length < 128) this._inBytePool.push(buf);
+};
+
 Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, socklenPtr) {
+  // Net Worker + SAB path (preferred when crossOriginIsolated)
+  const bridge = this.sender && this.sender._netBridge;
+  if (bridge && bridge.open) {
+    const n = bridge.recvPacket(this, bufPtr, bufLen, sockaddrPtr, socklenPtr);
+    if (n < 0) {
+      this._setEagain();
+      return -1;
+    }
+    return n;
+  }
+
   const packet = this.incoming.pull();
   if (!packet) {
     // xash3d-fwgs 0.2.x: non-blocking empty socket must return EAGAIN
@@ -544,7 +613,11 @@ Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, sockl
     this._heap8[sockaddrPtr + 7] = packet.ip[3];
   }
   if (socklenPtr) this._heap32[socklenPtr >> 2] = 16;
-  // Recycle envelope object (not the ArrayBuffer — WebRTC owns that)
+  // Recycle envelope + pooled inbound bytes
+  if (packet._poolBuf) {
+    this._freeInBytes(packet._poolBuf);
+    packet._poolBuf = null;
+  }
   if (!this._inPktPool) this._inPktPool = [];
   if (this._inPktPool.length < 96) {
     packet.data = null;
@@ -557,6 +630,21 @@ Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, sockl
 Net.prototype.sendto = function (fd, bufPtr, bufLen, flags, sockaddrPtr, socklenPtr) {
   this._heapViews();
   const [ip, port] = this.readSockaddrFast(sockaddrPtr);
+
+  const bridge = this.sender && this.sender._netBridge;
+  if (bridge && bridge.open) {
+    if (this.sender.isHost) {
+      if (!ip || ip[0] === 127) return bufLen;
+    } else if (!ip || ip[0] !== 10) {
+      return bufLen;
+    }
+    const ok = bridge.sendPacket(this._heapU8, bufPtr, bufLen, ip, port);
+    if (!ok) {
+      this._setEagain();
+      return -1;
+    }
+    return bufLen;
+  }
 
   // Pool + copy: DC must not hold a live HEAP view; avoid allocating a new
   // Uint8Array every packet (major GC source for 75↔45 FPS oscillation).
@@ -575,6 +663,31 @@ Net.prototype.sendtoBatch = function (fd, bufsPtr, lensPtr, count, flags, sockad
   this._heapViews();
   let totalSize = 0;
   const [ip, port] = this.readSockaddrFast(sockaddrPtr);
+
+  const bridge = this.sender && this.sender._netBridge;
+  if (bridge && bridge.open) {
+    if (this.sender.isHost) {
+      if (!ip || ip[0] === 127) {
+        for (let i = 0; i < count; ++i) totalSize += this._heap32[(lensPtr >> 2) + i];
+        return totalSize;
+      }
+    } else if (!ip || ip[0] !== 10) {
+      for (let i = 0; i < count; ++i) totalSize += this._heap32[(lensPtr >> 2) + i];
+      return totalSize;
+    }
+    for (let i = 0; i < count; ++i) {
+      const size = this._heap32[(lensPtr >> 2) + i];
+      const packetPtr = this._heap32[(bufsPtr >> 2) + i];
+      const ok = bridge.sendPacket(this._heapU8, packetPtr, size, ip, port);
+      if (!ok) {
+        this._setEagain();
+        return totalSize > 0 ? totalSize : -1;
+      }
+      totalSize += size;
+    }
+    return totalSize;
+  }
+
   for (let i = 0; i < count; ++i) {
     const size = this._heap32[(lensPtr >> 2) + i];
     const packetPtr = this._heap32[(bufsPtr >> 2) + i];
@@ -608,9 +721,49 @@ class Xash3DWebSocket extends Xash3D {
     this._connectWsInFlight = null;
     this._ensureDcInFlight = null;
     this._pendingLocalCandidates = [];
+    this._netBridge = null;
+    this._preferNetWorker = netWorkerEnabled();
+    if (this._preferNetWorker) {
+      console.info('[Net] SAB OK — inbound worker + main-thread DC');
+      browserCSDebugLog('[Net] SAB OK — inbound worker bridge on connect');
+    } else {
+      console.info('[Net] classic main-thread WebRTC');
+    }
+  }
+
+  /** Live DC — classic `this.dc` or netBridge owned channel. */
+  isDataChannelOpen() {
+    return !!(this._netBridge?.open || this.dc?.readyState === 'open');
+  }
+
+  /**
+   * ICE still negotiating / healthy — do NOT tear down (was causing AWS peer churn:
+   * connected → client 10s timeout close → DataChannel kapandı storm).
+   */
+  isIceStillViable() {
+    const pc = this._netBridge?._pc || this.pc;
+    if (!pc) return false;
+    const ice = pc.iceConnectionState;
+    const conn = pc.connectionState;
+    if (ice === 'failed' || ice === 'closed') return false;
+    if (conn === 'failed' || conn === 'closed') return false;
+    return (
+      ice === 'new' ||
+      ice === 'checking' ||
+      ice === 'connected' ||
+      ice === 'completed' ||
+      ice === 'disconnected' ||
+      conn === 'new' ||
+      conn === 'connecting' ||
+      conn === 'connected' ||
+      conn === 'disconnected'
+    );
   }
 
   _cleanupWebRTC() {
+    if (this._netBridge) {
+      try { this._netBridge.disconnect(); } catch (e) { /* ignore */ }
+    }
     if (this._webrtcTimeoutTimer) {
       clearTimeout(this._webrtcTimeoutTimer);
       this._webrtcTimeoutTimer = null;
@@ -663,8 +816,8 @@ class Xash3DWebSocket extends Xash3D {
     this._suppressDisconnectEvent = false;
   }
 
-  async ensureDcReady(maxWaitMs = 45000) {
-    if (this.dc?.readyState === 'open') {
+  async ensureDcReady(maxWaitMs = 60000) {
+    if (this.isDataChannelOpen()) {
       return;
     }
 
@@ -672,35 +825,33 @@ class Xash3DWebSocket extends Xash3D {
       return this._ensureDcInFlight;
     }
 
-    // Tek uzun 55s timeout yerine kısa denemeler:
-    // 1. deneme sık timeout oluyor, 2. genelde hemen açılıyor → kullanıcı 1+ dk bekliyordu.
-    const ATTEMPT_MS = 10000;
+    // Windows NAT + TURN: first attempts need a long ICE budget.
+    const ATTEMPT_MS = 40000;
 
     this._ensureDcInFlight = (async () => {
       try {
-        const deadline = Date.now() + maxWaitMs;
+        const deadline = Date.now() + Math.max(maxWaitMs, 90000);
         let attempt = 0;
 
         while (Date.now() < deadline) {
-          if (this.dc?.readyState === 'open') {
+          if (this.isDataChannelOpen()) {
             return;
           }
 
-          // Devam eden denemeyi bekle
           if (this._connectWsInFlight) {
             await this._connectWsInFlight;
-            if (this.dc?.readyState === 'open') {
+            if (this.isDataChannelOpen()) {
               return;
             }
           }
 
           attempt += 1;
           const slice = Math.max(
-            3000,
+            25000,
             Math.min(ATTEMPT_MS, deadline - Date.now())
           );
 
-          const hadSession = !!(this.pc || this.dc || this._dcFailed);
+          const hadSession = !!(this.pc || this.dc || this._netBridge || this._dcFailed);
           if (hadSession) {
             browserCSDebugLog(`[DEBUG] WebRTC deneme #${attempt}...`);
             if (attempt > 1) {
@@ -712,37 +863,23 @@ class Xash3DWebSocket extends Xash3D {
             this._detachDcReady();
           }
 
-          await this.connectWs({ timeoutMs: slice, quietTimeout: attempt < 3 });
-
-          let timeoutId = null;
           try {
-            await Promise.race([
-              this.dcReady,
-              new Promise((_, reject) => {
-                timeoutId = setTimeout(
-                  () => reject(new Error('WebRTC attempt timeout')),
-                  slice + 500
-                );
-              })
-            ]);
+            await this.connectWs({ timeoutMs: slice, quietTimeout: attempt < 3 });
           } catch (_) {
-            // sonraki slice
-          } finally {
-            if (timeoutId) clearTimeout(timeoutId);
+            /* next attempt */
           }
 
-          if (this.dc?.readyState === 'open') {
+          if (this.isDataChannelOpen()) {
             return;
           }
 
-          // Başarısız denemeyi temizle, kısa nefes, tekrar
           this._suppressDisconnectEvent = true;
           try { this._cleanupWebRTC(); } catch (_) { /* ignore */ }
           this._suppressDisconnectEvent = false;
           this._dcFailed = true;
 
           if (Date.now() >= deadline) break;
-          await new Promise((r) => setTimeout(r, 250));
+          await new Promise((r) => setTimeout(r, 500));
         }
 
         throw new Error('WebRTC timeout');
@@ -767,7 +904,105 @@ class Xash3DWebSocket extends Xash3D {
   }
 
   async connectWs(opts = {}) {
-    const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 12000;
+    const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 28000;
+    const quietTimeout = !!opts.quietTimeout;
+
+    if (this.isDataChannelOpen()) {
+      return;
+    }
+
+    if (this._connectWsInFlight) {
+      return this._connectWsInFlight;
+    }
+
+    // Preferred: main-thread WebRTC + SAB packet rings (bounded/coalesced EmNet I/O)
+    if (this._preferNetWorker) {
+      this._connectWsInFlight = (async () => {
+        if (!this.connectPort || this.connectPort === 'listen') {
+          this.dcReady = Promise.resolve();
+          return;
+        }
+
+        const sabOk = await workerWebRtcAvailable();
+        if (!sabOk) {
+          this._preferNetWorker = false;
+          console.info('[Net] SharedArrayBuffer unavailable — classic path');
+          browserCSDebugLog('[Net] SharedArrayBuffer unavailable — classic path');
+          const held = this._connectWsInFlight;
+          this._connectWsInFlight = null;
+          try {
+            await this._connectWsLegacy({ timeoutMs, quietTimeout });
+          } finally {
+            this._connectWsInFlight = held;
+          }
+          return;
+        }
+
+        const role = this.isHost ? 'host' : 'client';
+        browserCSDebugLog(`[DEBUG] Net inbound-worker → port ${this.connectPort} (${role})`);
+        addConsoleLog(`[Ağ] WebRTC (inbound worker) bağlanılıyor (${role.toUpperCase()}): port ${this.connectPort}`, 'warn');
+        console.info('[Net] inbound-worker connect', { port: this.connectPort, role, api: API_URL });
+
+        this.dcReady = new Promise((resolveDc, rejectDc) => {
+          this._resolveDcReady = resolveDc;
+          this._rejectDcReady = rejectDc;
+        });
+        this.dcReady.catch(() => {});
+
+        try {
+          if (!this._netBridge) {
+            this._netBridge = new BrowserCSNetBridge({
+              apiUrl: API_URL,
+              isHost: this.isHost,
+              connectPort: this.connectPort,
+            });
+          }
+          await this._netBridge.connect(timeoutMs);
+          this._dcFailed = false;
+          this._resolveDcReady?.();
+          addConsoleLog('[Ağ] WebRTC kanalı açık (inbound worker)', 'ok');
+          console.info('[Net] channel open (inbound worker + main DC)');
+        } catch (err) {
+          this._dcFailed = true;
+          console.error('[Net] inbound-worker bridge failed — legacy fallback', err);
+          if (!quietTimeout) {
+            addConsoleLog('[Ağ] WebRTC worker: ' + (err?.message || err), 'warn');
+          }
+          this._preferNetWorker = false;
+          try { this._netBridge?.destroy(); } catch (_) { /* ignore */ }
+          this._netBridge = null;
+          // Fresh DC promise + full ICE budget for classic path (Windows NAT/TURN).
+          this.dcReady = new Promise((resolveDc, rejectDc) => {
+            this._resolveDcReady = resolveDc;
+            this._rejectDcReady = rejectDc;
+          });
+          this.dcReady.catch(() => {});
+          addConsoleLog('[Ağ] Klasik WebRTC deneniyor...', 'warn');
+          const held = this._connectWsInFlight;
+          this._connectWsInFlight = null;
+          try {
+            await this._connectWsLegacy({
+              timeoutMs: Math.max(timeoutMs, 35000),
+              quietTimeout,
+            });
+            if (!this.isDataChannelOpen()) {
+              throw err instanceof Error ? err : new Error(String(err?.message || err || 'WebRTC timeout'));
+            }
+          } finally {
+            this._connectWsInFlight = held;
+          }
+        }
+      })().finally(() => {
+        this._connectWsInFlight = null;
+      });
+      return this._connectWsInFlight;
+    }
+
+    return this._connectWsLegacy(opts);
+  }
+
+  async _connectWsLegacy(opts = {}) {
+    const timeoutMs = Number(opts.timeoutMs) > 0 ? Number(opts.timeoutMs) : 35000;
     const quietTimeout = !!opts.quietTimeout;
 
     if (this.dc?.readyState === 'open') {
@@ -804,24 +1039,11 @@ class Xash3DWebSocket extends Xash3D {
         }
       };
 
-      // Az STUN + TURN: fazla sunucu ilk ICE'yi yavaşlatıyordu
       const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun.cloudflare.com:3478' },
-          {
-            urls: [
-              'turn:relay.metered.ca:80?transport=udp',
-              'turn:relay.metered.ca:443?transport=tcp',
-              'turns:relay.metered.ca:443?transport=tcp'
-            ],
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          }
-        ],
+        iceServers: getIceServers(),
         iceTransportPolicy: 'all',
         bundlePolicy: 'max-bundle',
-        iceCandidatePoolSize: 4
+        iceCandidatePoolSize: 8
       });
       this.pc = pc;
       this._pendingLocalCandidates = [];
@@ -853,6 +1075,7 @@ class Xash3DWebSocket extends Xash3D {
             detail: { state: 'active' }
           })
         );
+        // window.stop() burada yok — asset indirme hâlâ sürebilir (netBridge ile aynı)
 
         // Relay-only keepalive — oyun sunucusuna UDP olarak GİTMEMELİ
         this._keepAliveInterval = setInterval(() => {
@@ -884,17 +1107,20 @@ class Xash3DWebSocket extends Xash3D {
           return;
         }
         addConsoleLog(`[Ağ] WebRTC bağlantısı kapandı!`, 'err');
-        if (window.BrowserCSReconnect?.sessionJoined) {
-          return;
-        }
+        // Mid-game silent death was a dead pipe (lag). Always signal recovery.
         window.dispatchEvent(
           new CustomEvent('browsercs-connection-state', {
-            detail: { state: 'disconnected', reason: 'WebRTC kanalı kapandı' }
+            detail: {
+              state: 'disconnected',
+              reason: 'WebRTC kanalı kapandı',
+              forcePipe: !!window.BrowserCSReconnect?.sessionJoined,
+            }
           })
         );
       };
 
-      // Kısa timeout — ensureDcReady hemen yeni deneme başlatır
+      // Hard wait for DC open. Soft-resolve previously returned connectWs while ICE
+      // was still connecting → Windows clients got "WebRTC timeout" on retry churn.
       this._webrtcTimeoutTimer = setTimeout(() => {
         if (this.dc?.readyState === 'open') return;
         if (!quietTimeout) {
@@ -914,25 +1140,29 @@ class Xash3DWebSocket extends Xash3D {
         const raw = e.data;
         if (!raw) return;
 
-        // Prefer ArrayBuffer as-is (view only at recvfrom). Avoid extra copies.
-        let data;
+        // Copy into pooled bytes immediately so WebRTC's ArrayBuffer can be GC'd
+        // in bulk instead of fragmenting the heap (48↔85 FPS dips).
+        let srcView;
         if (raw instanceof ArrayBuffer) {
           if (raw.byteLength === 0) return;
-          data = raw;
+          srcView = new Uint8Array(raw);
         } else if (raw instanceof Uint8Array) {
           if (raw.byteLength === 0) return;
-          data = raw;
+          srcView = raw;
         } else if (typeof raw === 'string') {
           if (!raw.length) return;
-          data = new TextEncoder().encode(raw);
+          srcView = new TextEncoder().encode(raw);
         } else {
           return;
         }
 
+        const poolBuf = this.net._allocInBytes(srcView.byteLength);
+        poolBuf.set(srcView, 0);
+        const data = poolBuf.subarray(0, srcView.byteLength);
+
         this.packetCountRecv++;
-        if (this.packetCountRecv <= 20) {
-          const n = data.byteLength != null ? data.byteLength : data.length;
-          browserCSDebugLog(`[Ağ Log - Alınan #${this.packetCountRecv}] ${n} byte`);
+        if (this.packetCountRecv <= 5) {
+          browserCSDebugLog(`[Ağ Log - Alınan #${this.packetCountRecv}] ${data.byteLength} byte`);
         }
 
         const srcIp = this.isHost ? [10, 0, 0, 2] : [10, 0, 0, 1];
@@ -941,12 +1171,14 @@ class Xash3DWebSocket extends Xash3D {
 
         try {
           let pkt = this.net._inPktPool && this.net._inPktPool.pop();
-          if (!pkt) pkt = { ip: null, port: 0, data: null };
+          if (!pkt) pkt = { ip: null, port: 0, data: null, _poolBuf: null };
           pkt.ip = srcIp;
           pkt.port = srcPort;
           pkt.data = data;
+          pkt._poolBuf = poolBuf;
           this.net.incoming.enqueue(pkt);
         } catch (err) {
+          this.net._freeInBytes(poolBuf);
           console.error('[Ağ Log] Xash3D enqueue hatası:', err);
         }
       };
@@ -994,9 +1226,11 @@ class Xash3DWebSocket extends Xash3D {
           body: JSON.stringify({ gamePort: this.connectPort, sdp: pc.localDescription.sdp })
         });
 
-        if (!res.ok) throw new Error('Signaling server responded with ' + res.status);
-
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 503 || data.code === 'SERVER_STOPPED') {
+          throw new Error(data.error || 'Sunucu kapalı');
+        }
+        if (!res.ok) throw new Error(data.error || ('Signaling server responded with ' + res.status));
         if (data.error) throw new Error(data.error);
 
         this.peerId = data.peerId;
@@ -1188,13 +1422,16 @@ const btnDownloadQConsole = $('btn-download-qconsole');
 const mapCountInfo = $('map-count-info');
 const tabMaps = $('tab-maps');
 const tabServers = $('tab-servers');
+const tabRank = $('tab-rank');
 const tabAdmin = $('tab-admin');
 
 
 const serverList = $('server-list');
+const rankPanel = $('rank-panel');
 const btnCreateServer = $('btn-create-server');
 const adminPanel = $('admin-panel');
 const activeServersContainer = $('active-servers-container');
+let _rankTakipUnmount = null;
 
 const userNicknameInput = $('user-nickname');
 const serverNameInput = $('server-name-input');
@@ -1211,6 +1448,21 @@ if (userNicknameInput) {
     localStorage.setItem('cs_nickname', userNicknameInput.value.trim() || '');
   });
 }
+
+function requirePlayableNickname(raw) {
+  const nickname = String(raw || '').trim();
+  if (!nickname) {
+    window.customAlert('Lütfen oyuna girmeden önce bir oyuncu adı belirleyin!');
+    return null;
+  }
+  const nickErr = validatePublicNickname(nickname, { userId: getCurrentUser()?.id || null });
+  if (nickErr) {
+    window.customAlert(nickErr);
+    return null;
+  }
+  return nickname;
+}
+
 
 // ─── Yardımcılar ─────────────────────────────────────────────────────────────
 
@@ -1276,6 +1528,13 @@ function normalizeConsoleCommand(rawCmd) {
         meta: { kind: 'error', message: 'Geçerli bir isim yaz: name "YeniIsim"' }
       };
     }
+    const nickErr = validatePublicNickname(nick, { userId: getCurrentUser()?.id || null });
+    if (nickErr) {
+      return {
+        commands: [],
+        meta: { kind: 'error', message: nickErr }
+      };
+    }
     return {
       commands: [`name "${nick}"`, `setinfo name "${nick}"`],
       meta: { kind: 'name', name: nick }
@@ -1323,6 +1582,14 @@ function normalizeConsoleCommand(rawCmd) {
 function runEngineCommandRaw(cmd) {
   if (!state.xash || !state.xash.em) {
     console.warn('[Konsol] Komut gönderilemedi, engine hazır değil:', cmd);
+    return false;
+  }
+  if (!state.engineRunning) {
+    console.warn('[Konsol] Engine henüz Cmd_Init tamamlamadı, komut ertelendi:', cmd);
+    return false;
+  }
+  if (state.xash.exited) {
+    console.warn('[Konsol] Engine kapalı, komut yok sayıldı:', cmd);
     return false;
   }
 
@@ -1390,7 +1657,13 @@ function runEngineCommandRaw(cmd) {
       return true;
     }
   } catch (e) {
-    console.error('[Konsol] Komut çalıştırma hatası:', e);
+    // WASM Host_Error bazen sayı (Infinity) fırlatır — stringify et
+    const msg = e && typeof e === 'object' && 'message' in e ? e.message : String(e);
+    if (msg === 'Infinity' || msg === 'NaN') {
+      console.error('[Konsol] Engine abort (Mem/Cmd). Komut:', cmd);
+    } else {
+      console.error('[Konsol] Komut çalıştırma hatası:', e, 'cmd=', cmd);
+    }
   }
   return false;
 }
@@ -1454,18 +1727,43 @@ window.executeEngineCommand = function executeEngineCommand(cmd) {
 
 function appendBrowserCSPerfConfig(cfgBuffer) {
   // HTML skorboard TAB olayının tek sahibidir. Native +showscores'u kapat.
-  const tabGuard = '\nunbind "TAB"\nbind "TAB" ""\n';
+  // Mouse teker duck — tüm oyuncular için sabit.
+  let extra =
+    '\nunbind "TAB"\nbind "TAB" ""\n' +
+    'bind "MWHEELDOWN" "+duck"\n' +
+    'bind "MWHEELUP" "+duck"\n' +
+    'bind "y" "messagemode"\n' +
+    'bind "u" "messagemode2"\n' +
+    'cl_righthand "1"\n';
+  if (window._browserCSTouchControls) {
+    extra +=
+      'touch_enable "1"\n' +
+      'touch_emulate "0"\n' +
+      'exec touch_defalias.cfg\n' +
+      'exec touch.cfg\n';
+  } else {
+    extra += 'touch_enable "0"\ntouch_emulate "0"\n';
+  }
   let base = cfgBuffer && cfgBuffer.length ? cfgBuffer : new Uint8Array(0);
   try {
     const text = new TextDecoder().decode(base);
     const stripped = text
       .replace(/^\s*bind\s+"?TAB"?\s+.+$/gim, '')
-      .replace(/^\s*bind\s+"?tab"?\s+.+$/gim, '');
+      .replace(/^\s*bind\s+"?tab"?\s+.+$/gim, '')
+      .replace(/^\s*bind\s+"?MWHEELUP"?\s+.+$/gim, '')
+      .replace(/^\s*bind\s+"?MWHEELDOWN"?\s+.+$/gim, '')
+      .replace(/^\s*bind\s+"?mwheelup"?\s+.+$/gim, '')
+      .replace(/^\s*bind\s+"?mwheeldown"?\s+.+$/gim, '')
+      .replace(/^\s*touch_enable\s+.+$/gim, '')
+      .replace(/^\s*touch_emulate\s+.+$/gim, '')
+      // Eski/farkli deger tasiyan cl_righthand satirlarini temizle; dogru
+      // deger asagidaki extra blokta tek sefer yazilir.
+      .replace(/^\s*cl_righthand\s+.+$/gim, '');
     base = new TextEncoder().encode(stripped);
   } catch (_) {
     /* keep original bytes */
   }
-  const guardBytes = new TextEncoder().encode(tabGuard);
+  const guardBytes = new TextEncoder().encode(extra);
   const merged = new Uint8Array(base.length + guardBytes.length);
   merged.set(base, 0);
   merged.set(guardBytes, base.length);
@@ -1481,11 +1779,12 @@ window.addEventListener(
 
     if (state === "disconnected") {
       // WebRTC asset indirme sırasında ısıtılır. Bu aşamadaki ICE kapanması
-      // kullanıcıya reconnect ekranı göstermemeli.
-      if (!window._browserCSAssetsReady) return;
+      // kullanıcıya reconnect ekranı göstermemeli — forcePipe (oyun içi DC ölüm) hariç.
+      if (!window._browserCSAssetsReady && !event.detail?.forcePipe) return;
       BrowserCSReconnect.start(
         event.detail?.reason ||
-          "Sunucu bağlantısı kesildi."
+          "Sunucu bağlantısı kesildi.",
+        { forcePipe: !!event.detail?.forcePipe }
       );
       return;
     }
@@ -1577,16 +1876,55 @@ function setProgress(pct, msg) {
 window.ensureMapBspInVfs = ensureMapBspInVfs;
 // ─── FPS Sayacı ───────────────────────────────────────────────────────────────
 
+/** Mobilde telefon ekranının otomatik kararmasını engelle (Screen Wake Lock). */
+let _bcsWakeLock = null;
+let _bcsWakeLockWanted = false;
+
+async function requestBrowserCSWakeLock() {
+  _bcsWakeLockWanted = true;
+  if (typeof navigator === 'undefined' || !navigator.wakeLock?.request) return;
+  if (document.visibilityState !== 'visible') return;
+  try {
+    if (_bcsWakeLock) return;
+    _bcsWakeLock = await navigator.wakeLock.request('screen');
+    _bcsWakeLock.addEventListener('release', () => {
+      _bcsWakeLock = null;
+    });
+  } catch (_) {
+    // Kullanıcı izni / güç tasarrufu — sessizce yoksay
+    _bcsWakeLock = null;
+  }
+}
+
+async function releaseBrowserCSWakeLock() {
+  _bcsWakeLockWanted = false;
+  try {
+    await _bcsWakeLock?.release?.();
+  } catch (_) { /* ignore */ }
+  _bcsWakeLock = null;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && _bcsWakeLockWanted && state.engineRunning) {
+    requestBrowserCSWakeLock();
+  }
+});
+
+window.__bcsRequestWakeLock = requestBrowserCSWakeLock;
+window.__bcsReleaseWakeLock = releaseBrowserCSWakeLock;
+
 let _fpsCounterStarted = false;
 function startFPSCounter() {
   if (_fpsCounterStarted) return;
   _fpsCounterStarted = true;
+  requestBrowserCSWakeLock();
 
   let rafCount = 0;
   let rafLast = performance.now();
   function rafLoop() {
     if (!state.engineRunning) {
       _fpsCounterStarted = false;
+      releaseBrowserCSWakeLock();
       return;
     }
     if (!document.hidden) {
@@ -1855,38 +2193,53 @@ async function loadServerList() {
         let playersCount = server.players !== undefined ? server.players : '?';
         let isOfficialFinal = false;
         let isDeathmatchFinal = isDeathmatchServer(server);
+        const isOnline = server.state === 'running' && !!server.port;
 
         if (isDeathmatchFinal) {
           displayName = server.name?.replace(/^BROWSERCS\s*\|\s*/i, '') || 'Deathmatch';
           displayHost = 'BrowserCS (Resmi)';
-          badgeText = '⭐ RESMİ SUNUCU';
+          badgeText = isOnline ? '⭐ RESMİ SUNUCU' : '⏸ KAPALI';
           isOfficialFinal = true;
         } else if (server.isOfficial === true) {
           displayName = server.name?.replace(/^BROWSERCS\s*\|\s*/i, '') || 'BrowserCS';
           displayHost = 'BrowserCS (Resmi)';
-          badgeText = '⭐ RESMİ SUNUCU';
+          if (server.vipOnly) {
+            badgeText = isOnline ? '♛ VIP ODA' : '⏸ KAPALI';
+            displayHost = 'VIP ODA · Gold/Platinum';
+          } else {
+            badgeText = isOnline ? '⭐ RESMİ SUNUCU' : '⏸ KAPALI';
+          }
           isOfficialFinal = true;
         } else if (server.isOfficial === false) {
           displayHost = server.host || 'Kiralık Sunucu';
-          badgeText = server.state === 'running' ? '🏠 KİRALIK' : '⏸ KAPALI';
+          badgeText = isOnline ? '🏠 KİRALIK' : '⏸ KAPALI';
         } else if (displayName.startsWith('CS Server') && (!server.host || server.host === 'Anonim')) {
           displayName = 'BrowserCS';
           displayHost = 'BrowserCS (Resmi)';
-          badgeText = '⭐ RESMİ SUNUCU';
+          badgeText = isOnline ? '⭐ RESMİ SUNUCU' : '⏸ KAPALI';
           isOfficialFinal = true;
+        } else if (!isOnline) {
+          badgeText = '⏸ KAPALI';
         }
 
-        const srvObj = { ...server, displayName, displayHost, badgeText, playersCount, isOfficialFinal, isDeathmatchFinal };
+        const srvObj = { ...server, displayName, displayHost, badgeText, playersCount, isOfficialFinal, isDeathmatchFinal, isOnline };
         if (isOfficialFinal) officialServers.push(srvObj);
         else rentalServers.push(srvObj);
       });
 
       officialServers.sort((a, b) => {
+        if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+        const aVip = !!a.vipOnly;
+        const bVip = !!b.vipOnly;
+        if (aVip !== bVip) return aVip ? -1 : 1;
         if (a.isDeathmatchFinal && !b.isDeathmatchFinal) return -1;
         if (!a.isDeathmatchFinal && b.isDeathmatchFinal) return 1;
         return (a.port || 0) - (b.port || 0);
       });
-      rentalServers.sort((a, b) => (a.port || 0) - (b.port || 0));
+      rentalServers.sort((a, b) => {
+        if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+        return (a.port || 0) - (b.port || 0);
+      });
 
       const appendCategoryHeader = (container, title, color, marginTop = '0') => {
         const header = document.createElement('div');
@@ -1920,29 +2273,38 @@ async function loadServerList() {
           div.style.padding = '0.6rem';
           div.style.marginBottom = '0.6rem';
           div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+          if (!server.isOnline) {
+            div.style.opacity = '0.55';
+            div.style.filter = 'grayscale(0.35)';
+          }
           const miniModePill = buildModePill(server, true);
           const miniLockPill = server.hasPassword
             ? '<span style="background:rgba(255,204,0,0.15);border:1px solid rgba(255,204,0,0.4);color:#ffcc00;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">🔒 ŞİFRELİ</span>'
             : '';
+          const miniVipPill = server.vipOnly
+            ? '<span style="background:rgba(255,215,0,0.16);border:1px solid rgba(255,215,0,0.45);color:#ffd700;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;padding:1px 5px;border-radius:3px;text-transform:uppercase;">♛ VIP ODA</span>'
+            : '';
+          const miniStatus = server.isOnline
+            ? `<div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50; z-index:5;">👤 ${server.playersCount}/${server.maxplayers}</div>`
+            : `<div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.85); padding:2px 6px; border-radius:4px; font-size:0.7rem; color:#f87171; font-weight:bold; border: 1px solid #f87171; z-index:5;">KAPALI</div>`;
           div.innerHTML = `
             <div style="position: relative; width: 100%; height: 80px; overflow: hidden; border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: var(--bg-deep);">
               <img crossorigin="anonymous" src="${mapImgUrl}" alt="Server" style="position:absolute; inset:0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
               <div style="position:absolute; inset:0; background:linear-gradient(to bottom,rgba(10,16,26,0.1),var(--bg-card)); pointer-events:none;"></div>
               <span class="server-thumb-map-text" style="z-index:5; font-size: 0.95rem;">${server.map}</span>
-              <div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50; z-index:5;">
-                👤 ${server.playersCount}/${server.maxplayers}
-              </div>
+              ${miniStatus}
             </div>
             <div style="font-weight: bold; color: var(--text-bright); text-align: center; margin-top: 6px; font-size: 0.85rem;">${server.displayName}</div>
             <div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px;">
-              ${miniModePill}${miniLockPill}
+              ${miniModePill}${miniVipPill}${miniLockPill}
             </div>
           `;
           div.addEventListener('click', async () => {
-            if (server.state !== 'running' || !server.port) {
+            if (!server.isOnline) {
               notify('Bu sunucu şu an kapalı.', 'error');
               return;
             }
+            if (!(await window.ensureVipRoomAccess(server))) return;
             window._motdServerMeta = { serverName: server.name || server.displayName, mapName: server.map, serverId: server.serverId || server.id, owner_id: server.owner_id, mode: server.mode, gameMode: server.gameMode };
             window._browserCSIsDeathmatch = isDeathmatchServer(server);
             // Sifre gerekiyorsa modal aç
@@ -1965,29 +2327,40 @@ async function loadServerList() {
         } else {
           const card = document.createElement('div');
           card.className = 'server-card-box anim-fade-in';
+          if (!server.isOnline) {
+            card.style.opacity = '0.6';
+            card.style.filter = 'grayscale(0.3)';
+          }
           // Mode pill: match=red, normal=green
           const modePill = buildModePill(server, false);
           const lockPill = server.hasPassword
             ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,204,0,0.12);border:1px solid rgba(255,204,0,0.35);color:#ffcc00;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">🔒 ŞİFRELİ</span>`
             : '';
+          const vipPill = server.vipOnly
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,215,0,0.14);border:1px solid rgba(255,215,0,0.4);color:#ffd700;font-family:var(--font-hud);font-size:0.55rem;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;text-transform:uppercase;">♛ VIP ODA</span>`
+            : '';
+          const joinLabel = server.isOnline ? '▶ ODAYA KATIL' : '⏸ KAPALI';
+          const joinStyle = server.isOnline
+            ? 'flex:1;'
+            : 'flex:1;background:var(--bg-deep);border:1px solid var(--border);color:var(--text-dim);cursor:not-allowed;opacity:0.85;';
           card.innerHTML = `
             <div class="server-card-thumb" style="position: relative;">
               <img crossorigin="anonymous" src="${mapImgUrl}" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
-              <span class="server-badge-live" style="z-index:2;">${server.badgeText}</span>
+              <span class="server-badge-live" style="z-index:2;${server.isOnline ? '' : 'background:rgba(120,20,20,0.85);border-color:#f87171;'}">${server.badgeText}</span>
               <span class="server-thumb-map-text" style="z-index:2;">${server.map}</span>
             </div>
             <div class="server-card-body">
               <div class="server-card-name">${server.displayName}</div>
               <div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px;">
-                ${modePill}${lockPill}
+                ${modePill}${vipPill}${lockPill}
               </div>
               <div class="server-card-meta">
                 <span>🗺️ ${server.map}</span>
-                <span>👤 ${server.playersCount}/${server.maxplayers} Oyuncu</span>
+                <span>${server.isOnline ? `👤 ${server.playersCount}/${server.maxplayers} Oyuncu` : '⏸ Kapalı'}</span>
               </div>
               <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${server.displayHost}</b></div>
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
-                <button class="btn-join-room" style="flex:1;">▶ ODAYA KATIL</button>
+                <button class="btn-join-room" style="${joinStyle}" ${server.isOnline ? '' : 'disabled'}>${joinLabel}</button>
                 ${(server.owner_id && getCurrentUser() && server.owner_id === getCurrentUser().id) ?
               `<button class="btn-join-room" style="background:var(--bg-deep); border:1px solid var(--border-bright); color:var(--text-bright); padding:0 0.8rem; font-size:1rem;" title="Sunucu Ayarları" onclick="openServerSettings('${server.serverId || server.id}')">⚙️</button>`
               : ''}
@@ -1996,10 +2369,11 @@ async function loadServerList() {
           `;
           const joinBtn = card.querySelector('.btn-join-room');
           joinBtn.addEventListener('click', async () => {
-            if (server.state !== 'running' || !server.port) {
+            if (!server.isOnline) {
               notify('Bu sunucu şu an kapalı.', 'error');
               return;
             }
+            if (!(await window.ensureVipRoomAccess(server))) return;
             window._motdServerMeta = { serverName: server.name, mapName: server.map, serverId: server.serverId || server.id, owner_id: server.owner_id, mode: server.mode, gameMode: server.gameMode };
             window._browserCSIsDeathmatch = isDeathmatchServer(server);
 
@@ -2063,26 +2437,50 @@ async function loadServerList() {
 
 window.loadServerList = loadServerList;
 
+function setSidebarTab(which) {
+  if (tabServers) tabServers.classList.toggle('active', which === 'servers');
+  if (tabMaps) tabMaps.classList.toggle('active', which === 'maps');
+  if (tabRank) tabRank.classList.toggle('active', which === 'rank');
+  if (mapList) mapList.style.display = which === 'maps' ? 'block' : 'none';
+  if (serverList) serverList.style.display = which === 'servers' ? 'block' : 'none';
+  if (rankPanel) rankPanel.style.display = which === 'rank' ? 'block' : 'none';
+  if (typeof mapSearch !== 'undefined' && mapSearch) {
+    mapSearch.style.display = which === 'maps' ? 'block' : 'none';
+  }
+  if (fullServerBrowser) {
+    if (which === 'servers') fullServerBrowser.classList.add('active');
+    else fullServerBrowser.classList.remove('active');
+  }
+  if (which !== 'rank' && _rankTakipUnmount) {
+    _rankTakipUnmount();
+    _rankTakipUnmount = null;
+  }
+}
+
 if (tabServers && tabMaps) {
   tabServers.addEventListener('click', () => {
-    tabServers.classList.add('active');
-    tabMaps.classList.remove('active');
-    if (fullServerBrowser) fullServerBrowser.classList.add('active');
-    mapList.style.display = 'none';
-    serverList.style.display = 'block';
-    if (typeof mapSearch !== 'undefined' && mapSearch) mapSearch.style.display = 'none';
+    setSidebarTab('servers');
     loadServerList();
   });
 
   tabMaps.addEventListener('click', () => {
-    tabMaps.classList.add('active');
-    tabServers.classList.remove('active');
-    if (fullServerBrowser) fullServerBrowser.classList.remove('active');
-    mapList.style.display = 'block';
-    serverList.style.display = 'none';
-    mapSearch.style.display = 'block';
+    setSidebarTab('maps');
   });
+}
 
+if (tabRank && rankPanel) {
+  tabRank.addEventListener('click', async () => {
+    setSidebarTab('rank');
+    if (!_rankTakipUnmount) {
+      const { mountRankTakipPanel } = await import('./rank-takip/rankTakip.js');
+      _rankTakipUnmount = mountRankTakipPanel({
+        selectEl: $('rank-server-select'),
+        tableEl: $('rank-table'),
+        statusEl: $('rank-status'),
+        pollMs: 10000,
+      });
+    }
+  });
 }
 
 if (btnCloseServerBrowser) {
@@ -2330,8 +2728,22 @@ async function runSplash() {
   // SharedArrayBuffer kontrolü
   setSplash('Tarayıcı güvenliği kontrol ediliyor...', 35);
   const hasSAB = typeof SharedArrayBuffer !== 'undefined';
-  if (!hasSAB) {
-    notify('⚠ Tarayıcı kısıtlaması var — sayfayı yenileyin veya Chrome/Edge deneyin.', 'error');
+  const isolated = typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated;
+  const wantNetWorker = netWorkerEnabled();
+  const sabBridgeOk = wantNetWorker ? await workerWebRtcAvailable() : false;
+  const useNetWorker = wantNetWorker && sabBridgeOk;
+  window._browserCSNetMode = useNetWorker ? 'sab' : 'classic';
+  window._browserCSIsolated = !!isolated;
+  if (!hasSAB || !isolated) {
+    notify('⚠ SharedArrayBuffer / isolation yok — SAB köprüsü kapalı, klasik WebRTC.', 'warn');
+  } else if (wantNetWorker && !sabBridgeOk) {
+    browserCSDebugLog('[Net] isolation OK — SAB bridge unavailable, klasik path');
+    console.info('[Net] SAB bridge unavailable — classic path');
+  } else if (useNetWorker) {
+    browserCSDebugLog('[Net] crossOriginIsolated OK — inbound worker AÇIK');
+    console.info('[Net] inbound worker enabled (main-thread DataChannel)');
+  } else {
+    browserCSDebugLog('[Net] isolation OK — SAB bridge kullanıcı tarafından kapalı (networker=0)');
   }
 
 
@@ -2403,7 +2815,55 @@ window.dismissWelcomeMOTD = function () {
   setTimeout(() => { overlay.classList.remove('visible', 'hiding'); }, 420);
 };
 
+/** VIP ODA join gate — Gold/Platinum required (web UX; AMXX also kicks). */
+window.ensureVipRoomAccess = async function ensureVipRoomAccess(server) {
+  const need = String(server?.vipOnly || '').toLowerCase();
+  if (!need || !['silver', 'gold', 'platinum'].includes(need)) return true;
+
+  const rank = { none: 0, silver: 1, gold: 2, platinum: 3 };
+  const needRank = rank[need] || 2;
+
+  if (!getCurrentUser()) {
+    notify('VIP ODA için giriş yapıp Gold veya Platinum VIP olmalısın.', 'error');
+    if (typeof window.customAlert === 'function') {
+      window.customAlert(
+        'Bu oda sadece Gold ve Platinum VIP üyeler içindir.\nGiriş yapıp VIP paketini al, sonra tekrar dene.',
+        'VIP ODA'
+      );
+    }
+    return false;
+  }
+
+  try {
+    const token = await getSessionToken();
+    const res = await fetch(`${API_URL}/api/me/vip`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const data = await res.json();
+    const tier = String(data?.vip?.tier || 'none').toLowerCase();
+    const active = !!data?.vip?.active;
+    if (active && (rank[tier] || 0) >= needRank) return true;
+  } catch (_) {
+    /* fall through */
+  }
+
+  notify('VIP ODA — Gold veya Platinum gerekli.', 'error');
+  if (typeof window.customAlert === 'function') {
+    window.customAlert(
+      'VIP ODA’ya sadece aktif Gold veya Platinum VIP girebilir.\nPaketler: /vip',
+      'VIP ODA'
+    );
+  }
+  return false;
+};
+
 window.connectToServer = async function (port, mapName, isHost = false) {
+  const banMsg = getBanBlockMessage();
+  if (banMsg) {
+    if (typeof window.customAlert === 'function') window.customAlert(banMsg, 'HESAP YASAKLI');
+    else alert(banMsg);
+    return;
+  }
   if (state.engineRunning) {
     // WebRTC relay kapanmis olabilir. En guvenilir cozum:
     // baglanti bilgisini sessionStorage'a kaydet + sayfayi yenile.
@@ -2425,9 +2885,10 @@ window.connectToServer = async function (port, mapName, isHost = false) {
   // AMXX helpers live in lazy serverSettings module
   await ensureServerSettings();
 
-  // Misafirse tüm eski admin şifre cache'ini sil — nick ile admin olunamaz
+  // Misafirse tüm eski admin / rank cache'ini sil
   if (!getCurrentUser()) {
     if (typeof window.clearAmxPasswordCache === 'function') window.clearAmxPasswordCache();
+    if (typeof window.clearRankTicketCache === 'function') window.clearRankTicketCache();
   }
 
   // Admin badge + _pw: sadece üye oturumunda /api/me/server-admin ile
@@ -2439,16 +2900,31 @@ window.connectToServer = async function (port, mapName, isHost = false) {
     } catch (e) { /* ignore */ }
   }
 
-  // Mikrofon izni iste (Xash3D voice support için)
-  try {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      browserCSDebugLog('[Audio] Microphone permission granted.');
+  // Hesap bazlı rank bileti (JWT → kısa ömürlü ticket → setinfo _bcs_rank)
+  // VIP bileti paralel (aktif abone → setinfo _bcs_vip)
+  if (port && !isHost && getCurrentUser()) {
+    try {
+      const rankP =
+        typeof window.prefetchRankTicketForPort === 'function'
+          ? window.prefetchRankTicketForPort(port)
+          : Promise.resolve(null);
+      const vipP =
+        typeof window.ensureVipTicketForPort === 'function'
+          ? window.ensureVipTicketForPort(port)
+          : Promise.resolve(null);
+      await Promise.all([rankP, vipP]);
+    } catch (e) { /* ignore — misafir gibi devam */ }
+  } else if (port) {
+    if (typeof window.clearRankTicketCache === 'function') {
+      window.clearRankTicketCache(port);
     }
-  } catch (err) {
-    console.warn('[Audio] Microphone permission denied or not available:', err);
-    if (typeof notify === 'function') notify('Mikrofon erişimi reddedildi, sesli iletişim çalışmayacak.', 'warn');
+    if (typeof window.clearVipTicketCache === 'function') {
+      window.clearVipTicketCache(port);
+    }
   }
+
+  // Voice/mic kapalı: getUserMedia açma. SDL capture ScriptProcessor (512)
+  // main-thread wake üretir; voice_enable zaten 0 (engine.js).
 
   // Açık modalları kapat (maç modu modalını koru)
   document.querySelectorAll('.modal, .modal-overlay, #login-modal, #premium-modal, #guest-name-modal, #welcome-motd').forEach(el => {
@@ -2524,6 +3000,7 @@ window.connectToServer = async function (port, mapName, isHost = false) {
 // --- INIT ---
 runSplash();
 initAuth();
+initRankGiftPopup();
 // Auth sonrası admin-şifre bildirimlerini kontrol et
 setTimeout(() => {
   if (typeof checkAdminPasswordNotices === 'function') {
@@ -2541,8 +3018,59 @@ setTimeout(() => {
   if (params.get('modal') === 'premium') {
     const modal = document.getElementById('premium-modal');
     if (modal) modal.style.display = 'flex';
-    window.history.replaceState({}, '', '/oyna');
+    window.history.replaceState({}, '', '/oyna/');
   }
+})();
+
+/** VIP paket sayfasından /oyna/?vip=silver|gold|platinum|1 — panel veya giriş */
+(function openVipFlowFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const vipRaw = String(params.get('vip') || '').toLowerCase();
+  const tierMatch = ['silver', 'gold', 'platinum'].includes(vipRaw) ? vipRaw : null;
+  const wantVip =
+    vipRaw === '1' ||
+    !!tierMatch ||
+    params.get('modal') === 'vip' ||
+    params.get('modal') === 'login' ||
+    params.get('login') === '1';
+  if (!wantVip) return;
+
+  if (tierMatch) {
+    try { sessionStorage.setItem('bcs_vip_intent', tierMatch); } catch (_) { /* ignore */ }
+  } else if (vipRaw === '1') {
+    try { sessionStorage.setItem('bcs_vip_intent', 'gold'); } catch (_) { /* ignore */ }
+  }
+
+  window.history.replaceState({}, '', '/oyna/');
+
+  let attempts = 0;
+  const maxAttempts = 20;
+  const tick = () => {
+    attempts += 1;
+    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const loginModal = document.getElementById('login-modal');
+    const dashBtn = document.getElementById('btn-dashboard');
+
+    if (user) {
+      if (typeof window.openVipPurchasePanel === 'function') {
+        window.openVipPurchasePanel(sessionStorage.getItem('bcs_vip_intent') || tierMatch || 'gold');
+      } else if (dashBtn) {
+        dashBtn.click();
+      } else {
+        const dashModal = document.getElementById('dashboard-modal');
+        if (dashModal) dashModal.style.display = 'flex';
+      }
+      return;
+    }
+
+    if (attempts >= maxAttempts) {
+      // Oturum yok — giriş; bcs_vip_intent login sonrası paneli açar
+      if (loginModal) loginModal.style.display = 'flex';
+      return;
+    }
+    setTimeout(tick, 200);
+  };
+  setTimeout(tick, 150);
 })();
 
 // ── AUTO-CONNECT: sayfa yenilendikten sonra bekleyen baglanti varsa otomatik baglan ──
@@ -2751,7 +3279,7 @@ window._execMatchCfgWithPass = async function (svPassword) {
     'hostname "CS 1.5 Clan Match Server"',
     'sv_password "' + safePassword + '"',
     'sv_cheats 0', 'sv_lan 0', 'sv_pausable 1',
-    'sv_voiceenable 1', 'sv_alltalk 0',
+    'sv_voiceenable 0', 'sv_alltalk 0',
     'sv_gravity 800', 'sv_maxspeed 320',
     'sv_airaccelerate 10', 'sv_aim 0',
     'mp_friendlyfire 1', 'mp_autoteambalance 0',
@@ -2805,8 +3333,60 @@ window._execMatchCfgWithPass = async function (svPassword) {
   const gCanvas = document.getElementById('canvas');
   if (!escMenu || !gCanvas) return;
 
+  // Y/U (say / team say) pointer-lock'u düşürür — bunu ESC sanıp menü açma.
+  let suppressPauseMenuUntil = 0;
+  // Ctrl (+duck) gibi oyun tuşları bazı tarayıcılarda pointer-lock'u düşürebiliyor.
+  // Bu pencere içinde kilit düşerse ESC değil kaza sayıp kilidi geri al.
+  let relockAfterLossUntil = 0;
+
+  const typingTarget = (el) => {
+    if (!el) return false;
+    const tag = (el.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || el.isContentEditable;
+  };
+
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.repeat) return;
+      if (typingTarget(e.target) || typingTarget(document.activeElement)) return;
+
+      // Klasik CS chat / menü — fare kilidi kalkar, pause menü açılmamalı
+      const chatOrMenu =
+        e.code === 'KeyY' ||
+        e.code === 'KeyU' ||
+        e.code === 'KeyB' ||
+        e.code === 'KeyM' ||
+        e.key === 'y' ||
+        e.key === 'Y' ||
+        e.key === 'u' ||
+        e.key === 'U' ||
+        e.key === 'b' ||
+        e.key === 'B' ||
+        e.key === 'm' ||
+        e.key === 'M';
+      if (chatOrMenu) {
+        suppressPauseMenuUntil = Date.now() + 2500;
+        return;
+      }
+
+      // Esc, pointer-lock sırasında sayfaya keydown göndermez (tarayıcı yutar).
+      // O yüzden Esc DIŞINDA bir tuş basılıp hemen ardından kilit düşerse,
+      // bu kaza kaynaklı bir kilit kaybıdır (ör. Ctrl/+duck) → menü açma, kilidi geri al.
+      if (e.key !== 'Escape') {
+        relockAfterLossUntil = Date.now() + 400;
+      }
+    },
+    true
+  );
+
   document.addEventListener('pointerlockchange', () => {
     if (!state.engineRunning) return;
+    // Mobil dokunmatikte pointer-lock yok — ESC menüyü açma
+    if (window._browserCSTouchControls) {
+      escMenu.classList.remove('show');
+      return;
+    }
     const consoleOpenNow = document.getElementById('console-panel')?.classList.contains('open');
     if (document.pointerLockElement === gCanvas) {
       escMenu.classList.remove('show');
@@ -2814,6 +3394,14 @@ window._execMatchCfgWithPass = async function (svPassword) {
       setTimeout(() => {
         // Kalite / toolbar tıklaması geçici unlock — ESC menüyü açma
         if (window._browserCSIgnorePointerLockLoss) return;
+        if (window._browserCSTouchControls) return;
+        // Chat (Y/U) veya buy/team menüsü — pause menüyü bastır
+        if (Date.now() < suppressPauseMenuUntil) return;
+        // Ctrl/+duck gibi oyun tuşu kaynaklı kaza kilit kaybı — menü açma, kilidi geri al
+        if (Date.now() < relockAfterLossUntil) {
+          try { gCanvas.requestPointerLock(); } catch (e) { /* ignore */ }
+          return;
+        }
         const kickEl = document.getElementById('kick-overlay');
         const reconEl = document.getElementById('reconnect-overlay');
         const kickOpen = kickEl && kickEl.classList.contains('show');
@@ -2827,6 +3415,7 @@ window._execMatchCfgWithPass = async function (svPassword) {
         const sbOpen = sb && sb.style.display !== 'none' && sb.style.display !== '';
         const motd = document.getElementById('welcome-motd');
         const motdOpen = motd && motd.classList.contains('visible');
+        const localMenuOpen = !!window._browserCSLocalMenu;
         if (
           !kickOpen &&
           !reconOpen &&
@@ -2834,6 +3423,7 @@ window._execMatchCfgWithPass = async function (svPassword) {
           !tmOpen &&
           !sbOpen &&
           !motdOpen &&
+          !localMenuOpen &&
           state.engineRunning
         ) {
           escMenu.classList.add('show');
@@ -2844,7 +3434,9 @@ window._execMatchCfgWithPass = async function (svPassword) {
 
   if (btnResume) btnResume.addEventListener('click', () => {
     escMenu.classList.remove('show');
-    try { gCanvas.requestPointerLock(); } catch (e) { }
+    if (!window._browserCSTouchControls) {
+      try { gCanvas.requestPointerLock(); } catch (e) { }
+    }
     gCanvas.focus();
   });
 
@@ -2857,7 +3449,9 @@ window._execMatchCfgWithPass = async function (svPassword) {
       window.executeEngineCommand('setinfo _vgui_menus 0');
       window.executeEngineCommand('retry');
       notify('retry komutu gönderildi.', 'info');
-      try { gCanvas.requestPointerLock(); } catch (e) { }
+      if (!window._browserCSTouchControls) {
+        try { gCanvas.requestPointerLock(); } catch (e) { }
+      }
     }
   });
 
@@ -2893,6 +3487,10 @@ window.leaveBrowserCSServer = function leaveBrowserCSServer(opts = {}) {
   window._browserCSLeaving = true;
   window._browserCSInGameFlag = false;
   window._browserCSScoreboardSeen = false;
+  window._browserCSDidJoinFullupdate = false;
+  window._browserCSScoreDomSig = '';
+  window._browserCSLocalTeam = null;
+  releaseBrowserCSWakeLock();
 
   try {
     window.stopBrowserCSPromoLoop?.();
@@ -2965,14 +3563,23 @@ window.leaveBrowserCSServer = function leaveBrowserCSServer(opts = {}) {
 
 assertEngineBridges();
 
-// Sekme/kapanışta sadece kendi kanalını kapat (OOB disconnect yok)
+// Sekme/kapanış: mümkünse engine disconnect, sonra WebRTC kapat.
+// Asıl sunucu-side leave: DataChannel close → port-scoped OOB disconnect.
 window.addEventListener('pagehide', () => {
   if (window._browserCSLeaving) return;
   try {
-    if (state.xash?.dc?.readyState === 'open') {
-      try { state.xash.dc.close(); } catch (e) { /* ignore */ }
+    if (typeof window.executeEngineCommand === 'function' && state.engineRunning) {
+      try { window.executeEngineCommand('disconnect'); } catch (_) { /* ignore */ }
     }
-  } catch (e) { /* ignore */ }
+  } catch (_) { /* ignore */ }
+  try {
+    if (state.xash?._netBridge) {
+      try { state.xash._netBridge.disconnect(); } catch (_) { /* ignore */ }
+    }
+    if (state.xash?.dc?.readyState === 'open') {
+      try { state.xash.dc.close(); } catch (_) { /* ignore */ }
+    }
+  } catch (_) { /* ignore */ }
 });
 
 // Toolbar: Sunuculara Dön → sunucu listesi
@@ -2997,14 +3604,29 @@ window.addEventListener('pagehide', () => {
   const btnKickRecon = document.getElementById('btn-kick-reconnect');
   if (!kickOverlay) return;
 
+  // Sadece "sen atıldın" mesajları — üçüncü şahıs kick logları overlay açmamalı.
+  // (Örn. AMXX "Kick: Admin kick Player" veya "kicked due to invalid password" başkasının logu)
   const KICK_PATTERNS = [
+    { r: /you were kicked from the game/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
     { r: /you have been kicked/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Yonetici tarafindan sunucudan atildiniz.' },
-    { r: /kicked by server/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
-    { r: /idle.*kick|afk.*kick/i, title: 'HAREKETSIZLIK', reason: 'Uzun sure hareketsizlik nedeniyle sunucudan otomatik atildiniz.' },
-    { r: /banned/i, title: 'SUNUCU ERISIMI REDDEDILDI', reason: 'Bu sunucuya girisiniz engellenmis.' },
+    { r: /browsercs anti-cheat/i, title: 'ANTI-CHEAT', reason: 'Sunucu anti-cheat korumasi baglantinizi kesti.' },
+    { r: /\byou\b.*\bkicked by server\b|\bkicked by server\b.*\byou\b/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
+    { r: /^kicked by server\.?$/i, title: 'SUNUCUDAN ATILDINIZ', reason: 'Sunucu sizi baglantidan kesti.' },
+    { r: /you.*(idle|afk).*kick|(idle|afk).*kick.*you/i, title: 'HAREKETSIZLIK', reason: 'Uzun sure hareketsizlik nedeniyle sunucudan otomatik atildiniz.' },
+    { r: /you (are|have been) banned|\bbanned from (this )?server\b/i, title: 'SUNUCU ERISIMI REDDEDILDI', reason: 'Bu sunucuya girisiniz engellenmis.' },
     { r: /server is full/i, title: 'SUNUCU DOLU', reason: 'Sunucuda yer kalmadigi icin baglantiniz reddedildi.' },
-    { r: /bad password/i, title: 'HATALI SIFRE', reason: 'Sunucu sifresi hatali.' },
+    { r: /\bbad (server )?password\b/i, title: 'HATALI SIFRE', reason: 'Sunucu sifresi hatali.' },
   ];
+
+  function isThirdPartyKickLog(msg) {
+    const s = String(msg || '');
+    // AMXX plmenu / admincmd: "Kick: "X" kick "Y"" — admin aksiyonu, kendini atılmamış
+    if (/\[plmenu\.amxx\]|\[admincmd\.amxx\]/i.test(s) && /\bkick\b/i.test(s)) return true;
+    if (/^Kick:\s*".+"\s+kick\s+"/i.test(s)) return true;
+    if (/kicked due to invalid password/i.test(s)) return true;
+    if (/\bkick\s+".+"\b/i.test(s) && !/you have been kicked/i.test(s)) return true;
+    return false;
+  }
 
   window._showKickOverlay = function (title, reason) {
     if (kickTitleEl) kickTitleEl.textContent = title;
@@ -3021,6 +3643,7 @@ window.addEventListener('pagehide', () => {
     window.addConsoleLog = function (msg, type) {
       _origAdd(msg, type);
       if (!state.engineRunning || !msg) return;
+      if (isThirdPartyKickLog(msg)) return;
       const lower = msg.toLowerCase();
       for (const p of KICK_PATTERNS) {
         if (p.r.test(lower)) {
@@ -3309,13 +3932,79 @@ window.openAuthGate = function (msgOverride) {
   window.showMenuBackground = showMenuBg;
 })();
 
-// --- BROWSERCS: Sniper Scope JS Overlay ---
+// --- BROWSERCS: Sniper Scope JS Overlay + quick-scope input buffer ---
+let browserCSSniperScopeOpen = false;
+let browserCSSniperScopeOpenedAt = 0;
+let browserCSSniperQuickClickAt = 0;
+let browserCSSniperBufferTimers = [];
+
+function clearSniperInputBuffer() {
+  browserCSSniperBufferTimers.forEach((timer) => clearTimeout(timer));
+  browserCSSniperBufferTimers = [];
+  browserCSSniperQuickClickAt = 0;
+}
+
+function pulseBufferedSniperAttack() {
+  if (
+    !browserCSSniperScopeOpen ||
+    !state.engineRunning ||
+    typeof window.executeEngineCommand !== 'function'
+  ) return;
+
+  window.executeEngineCommand('+attack');
+  setTimeout(() => {
+    if (typeof window.executeEngineCommand === 'function') {
+      window.executeEngineCommand('-attack');
+    }
+  }, 34);
+}
+
 window.toggleSniperScope = function(isOpen) {
+  const nextOpen = Boolean(isOpen);
+  if (nextOpen && !browserCSSniperScopeOpen) {
+    browserCSSniperScopeOpenedAt = performance.now();
+  } else if (!nextOpen) {
+    clearSniperInputBuffer();
+  }
+  browserCSSniperScopeOpen = nextOpen;
+
   const scope = document.getElementById('custom-sniperscope');
   if (scope) {
-    scope.style.display = isOpen ? 'block' : 'none';
+    scope.style.display = nextOpen ? 'block' : 'none';
   }
 };
+
+document.addEventListener('mousedown', (event) => {
+  if (
+    event.button !== 0 ||
+    !browserCSSniperScopeOpen ||
+    window._browserCSTouchControls
+  ) return;
+
+  const canvas = document.getElementById('canvas');
+  if (document.pointerLockElement !== canvas) return;
+
+  const sinceScopeOpened = performance.now() - browserCSSniperScopeOpenedAt;
+  if (sinceScopeOpened >= 0 && sinceScopeOpened <= 240) {
+    browserCSSniperQuickClickAt = performance.now();
+  }
+}, true);
+
+document.addEventListener('mouseup', (event) => {
+  if (event.button !== 0 || !browserCSSniperQuickClickAt) return;
+
+  const clickDuration = performance.now() - browserCSSniperQuickClickAt;
+  browserCSSniperQuickClickAt = 0;
+  if (clickDuration > 220 || !browserCSSniperScopeOpen) return;
+
+  // İlk tekrar çoğu aynı-kare kaybını çözer. İkinci tekrar, weapon cooldown
+  // daha uzun sürdüyse devreye girer; başarılı atış scope'u kapatınca iptal olur.
+  [90, 320].forEach((offset) => {
+    const wait = Math.max(0, browserCSSniperScopeOpenedAt + offset - performance.now());
+    const timer = setTimeout(pulseBufferedSniperAttack, wait);
+    browserCSSniperBufferTimers.push(timer);
+  });
+}, true);
 
 // --- BROWSERCS: Text Menu Keyboard Shortcuts Removed ---
 // The text menu relies completely on the engine's native key handlers now.
@@ -3345,6 +4034,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   canvas.addEventListener("click", async () => {
     canvas.focus();
+    if (window._browserCSTouchControls) return;
     if (document.pointerLockElement !== canvas) {
       try {
         await canvas.requestPointerLock();

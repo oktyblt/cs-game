@@ -4,6 +4,19 @@ create table profiles (
   username text unique not null,
   wallet_balance integer default 0,
   is_premium boolean default false,
+  -- Classic CS VIP (see migrations/20260721_vip_subscriptions.sql)
+  vip_tier text not null default 'none'
+    check (vip_tier in ('none', 'silver', 'gold', 'platinum')),
+  vip_expires_at timestamp with time zone,
+  vip_clan_tag text,
+  vip_granted_at timestamp with time zone,
+  vip_granted_by text,
+  vip_notes text,
+  -- Moderation (see migrations/20260721_user_bans.sql)
+  is_banned boolean not null default false,
+  banned_until timestamp with time zone,
+  ban_reason text,
+  admin_notes text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -41,6 +54,32 @@ create policy "Users can insert their own servers." on purchased_servers
 
 create policy "Users can update their own servers." on purchased_servers
   for update using (auth.uid() = owner_id);
+
+-- ENPARA havale/EFT siparişleri
+create table if not exists rental_orders (
+  id uuid default gen_random_uuid() primary key,
+  order_code text not null unique,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  server_name text not null,
+  map text not null default 'de_dust2',
+  max_players integer not null default 16,
+  amount_try numeric(10,2) not null default 350,
+  status text not null default 'pending_payment'
+    check (status in ('pending_payment', 'paid', 'provisioning', 'active', 'cancelled', 'failed')),
+  purchased_server_id uuid references purchased_servers(id) on delete set null,
+  admin_note text,
+  paid_at timestamptz,
+  created_at timestamptz not null default timezone('utc'::text, now()),
+  updated_at timestamptz not null default timezone('utc'::text, now())
+);
+
+alter table rental_orders enable row level security;
+
+create policy "Users can view their own rental orders." on rental_orders
+  for select using (auth.uid() = owner_id);
+
+create policy "Users can insert their own rental orders." on rental_orders
+  for insert with check (auth.uid() = owner_id);
 
 -- Create a function to handle new user signups and automatically insert into profiles
 create or replace function public.handle_new_user()

@@ -1,12 +1,16 @@
 /** @module net/reconnect */
 import { getStoredAmxPassword } from './amxPassword.js';
+import { getStoredRankTicket, prefetchRankTicketForPort } from './rankTicket.js';
+import { ensureVipTicketForPort, getStoredVipTicket } from './vipTicket.js';
 import { state } from '../game/state.js';
 
 export const BrowserCSReconnect = (() => {
   const MAX_ATTEMPTS = 5;
   const MANUAL_RETRY_COOLDOWN_MS = 1200;
   // ensureDcReady içinde kısa WebRTC denemeleri var; burada oyun oturumunu bekle
-  const CONNECT_WAIT_MS = 35000;
+  /* FastDL / custom resource sync on rented servers can exceed 35s after restarts. */
+  const CONNECT_WAIT_MS = 90000;
+  const CONNECT_WAIT_TRAFFIC_MS = 120000;
   const WEBRTC_RETRY_TIMEOUT_MS = 45000;
   const RETRY_DELAYS = [
     400,
@@ -166,10 +170,59 @@ export const BrowserCSReconnect = (() => {
     window.executeEngineCommand(`setinfo _pw "${safe}"`);
   }
 
+  function restoreRankTicket() {
+    const port = window._browserCSConnectPort || "";
+    const ticket = getStoredRankTicket(port);
+    if (typeof window.executeEngineCommand !== "function") return;
+    if (ticket) {
+      const safe = sanitizeEngineArgument(ticket);
+      window.executeEngineCommand(`setinfo _bcs_rank "${safe}"`);
+    } else {
+      // Misafir / süresi dolmuş bilet — eski setinfo kalmasın
+      window.executeEngineCommand('setinfo _bcs_rank ""');
+    }
+  }
+
+  function clearVipTicketSetinfo() {
+    if (typeof window.executeEngineCommand !== "function") return;
+    /* Keep connect userinfo small — inject VIP only after fully in-game. */
+    window.executeEngineCommand('setinfo _bcs_vip ""');
+  }
+
+  function restoreVipTicket() {
+    const port = window._browserCSConnectPort || "";
+    const ticket = getStoredVipTicket(port);
+    if (typeof window.executeEngineCommand !== "function") return;
+    if (ticket) {
+      const safe = sanitizeEngineArgument(ticket);
+      window.executeEngineCommand(`setinfo _bcs_vip "${safe}"`);
+    } else {
+      window.executeEngineCommand('setinfo _bcs_vip ""');
+    }
+  }
+
+  async function refreshRankTicketBeforeConnect() {
+    const port = window._browserCSConnectPort || "";
+    if (!port) return;
+    try {
+      await Promise.all([
+        prefetchRankTicketForPort(port),
+        ensureVipTicketForPort(port),
+      ]);
+    } catch {
+      /* guest / offline */
+    }
+  }
+
   let connectCommandSentAt = 0;
   let recvAtConnect = 0;
 
-  function executeReconnectCommand() {
+  async function executeReconnectCommand() {
+    if (!state.engineRunning || state.xash?.exited) {
+      console.warn('[Reconnect] Engine henüz hazır değil — connect ertelendi');
+      return;
+    }
+
     // Menü splash'i bağlanırken görünmesin
     if (typeof window.hideMenuBackground === "function") {
       window.hideMenuBackground();
@@ -186,9 +239,19 @@ export const BrowserCSReconnect = (() => {
     }
     restorePassword();
     restoreAmxPassword();
+    await refreshRankTicketBeforeConnect();
+    restoreRankTicket();
+    /* Do NOT put _bcs_vip in the connect userinfo — Xash drops VIP clients
+     * mid-handshake when userinfo is churned (name/flags) or oversized. */
+    clearVipTicketSetinfo();
+    /* Önceki oturumdan kalmış vip_* oyuncu modeli team seçiminde yeniden
+     * uygulanırsa WASM istemcisi çökebiliyor. Takım modeli bu bağlantıda oyun
+     * DLL'i tarafından güvenli şekilde yeniden seçilecek. */
+    window.executeEngineCommand('setinfo model ""');
 
     const port = window._browserCSConnectPort || "";
     const doConnect = () => {
+      if (!state.engineRunning || state.xash?.exited) return;
       // connect öncesi sayaç — warm-start paketleri "girdik" sanılmasın
       recvAtConnect = Number(state.xash?.packetCountRecv || 0);
       connectCommandSentAt = Date.now();
@@ -206,6 +269,7 @@ export const BrowserCSReconnect = (() => {
 
     // Engine'in menüden çıkması için kısa bekle
     setTimeout(doConnect, 280);
+
   }
 
   /** Gerçek oyuna giriş — overlay bundan önce KAPANMASIN */
@@ -222,13 +286,29 @@ export const BrowserCSReconnect = (() => {
     // Scoreboard C++ bridge sadece gerçek oturumda gelir
     if (window._browserCSScoreboardSeen) return true;
 
+
     return false;
+  }
+
+  /** Classic DC or netBridge SAB path */
+  function isXashDcOpen() {
+    try {
+      if (typeof state.xash?.isDataChannelOpen === "function") {
+        return !!state.xash.isDataChannelOpen();
+      }
+      return !!(
+        state.xash?._netBridge?.open ||
+        state.xash?.dc?.readyState === "open"
+      );
+    } catch {
+      return false;
+    }
   }
 
   /** WebRTC canlı mı / paket var mı — sadece retry'de kanalı öldürmemek için */
   function hasJoinTraffic() {
     try {
-      if (state.xash?.dc?.readyState !== "open") return false;
+      if (!isXashDcOpen()) return false;
       const recv = Number(state.xash.packetCountRecv || 0);
       // connect komutundan SONRA gelen paketler
       if (connectCommandSentAt && recv - recvAtConnect >= 8) return true;
@@ -249,11 +329,17 @@ export const BrowserCSReconnect = (() => {
         return;
       }
 
-      const deadline = Date.now() + timeoutMs;
+      const started = Date.now();
+      let deadline = started + timeoutMs;
       const check = () => {
         if (!reconnecting || sessionJoined || isFullyInGame()) {
           resolve(true);
           return;
+        }
+
+        /* Resources still flowing — give the join more time before retry. */
+        if (hasJoinTraffic() && deadline < started + CONNECT_WAIT_TRAFFIC_MS) {
+          deadline = started + CONNECT_WAIT_TRAFFIC_MS;
         }
 
         if (Date.now() >= deadline) {
@@ -279,8 +365,7 @@ export const BrowserCSReconnect = (() => {
       return true;
     }
 
-    const dcAlreadyOpen =
-      state.xash?.dc?.readyState === "open";
+    const dcAlreadyOpen = isXashDcOpen();
 
     setText(
       messageEl,
@@ -478,7 +563,7 @@ export const BrowserCSReconnect = (() => {
     );
   }
 
-  function start(reason) {
+  function start(reason, opts = {}) {
     /*
      * Aynı kopma WebSocket, engine logu ve C++ eventi
      * tarafından aynı anda bildirilebilir.
@@ -495,8 +580,11 @@ export const BrowserCSReconnect = (() => {
       return;
     }
 
-    // Oyuna zaten girdiysek sahte kopma sinyallerini yoksay.
-    if (sessionJoined && isFullyInGame()) {
+    const forcePipe = !!opts.forcePipe;
+
+    // Oyuna zaten girdiysek sahte kopma sinyallerini yoksay —
+    // ama mid-game DC ölümü (forcePipe) mutlaka kurtarılsın.
+    if (sessionJoined && isFullyInGame() && !forcePipe) {
       return;
     }
 
@@ -528,6 +616,8 @@ export const BrowserCSReconnect = (() => {
     recvAtConnect = 0;
     window._browserCSInGameFlag = false;
     window._browserCSScoreboardSeen = false;
+    window._browserCSDidJoinFullupdate = false;
+    window._browserCSScoreDomSig = '';
     lastReason =
       reason || "Sunucuya bağlanılıyor...";
 
@@ -538,7 +628,7 @@ export const BrowserCSReconnect = (() => {
     showOverlay(lastReason, "connecting");
     setText(
       attemptEl,
-      state.xash?.dc?.readyState === "open"
+      isXashDcOpen()
         ? "Ağ kanalı hazır — oyuna giriliyor"
         : "Bağlantı hazırlanıyor..."
     );
@@ -561,6 +651,9 @@ export const BrowserCSReconnect = (() => {
     reconnecting = false;
     exhausted = false;
     attempt = 0;
+    if (wasReconnecting) {
+      window._browserCSScoreDeadGraceUntil = Date.now() + 20000;
+    }
 
     clearRetryTimer();
     hideOverlay();
@@ -568,6 +661,31 @@ export const BrowserCSReconnect = (() => {
     if (typeof window.hideMenuBackground === "function") {
       window.hideMenuBackground();
     }
+
+    /* VIP ticket after handshake — server binds on late setinfo / delayed tasks.
+     * Single deferred send only: Xash drops VIP clients when userinfo is
+     * churned right after connect (same fragility that keeps _bcs_vip out of
+     * the connect userinfo). Repeated immediate resends (0/800/2500ms) were
+     * re-triggering that mid-handshake drop while resources were still
+     * settling, causing a VIP-only disconnect/reconnect loop. AMXX already
+     * re-reads _bcs_vip on its own schedule (0.5s/1.5s/2.0s after
+     * putinserver), so one late, settled send is enough.
+     *
+     * On retry/reconnect (esp. right after a page reload from the WASM
+     * crash auto-recovery), the EARLIER prefetch in executeReconnectCommand()
+     * can race the Supabase session restore and come back empty — the client
+     * then connects as a "guest" even for an active VIP. Geçerli bir bilet
+     * varsa tekrar API sorgusu yapmadan onu kullan; yoksa auth oturduktan sonra
+     * burada tek kez yenile. */
+    try {
+      setTimeout(async () => {
+        const port = window._browserCSConnectPort || "";
+        if (port) {
+          try { await ensureVipTicketForPort(port); } catch (_) { /* guest / offline */ }
+        }
+        restoreVipTicket();
+      }, 1800);
+    } catch (_) { /* ignore */ }
 
     try {
       window.dispatchEvent(new CustomEvent("xash3d-ingame"));
@@ -621,6 +739,8 @@ export const BrowserCSReconnect = (() => {
     exhausted = false;
     sessionJoined = false;
     attempt = 0;
+    // Eski "ölü" skorboard bayrağını kısa süre yoksay
+    window._browserCSScoreDeadGraceUntil = Date.now() + 20000;
 
     showOverlay("Manuel yeniden bağlanma başlatıldı.", "reconnecting");
     setText(
@@ -638,6 +758,8 @@ export const BrowserCSReconnect = (() => {
     exhausted = false;
     sessionJoined = false;
     attempt = 0;
+    window._browserCSDidJoinFullupdate = false;
+    window._browserCSScoreDomSig = '';
     clearRetryTimer();
     hideOverlay();
   }
