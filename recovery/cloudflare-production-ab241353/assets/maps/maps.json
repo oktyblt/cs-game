@@ -1,0 +1,651 @@
+[
+  {
+    "name": "de_dust2",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "CS tarihinin en ikonik haritası. A Long, Short ve B Tunnels dengesiyle klasik 5v5.",
+    "slug": "de-dust2",
+    "title_tr": "Dust2",
+    "keywords": [
+      "de_dust2",
+      "dust2",
+      "CS 1.5 dust2",
+      "tarayıcıda dust2",
+      "BrowserCS dust2",
+      "bomba imha",
+      "long",
+      "short",
+      "cat",
+      "tunnels"
+    ],
+    "body": "de_dust2, Counter-Strike tarihinin en ikonik bomba imha haritasıdır. BrowserCS ile hiçbir indirme yapmadan tarayıcınızda Dust2 oynayabilirsiniz. A Long, Short (Cat) ve B Tunnels dengesi klasik 5v5 ritmini korur.",
+    "tips": [
+      "A Long’da AWP açılarına dikkat edin.",
+      "B Tunnels erken baskında flaş kullanın.",
+      "Mid kontrolü rotasyonu hızlandırır."
+    ],
+    "briefing": "Dust II - Bombalama/Imha Etme Harita: DaveJ (dv@btinternet.com) Kaplamalar: MacMan (MacManInfi@aol.com) Counter-Teroristler: Teroristlerin kimyasal silah sandiklarini bombalamalarini engelleyin. Takim uyeleri hedef alanlara konulan bombalari imha etmek zorundadirlar. Teroristler: C4'u tasiyan terorist kimyasal silah sandiklarindan bir tanesini bombalamak zorundadir. Diger Notlar: There are 2 chemical weapon stashes in the mission.",
+    "image": "/assets/maps/heroes/de_dust2.jpg",
+    "thumb": "/assets/maps/de_dust2.jpg"
+  },
+  {
+    "name": "de_dust",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Orijinal Dust çöl haritası. Daha dar koridorlar ve nostaljik ritim.",
+    "slug": "de-dust",
+    "title_tr": "Dust",
+    "keywords": [
+      "de_dust",
+      "dust",
+      "CS 1.5 dust",
+      "BrowserCS",
+      "bomba imha"
+    ],
+    "body": "Orijinal Dust çöl haritası. Dust2’ye göre daha dar koridorlar ve nostaljik tempo sunar. BrowserCS üzerinde CS 1.5 Dust’ı tarayıcıdan oynayın.",
+    "tips": [
+      "Dar kapılarda flash etkili.",
+      "Site girişlerini erken tutun."
+    ],
+    "briefing": "Dust - Bombalama/Imha Etme Harita: DaveJ (dv@btinternet.com) Kaplamalar: Macman (MacManInfi@aol.com) Counter-Teroristler: Kimyasal silah sandiklarini bombalamak isteyen teroristleri durdurun. Takim mensuplari hedef bolgeleri tehdit eden butun bombalari imha etmelidir. Teroristler: Teroristler tasidiklari C4 ile kimyasal silahlari yok etmeliler. Diger Not: Orada iki tane kimyasal silah deposu var",
+    "image": "/assets/maps/heroes/de_dust.jpg",
+    "thumb": "/assets/maps/de_dust.jpg"
+  },
+  {
+    "name": "de_inferno",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "İtalyan köy atmosferi. Banana ve Mid kontrolü maçı belirler.",
+    "slug": "de-inferno",
+    "title_tr": "Inferno",
+    "keywords": [
+      "de_inferno",
+      "inferno",
+      "CS 1.5 inferno",
+      "banana",
+      "BrowserCS"
+    ],
+    "body": "İtalyan köy atmosferli Inferno. Banana ve Mid kontrolü maçı belirler. BrowserCS ile CS 1.5 Inferno’yu indirmeden oynayın.",
+    "tips": [
+      "Banana’da util kullanımı kritik.",
+      "Apps ve balcony açılarını bilin."
+    ],
+    "briefing": "Inferno - Bombalama/Imha etme Harita: Chris Auty (Barney) (fragged101@yahoo.com) Kaplamalar: by Valve software Teroristler ufak bir koyden gecen iki tane kritik petrol boru hattini patlaymaya hazirlaniyorlar. Counter-Teroristler: Teroristlerin petrol boru hattini yoketmelerini engelleyin. Teroristler: Petrol boru hattini yokedin. Diger Notlar: Bu gorevde 2 tane bomba koyulabilecek yer bulunuyor. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_inferno.jpg",
+    "thumb": "/assets/maps/de_inferno.jpg"
+  },
+  {
+    "name": "de_aztec",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Maya tapınak temalı klasik. Köprü ve su kenarı çatışmaları.",
+    "slug": "de-aztec",
+    "title_tr": "Aztec",
+    "keywords": [
+      "de_aztec",
+      "aztec",
+      "CS 1.5 aztec",
+      "BrowserCS"
+    ],
+    "body": "Maya tapınak temalı klasik Aztec. Köprü ve su kenarı çatışmalarıyla bilinir. Tarayıcıda CS 1.5 Aztec deneyimi BrowserCS’te.",
+    "tips": [
+      "Köprü geçişlerinde smoke kullanın.",
+      "Su kenarı flanks’e açık."
+    ],
+    "briefing": "Aztek - Bombalama/Imha Etme Harita: Narby Kaplamalar: Macman Counter-Teroristler:  Eski Maya yerlesim yerlerini, bombalayip yikmadan once teroristleri engelleyin. Teroristler: Eski Maya yerlesim yerlerini bombalayin Diger Not: Eglenin (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_aztec.jpg",
+    "thumb": "/assets/maps/de_aztec.jpg"
+  },
+  {
+    "name": "de_nuke",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Nükleer tesis. Üst/alt site dikey oynanış ve Outside baskısı.",
+    "slug": "de-nuke",
+    "title_tr": "Nuke",
+    "keywords": [
+      "de_nuke",
+      "nuke",
+      "CS 1.5 nuke",
+      "BrowserCS",
+      "outside"
+    ],
+    "body": "Nükleer tesis haritası Nuke. Üst/alt site dikey oynanış ve Outside baskısı öne çıkar. BrowserCS’te CS 1.5 Nuke oynayın.",
+    "tips": [
+      "Ramp ve heaven kontrolü önemli.",
+      "Outside erken bilgi verir."
+    ],
+    "briefing": "Nuke - Bombalama/Imha etme Harita: Bieg (MEEEEDIC@gmx.net) Counter-Teroristler: Teroristleri, nukleer fuzeyi bombalamadan once engelleyin. Bombalama yukarda yada asagida olabilir. Takim mensuplari hedef bolgeleri tehdit eden butun bombalari imha etmelidir . Teroristler: Teroristler C4 ile nukleer fuzeyi yok etmeliler. Diger Not: Haritada 2 adet bombalama noktasi var. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_nuke.jpg",
+    "thumb": "/assets/maps/de_nuke.jpg"
+  },
+  {
+    "name": "de_cbble",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Ortaçağ kalesi. Geniş Mid ve sniper dostu hatlar.",
+    "slug": "de-cbble",
+    "title_tr": "Cobblestone",
+    "keywords": [
+      "de_cbble",
+      "cobblestone",
+      "cbble",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Ortaçağ kalesi Cobblestone. Geniş Mid ve sniper dostu hatlar. BrowserCS ile tarayıcıda CS 1.5 Cbble.",
+    "tips": [
+      "Mid sniper duel’lerine hazır olun.",
+      "Drop ve balcony açıları."
+    ],
+    "briefing": "Cobble - Bombalama/Imha Etme Harita: DaveJ (dv@btinternet.com) Kaplamalar: MacMan (MacManInfi@aol.com) Counter-Teroristler: Teroristleri, Lord William'in ciftligini bombalamadan once durdurun. Hukumet olma teklifi aldigi icin bir suikast tehdidi altinda. Teroristler: C4 bombasi haritadaki iki bombalama noktasindan birine konmalidir, boylece Lord Archwald olecek ve evine bir cok hasar gelecek. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_cbble.jpg",
+    "thumb": "/assets/maps/de_cbble.jpg"
+  },
+  {
+    "name": "de_chateau",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Şato içi yakın temas. Dar kapılar ve sürpriz açıları.",
+    "slug": "de-chateau",
+    "title_tr": "Chateau",
+    "keywords": [
+      "de_chateau",
+      "chateau",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Şato içi yakın temas haritası. Dar kapılar ve sürpriz açılar. CS 1.5 Chateau — BrowserCS’te ücretsiz.",
+    "tips": [
+      "Kapı peeks’lerinde ses dinleyin.",
+      "Yakın menzil silahlar avantajlı."
+    ],
+    "briefing": "Sato - Bombalama/Imha etme Macman    *chrisa@valvesoftware.com* Ido Magal *ido@valvesoftware.com* Teroristler: Cobble'in kaybedilmesinin ardindan Lord Williams yazlik satosunu yeniden yaptiriyor.  Onun bu girisimini engellemeniz lazim.  C4'u on avluya veya arka avluya koyabilirsiniz. Counter-Teroristler:  Lord Williams'in yatirimini koruyun ve teroristlerin yeni evi yoketmesini engelleyin. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_chateau.jpg",
+    "thumb": "/assets/maps/de_chateau.jpg"
+  },
+  {
+    "name": "de_piranesi",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Venedik kanalları. Su kenarı ve köprü geçişleri.",
+    "slug": "de-piranesi",
+    "title_tr": "Piranesi",
+    "keywords": [
+      "de_piranesi",
+      "piranesi",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Venedik kanalları temalı Piranesi. Su kenarı ve köprü geçişleri. BrowserCS’te tarayıcıdan oynayın.",
+    "tips": [
+      "Köprü kontrolleri rotasyonu etkiler."
+    ],
+    "briefing": "Piranesi - Bombalama/Imha etme Harita: Fingers - iikkak@valvesoftware.com Kaplamalar: Ido Magal Hikaye: Villa Piranesi adindaki eski bir saray muze haline getirilerek halka acilacak. Restore edilmis mobilya ve sanat eserleri bir paket halinde muzeye gonderiliyor. Teroristler: Gonderilen mallari yokederek muzenin acilmasini onleyin. Ikinci hedefiniz arka bahce ve onun paha bicilmez antik gunes saatidir. Counter-Teroristler:  Tarihi yerleri",
+    "image": "/assets/maps/heroes/de_piranesi.jpg",
+    "thumb": "/assets/maps/de_piranesi.jpg"
+  },
+  {
+    "name": "de_prodigy",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Endüstriyel tesis. Dar koridorlar ve hızlı rotasyon.",
+    "slug": "de-prodigy",
+    "title_tr": "Prodigy",
+    "keywords": [
+      "de_prodigy",
+      "prodigy",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Endüstriyel tesis Prodigy. Dar koridorlar ve hızlı rotasyon. Klasik CS 1.5 Prodigy BrowserCS’te.",
+    "tips": [
+      "Koridor flash’leri güçlü."
+    ],
+    "briefing": "Prodigy - Bombalama/Imha etme Harita: Hobbit (hobbit6@bellatlantic.net) Counter-Teroristler: Teroristleri, bilgisayar labarotuvari ve petrol hatti kontrol odasini bombalamadan once engelleyin. Takim mensuplari hedef bolgeleri tehdit eden butun bombalari imha etmelidir . Teroristler: Teroristler C4 ile hedeflerden birini yoketmeliler. Diger Not: Haritada 2 adet bombalama noktasi var. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_prodigy.jpg",
+    "thumb": "/assets/maps/de_prodigy.jpg"
+  },
+  {
+    "name": "de_storm",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Fırtınalı liman. Açık alanlar ve yan yollar.",
+    "slug": "de-storm",
+    "title_tr": "Storm",
+    "keywords": [
+      "de_storm",
+      "storm",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Fırtınalı liman haritası Storm. Açık alanlar ve yan yollar. BrowserCS ile CS 1.5 Storm.",
+    "tips": [
+      "Açık alanda AWP riski yüksek."
+    ],
+    "briefing": "Storm - Bombalama/Imha etme Harita: FLiPMoDE|Daank (daankvirus420k@icqmail.com) Kaplamalar:  Fingers - jOeSmOe - MattC Counter-Teroristler: Silah kutularini koruyun. Bu silahlar teroristler tarafindan tehdit edilen bir muttefik ulkeye gonderilecek. Teroristler: Politik nedenlerden dolayi kavgali oldugumuz ve saldirmayi dusundugumuz bir ulkeyi silahlandirma girisiminde bulunuluyor. Silahlarin onlara ulastirilmasini engelleyin. Diger Notlar: Bu gorevde 2 tane silah",
+    "image": "/assets/maps/heroes/de_storm.jpg",
+    "thumb": "/assets/maps/de_storm.jpg"
+  },
+  {
+    "name": "de_survivor",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Büyük açık alanlı harita. Uzun menzilli çatışmalar.",
+    "slug": "de-survivor",
+    "title_tr": "Survivor",
+    "keywords": [
+      "de_survivor",
+      "survivor",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Büyük açık alanlı Survivor. Uzun menzilli çatışmalar. Tarayıcıda CS 1.5 — BrowserCS.",
+    "tips": [
+      "Uzun hatlarda pozisyon alın."
+    ],
+    "briefing": "DE_SURVIVOR - Bombalama/Imha etme Harita: Michael Visser aka 3D_Mike (3D_Mike@soneramail.nl) (3DMike@nmtrix.com) www.lanmaniax.com Teroristler: -Kamyonu veya dusmus ucagi bombalayin Counter-Teroristler: -Teroristlerin bombayi koymalarini engelleyin (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_survivor.jpg",
+    "thumb": "/assets/maps/de_survivor.jpg"
+  },
+  {
+    "name": "de_torn",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Yıkık şehir. Çok katmanlı yollar ve flanks.",
+    "slug": "de-torn",
+    "title_tr": "Torn",
+    "keywords": [
+      "de_torn",
+      "torn",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Yıkık şehir Torn. Çok katmanlı yollar ve flanks. BrowserCS’te CS 1.5 Torn oynayın.",
+    "tips": [
+      "Katlar arası ses bilgisi önemli."
+    ],
+    "briefing": "Torn - Bombalama/Imha Etme Harita: Crinity & Madcross www.planethalflife.com/crinity/ Teroristler: Sehirdeki su deposunun icinde zehirli sinir gazi bombasi patlatarak diger sehirlere yayilmasini saglayin. Counter-Teroristler: Duruma hakim olun. Teroristlerin hedeflerine ulasmalarini engelleyin. Diger notlar: Sehirde 2 tane bombalanacak hedef bulunmaktadir. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_torn.jpg",
+    "thumb": "/assets/maps/de_torn.jpg"
+  },
+  {
+    "name": "de_train",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Tren istasyonu. Vagonlar arası peek ve A/B site baskısı.",
+    "slug": "de-train",
+    "title_tr": "Train",
+    "keywords": [
+      "de_train",
+      "train",
+      "CS 1.5 train",
+      "BrowserCS"
+    ],
+    "body": "Tren istasyonu Train. Vagonlar arası peek ve A/B site baskısı. BrowserCS ile indirmeden CS 1.5 Train.",
+    "tips": [
+      "Vagon peeks’lerinde dikkat.",
+      "Ivy ve alley rotasyonları."
+    ],
+    "briefing": "Tren Gari - Bombalama/Imha etme Harita: Chris Mair (chris@barking-dog.com) Counter-Teroristler: Teroristleri, iki trende yuklu olan nukleer malzemeleri bombalamadan once engelleyin. Takim mensuplari hedef bolgeleri tehdit eden butun bombalari imha etmelidir . Teroristler: Teroristler C4 ile nukleer malzemeleri yok etmeliler. Diger Not: Haritada 2 adet bombalama noktasi var. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_train.jpg",
+    "thumb": "/assets/maps/de_train.jpg"
+  },
+  {
+    "name": "de_vegas",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Las Vegas temalı. Neon ışıklar altında site savaşları.",
+    "slug": "de-vegas",
+    "title_tr": "Vegas",
+    "keywords": [
+      "de_vegas",
+      "vegas",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Las Vegas temalı Vegas. Neon ışıklar altında site savaşları. BrowserCS’te oyna.",
+    "tips": [
+      "Dar iç mekân avantajı."
+    ],
+    "briefing": "Vegas - Bombalama/Imha Etme Harita: +Cadaver+ (cadaver@planethalflife.com) Kaplamalar: George_Pooshoes (pooshoes@mapcore.com) Counter-Teroristler: Haxor kompleksine gizlice girin ve bombalama hedeflerini koruyun. Karsi koyan herkesi etkisiz hale getirin. Teroristler: Dikkatli hareket edin; hata yapmalarini bekleyin, kotu sohret sahibi olmak icin Sphinx'i bombalayin. Katkida Bulunanlar: Macman, Chaos, Tech3D, Jubilee. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_vegas.jpg",
+    "thumb": "/assets/maps/de_vegas.jpg"
+  },
+  {
+    "name": "de_vertigo",
+    "mode": "defusal",
+    "mode_tr": "Bomba İmha",
+    "description_tr": "Gökdelen inşaatı. Dar platformlar ve yükseklik riski.",
+    "slug": "de-vertigo",
+    "title_tr": "Vertigo",
+    "keywords": [
+      "de_vertigo",
+      "vertigo",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Gökdelen inşaatı Vertigo. Dar platformlar ve yükseklik riski. CS 1.5 Vertigo — BrowserCS.",
+    "tips": [
+      "Düşme hazard’larına dikkat."
+    ],
+    "briefing": "Vertigo - Bombalama/Imha etme Harita. Chris Auty (Barney) (fragged101@yahoo.com) Kaplamalar: Telnets and J0esm0e Terroristler rizzleton kulesinin tamamlanmasini engellemek icin orayi bombalamayi dusunuyorlar. Counter-Terroristler: Kulenin yokedilmesini engelleyin. Teroristler: Bombayi koyun ve kuleyi havaya ucurun. Diger notlar: Asagi dusmeyin. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/de_vertigo.jpg",
+    "thumb": "/assets/maps/de_vertigo.jpg"
+  },
+  {
+    "name": "cs_assault",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Klasik depo baskını. CT’ler içeri girer, T’ler tutar.",
+    "slug": "cs-assault",
+    "title_tr": "Assault",
+    "keywords": [
+      "cs_assault",
+      "assault",
+      "CS 1.5 assault",
+      "rehine",
+      "BrowserCS"
+    ],
+    "body": "Klasik depo baskını Assault. CT’ler içeri girer, T’ler tutar. BrowserCS ile CS 1.5 Hostage Assault.",
+    "tips": [
+      "Giriş util’leri kritik.",
+      "Hostage kurtarma zamanlaması."
+    ],
+    "briefing": "Saldiri - Rehine Kurtarma Harita: CryptR (lmuur@dlc.fi) Counter-Terrorists: Rehineleri kurtar. Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin. Teroristler sizi kamerayla izliyor olabilir. Teroristler: Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin. Bunun icin ne gerekiyorsa kullanin. Diger Notlar: Bu gorevde 4 tane rehine var.. Kurtarin onlari! (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/cs_assault.jpg",
+    "thumb": "/assets/maps/cs_assault.jpg"
+  },
+  {
+    "name": "cs_office",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Ofis labirenti. Hostages ve dar koridor peek’leri.",
+    "slug": "cs-office",
+    "title_tr": "Office",
+    "keywords": [
+      "cs_office",
+      "office",
+      "CS 1.5 office",
+      "BrowserCS",
+      "rehine"
+    ],
+    "body": "Ofis labirenti Office. Dar koridor peek’leri ve rehine kurtarma. Tarayıcıda CS 1.5 Office — BrowserCS.",
+    "tips": [
+      "Projector ve side hallway kontrolü."
+    ],
+    "briefing": "Ofis Kompleksi - Rehine Kurtarma Harita: Hobbit (Hobbit6@BellAtlantic.net) Kaplamalar:Locknut, Smoe, and George_Pooshoes. Gokyuzu: aIX. Counter-Teroristler: Ofis binasina arka girisi kullanarak girin ve rehineleri kurtarin. Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin . Teroristler: Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin . Diger Notlar: Bu gorevde 4 tane rehine var.",
+    "image": "/assets/maps/heroes/cs_office.jpg",
+    "thumb": "/assets/maps/cs_office.jpg"
+  },
+  {
+    "name": "cs_italy",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "İtalyan kasaba. Market ve apartman hatları.",
+    "slug": "cs-italy",
+    "title_tr": "Italy",
+    "keywords": [
+      "cs_italy",
+      "italy",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "İtalyan kasaba Italy. Market ve apartman hatları. BrowserCS’te CS 1.5 Italy.",
+    "tips": [
+      "Apartman açılarını ezberleyin."
+    ],
+    "briefing": "Italya - Rehine Kurtarma Harita: glenC AKA [HOTSHEEP]Bastard (glenc@hotsheep.com) Kaplamalar/Grafik: DigiChaos (digichaos@hotsheep.com) Counter-Teroristler: Italyan sehrinde esir alinmis rehineleri yabanci teroristleirn elinden kurtarin. Teroristler: Counter-Teroristleri rehineleri kurtarmadan once engelleyin yada Counter-Teroristleri imha edin. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/cs_italy.jpg",
+    "thumb": "/assets/maps/cs_italy.jpg"
+  },
+  {
+    "name": "cs_747",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Uçak içi yakın savaş. Dar kabin ve kanat baskını.",
+    "slug": "cs-747",
+    "title_tr": "747",
+    "keywords": [
+      "cs_747",
+      "747",
+      "CS 1.5",
+      "BrowserCS",
+      "uçak"
+    ],
+    "body": "Uçak içi yakın savaş 747. Dar kabin ve kanat baskını. BrowserCS ile oynayın.",
+    "tips": [
+      "Yakın mesafe silahlar."
+    ],
+    "briefing": "747 Hijack - Rehine Kurtarma Harita: Stephen \"Judas\" Superville (witchdawn@hotmail.com) Kaplamalar:  \"The Postman\" (heavengame@yahoo.com) Counter-Terrorists:  Ucaga gizlice girin ve teroristler ele gecirmeden ucakta kalan rehineleri kurtarin . Terrorists:  Counter-Teroristleri rehineleri kurtarmadan once engelleyin. Diger Not: Ucakta 5 tane rehine var.",
+    "image": "/assets/maps/heroes/cs_747.jpg",
+    "thumb": "/assets/maps/cs_747.jpg"
+  },
+  {
+    "name": "cs_backalley",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Şehir arka sokakları. Çok yönlü yaklaşım.",
+    "slug": "cs-backalley",
+    "title_tr": "Back Alley",
+    "keywords": [
+      "cs_backalley",
+      "backalley",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Şehir arka sokakları Back Alley. Çok yönlü yaklaşım. CS 1.5 — BrowserCS.",
+    "tips": [
+      "Flank yollarını kontrol edin."
+    ],
+    "briefing": "Alleyway - Rehine Kurtarma Harita: TYR (tyr@barking-dog.com) Counter-Terrorists: Teroristlerin mevzisine gizlice girin ve rehineler kurtarip onlari kurtarma bolgesine getirin.Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin . Teroristler: Eliminate the Counter-Terrorist force before they rescue any hostages. Diger Not: Bu gorevde 4 tane rehine var.",
+    "image": "/assets/maps/heroes/cs_backalley.jpg",
+    "thumb": "/assets/maps/cs_backalley.jpg"
+  },
+  {
+    "name": "cs_estate",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Malikâne. Bahçe ve iç mekân rotasyonları.",
+    "slug": "cs-estate",
+    "title_tr": "Estate",
+    "keywords": [
+      "cs_estate",
+      "estate",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Malikâne Estate. Bahçe ve iç mekân rotasyonları. BrowserCS’te CS 1.5 Estate.",
+    "tips": [
+      "Bahçe sniper riski."
+    ],
+    "briefing": "Zaphod'un Malikanesi - Rehine Kurtarma Harita: Zaphod Beeblebrox zaphod@mapcore.com Counter-Teroristler: Malikanede esir tutulan 3 rehineyi kurtarin. Teroristler: Counter-Teroristleri rehineleri kurtarmadan once engelleyin. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/cs_estate.jpg",
+    "thumb": "/assets/maps/cs_estate.jpg"
+  },
+  {
+    "name": "cs_havana",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Küba sokakları. Renkli mahalle ve balkon açıları.",
+    "slug": "cs-havana",
+    "title_tr": "Havana",
+    "keywords": [
+      "cs_havana",
+      "havana",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Küba sokakları Havana. Renkli mahalle ve balkon açıları. Tarayıcıda CS 1.5 Havana.",
+    "tips": [
+      "Balkon peeks."
+    ],
+    "briefing": "Havana- Rehine Kurtarma Ido Magal *ido@valvesoftware.com* Macman    *chrisa@valvesoftware.com* Teroristler: Bazi politikacilari Habana Vieja'da rehin aldiniz, round bitince sizi tahliye etmek icin gelecek olan helikopteri bekliyorsunuz. Counter-Teroristler:  Cevrede kontrolu saglayin ve teroristler kacmadan butun rehineleri kurtarin. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/cs_havana.jpg",
+    "thumb": "/assets/maps/cs_havana.jpg"
+  },
+  {
+    "name": "cs_militia",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Kır evi / orman. Dışarıdan içeri baskın.",
+    "slug": "cs-militia",
+    "title_tr": "Militia",
+    "keywords": [
+      "cs_militia",
+      "militia",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Kır evi / orman Militia. Dışarıdan içeri baskın. BrowserCS ile CS 1.5 Militia.",
+    "tips": [
+      "Dış hatlardan bilgi toplayın."
+    ],
+    "briefing": "Militia - Rehine Kurtarma Harita: Andrew Aumann (andrewja@home.com) Counter-Terrorists:  Cliffe'in arazisine girin ve rehineleri kurtarin. Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin . Teroristler: Counter-Teroristleri rehineleri kurtarmadan once engelleyin. Diger Notlar: Bu gorevde 4 tane rehine ve bir tane su ustunde. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/cs_militia.jpg",
+    "thumb": "/assets/maps/cs_militia.jpg"
+  },
+  {
+    "name": "cs_siege",
+    "mode": "hostage",
+    "mode_tr": "Rehine Kurtarma",
+    "description_tr": "Kale kuşatması. Geniş avlu ve burç savunması.",
+    "slug": "cs-siege",
+    "title_tr": "Siege",
+    "keywords": [
+      "cs_siege",
+      "siege",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Kale kuşatması Siege. Geniş avlu ve burç savunması. BrowserCS’te oyna.",
+    "tips": [
+      "Avlu geçişlerinde smoke."
+    ],
+    "briefing": "Kanyon Kusatma Altinda - Rehine Kurtarma Harita: N0TH1NG  (n0th1ng@mailcity.com) Counter-Terrorists: POW Siginagina girin ve rehineleri kurtarin. Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin . Teroristler: Teroristleri, rehineleri tehlikeye sokmadan etkisiz hale getirin . Diger Notlar: Bu gorevde 4 tane rehine var. (Devam etmek icin \"Ates\"e basin)",
+    "image": "/assets/maps/heroes/cs_siege.jpg",
+    "thumb": "/assets/maps/cs_siege.jpg"
+  },
+  {
+    "name": "as_oilrig",
+    "mode": "vip",
+    "mode_tr": "VIP Suikast",
+    "description_tr": "Petrol platformu. VIP’i helipad’e ulaştır veya engelle.",
+    "slug": "as-oilrig",
+    "title_tr": "Oil Rig",
+    "keywords": [
+      "as_oilrig",
+      "oilrig",
+      "VIP",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Petrol platformu Oil Rig — VIP suikast modu. VIP’i helipad’e ulaştır veya engelle. BrowserCS CS 1.5.",
+    "tips": [
+      "VIP rotasını koruyun.",
+      "Helipad baskını."
+    ],
+    "briefing": "Rafineri - Suikast Harita: MacMan (macmaninfi@aol.com) Kaplamalar: MacMan Westland Wessex Helikopter: Agent Orange [agentorange@freemail.nl] Hikaye: Cok onemli bir sucun sahidi, sahit koruma programinin bir parcasi olarak bir rafineride koruma altindaydi. Fakat yeri tespit edildi. Sahidi yeni bir yere goturmek icin transport helikopteri yollandi. Counter-Teroristler: VIP'yi ne pahasina olursa olsun koruyun. VIP'ye catiya kadar eslik edin. Teroristler: VIP'yi kacmadan once oldurun. (Devam etmek i",
+    "image": "/assets/maps/heroes/as_oilrig.jpg",
+    "thumb": "/assets/maps/as_oilrig.jpg"
+  },
+  {
+    "name": "as_tundra",
+    "mode": "vip",
+    "mode_tr": "VIP Suikast",
+    "description_tr": "Karlı üs. VIP kaçış rotaları ve açık alan riski.",
+    "slug": "as-tundra",
+    "title_tr": "Tundra",
+    "keywords": [
+      "as_tundra",
+      "tundra",
+      "VIP",
+      "CS 1.5",
+      "BrowserCS"
+    ],
+    "body": "Karlı üs Tundra. VIP kaçış rotaları ve açık alan riski. BrowserCS ile CS 1.5 VIP Tundra.",
+    "tips": [
+      "Açık alanda örtü kullanın."
+    ],
+    "briefing": "Tundra - Suikast Harita: Zaphod_Beeblebrox (zaphod_beeblebrox@eudoramail.com) Kaplamalar: by MacMan Hikaye: Alaska'nin derinliklerinde yapilan gizli silahlarin satisi ile ilgili gizlilik bozuldu. Silahlari calan teroristler, VIP'yi etkisiz hale getirmek icin bekliyorlar. Counter-Teroristler: Iki guvenli bolgeden birine kadar VIP'ye eskortluk edin. Bir APC ve kurtarma helikopteri emrinizde bekliyor. Teroristler:",
+    "image": "/assets/maps/heroes/as_tundra.jpg",
+    "thumb": "/assets/maps/as_tundra.jpg"
+  },
+  {
+    "name": "fy_iceworld",
+    "mode": "other",
+    "mode_tr": "Hızlı Arena",
+    "description_tr": "Buz arenası. Hızlı deathmatch tarzı kısa raundlar.",
+    "slug": "fy-iceworld",
+    "title_tr": "Iceworld",
+    "keywords": [
+      "fy_iceworld",
+      "iceworld",
+      "CS 1.5",
+      "deathmatch",
+      "BrowserCS",
+      "arena"
+    ],
+    "body": "Buz arenası Iceworld. Hızlı deathmatch tarzı kısa raundlar. BrowserCS’te CS 1.5 Iceworld — indirmeden.",
+    "tips": [
+      "Hızlı spawn kontrolü.",
+      "Arena ortasını tutun."
+    ],
+    "briefing": "ICEWORLD... Pick up a gun... And dont die... Terrorist: Kill CT Counter-terrorist: Kill T (Soon will be fixed up by |-DD-| CLAN) We are playing on makin sequals to this map so please stay tooned to our site! Play fair! | \\ / \\ | | |/    | \\ | | / \\ |   | | |\\| |     |  |  / \\ |\\| |_/ | | | \\ | \\   |_/ | \\ | | | | |_| | |   |   |_ |_ | | | | Vist Us: at http://www.geocities.com/csddclan If you have any Qustions email me here at: csddclan@yahoo.com",
+    "image": "/assets/maps/heroes/fy_iceworld.jpg",
+    "thumb": "/assets/maps/fy_iceworld.jpg"
+  },
+  {
+    "name": "he_glass",
+    "mode": "other",
+    "mode_tr": "HE Arena",
+    "description_tr": "Cam platformlarda HE grenade savaşı. NIPPER klasikleri.",
+    "slug": "he-glass",
+    "title_tr": "Glass",
+    "keywords": [
+      "he_glass",
+      "glass",
+      "HE grenade",
+      "CS 1.5",
+      "BrowserCS",
+      "nipper",
+      "cam harita"
+    ],
+    "body": "he_glass — cam zeminli HE grenade arenası. Nathaniel Miller (NIPPER) haritası. BrowserCS’te indirmeden oynayın; dokular halflife.wad, gökyüzü xen10.",
+    "tips": [
+      "Camları kırıp düşmanı düşürün.",
+      "Grenade zamanlaması kritik.",
+      "Kenarlarda sıkışmayın."
+    ],
+    "briefing": "HE_Glass - Fight to the death. Mapping by Nathaniel Miller AKA NIPPER. Its alot of glass with HE grenades.",
+    "image": "/assets/maps/heroes/he_glass.jpg",
+    "thumb": "/assets/maps/he_glass.jpg"
+  },
+  {
+    "name": "fy_pool_day",
+    "mode": "other",
+    "mode_tr": "Hızlı Arena",
+    "description_tr": "Gündüz havuz arenası. Kısa mesafeli fight yard çatışmaları.",
+    "slug": "fy-pool-day",
+    "title_tr": "Pool Day",
+    "keywords": [
+      "fy_pool_day",
+      "pool day",
+      "CS 1.5",
+      "deathmatch",
+      "BrowserCS",
+      "arena",
+      "havuz",
+      "squall"
+    ],
+    "body": "Squall’ın klasik fy_pool_day haritası — açık havuz, soyunma kabinleri ve silah yığınlarıyla hızlı arena. Dokular BSP içinde gömülü; BrowserCS’te indirmeden oynayın.",
+    "tips": [
+      "Havuz kenarı ve soyunma odası köşelerini kontrol edin.",
+      "Orta silah yığınına erken baskı yapın.",
+      "Su üstünde hareket yavaşlatır — kenardan dönün."
+    ],
+    "briefing": "Squall's FY_Pool_Day — Have Fun and Check out FY_Pool_Night and my other maps: de_walmart_final, de_dorms, de_scootathon2k, cs_store.",
+    "image": "/assets/maps/heroes/fy_pool_day.jpg",
+    "thumb": "/assets/maps/fy_pool_day.jpg"
+  }
+]

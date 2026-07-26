@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="BCS">
+  <defs>
+    <linearGradient id="g" x1="18" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffc14a"/>
+      <stop offset="0.5" stop-color="#f0a000"/>
+      <stop offset="1" stop-color="#c97800"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="16" fill="#040608"/>
+  <rect x="6" y="6" width="116" height="116" rx="12" fill="#0a0e14" stroke="#1a2535" stroke-width="2"/>
+  <!-- HUD corners -->
+  <g fill="none" stroke="url(#g)" stroke-width="3.2" stroke-linecap="square">
+    <path d="M20 36V20h16"/><path d="M108 36V20H92"/><path d="M20 92v16h16"/><path d="M108 92v16H92"/>
+  </g>
+  <!-- BCS -->
+  <text x="64" y="76" text-anchor="middle"
+    font-family="Orbitron, Rajdhani, Arial Black, sans-serif"
+    font-size="38" font-weight="800" letter-spacing="2"
+    fill="url(#g)">BCS</text>
+  <rect x="50" y="92" width="28" height="3" rx="1.5" fill="#f0a000"/>
+</svg>
