@@ -38,6 +38,7 @@ export default defineConfig({
 
   build: {
     outDir:  path.resolve(__dirname, 'dist'),
+    emptyOutDir: true,
     target:  'esnext',
     assetsInlineLimit: 0, // WASM dosyaları inline edilmesin
     rollupOptions: {
@@ -47,6 +48,8 @@ export default defineConfig({
         sunucular: path.resolve(__dirname, 'src/sunucular/index.html'),
         sunucuKirala: path.resolve(__dirname, 'src/sunucu-kirala/index.html'),
         haritaDust2: path.resolve(__dirname, 'src/haritalar/de-dust2/index.html'),
+        vip: path.resolve(__dirname, 'src/vip/index.html'),
+        rankTakip: path.resolve(__dirname, 'src/rank-takip/index.html'),
       }
     }
   },
