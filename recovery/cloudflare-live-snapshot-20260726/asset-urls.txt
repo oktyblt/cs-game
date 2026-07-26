@@ -1,0 +1,10 @@
+/assets/bcs-logo.png
+/assets/bcs-mark.png
+/assets/main-CD5d4FKG.js
+/assets/modulepreload-polyfill-B5Qt9EMX.js
+/assets/oyna-Bqv9ZEZr.css
+/assets/oyna-DkF3HDE8.js
+/assets/rankTakip-Bz7pX2b5.js
+/assets/rankTakip-DgR-kYA5.js
+/assets/serverSettings-CNF3aRkF.js
+/assets/supabase-B05oRxV8.js

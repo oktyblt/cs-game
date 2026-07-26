@@ -1,5 +1,10 @@
 const Docker = require('dockerode');
 const docker = new Docker();
+const getNextMapName = (currentMap) => {
+  const officialRotation = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld', 'fy_pool_day'];
+  const idx = officialRotation.indexOf(currentMap);
+  return idx !== -1 ? officialRotation[(idx + 1) % officialRotation.length] : 'de_dust2';
+};
 async function run() {
   try {
     const oldContainer = docker.getContainer('53936e5a2b3044fe8b5a4669ea3aee4f809f6049f84199d7d66364ad662d0e89');
@@ -37,6 +42,10 @@ async function run() {
           '27015/udp': [{ HostPort: port.toString() }],
           '27015/tcp': [{ HostPort: port.toString() }]
         },
+        LogConfig: {
+          Type: 'json-file',
+          Config: { 'max-size': '10m', 'max-file': '2' },
+        },
         RestartPolicy: { Name: 'no' }
       },
       Env: [
@@ -58,7 +67,7 @@ async function run() {
     await container.start();
     
     const exec = await container.exec({
-      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\nsv_lan 1\\nsys_ticrate 100\\nrcon_password "browsercs"\\n' >> cstrike/server.cfg`],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_c4timer 35\\nsv_cheats 0\\nyb_quota_mode "normal"\\nyb_autovacate 1\\nyb_join_after_player 0\\nyb_quota 6\\nyb_difficulty 1\\nmp_consistency 0\\nsv_consistency 0\\nsv_lan 1\\nsv_maxrate 25000\\nsv_minrate 20000\\nsv_maxupdaterate 101\\nsv_minupdaterate 60\\nsys_ticrate 100\\nrcon_password "browsercs"\\nsv_restartround 1\\nbrowsercs_nextmap "${getNextMapName(map)}"\\n' >> cstrike/server.cfg`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();

@@ -48,11 +48,9 @@ app.post('/webrtc/offer', (req, res) => {
     });
     
     dataChannel.onClosed(() => {
-      console.log(`[WebRTC] DataChannel kapandı - peer ${peerId} disconnect`);
-      // Xash3D disconnect paketi gönder (0xff 0xff 0xff 0xff "disconnect\n")
-      const disc = Buffer.from([0xff,0xff,0xff,0xff,...Buffer.from('disconnect\n')]);
-      try { udpSocket.send(disc, gamePort, '127.0.0.1'); } catch(e) {}
-      setTimeout(() => { try { udpSocket.close(); } catch(e) {} }, 500);
+      // OOB disconnect gönderme — 127.0.0.1 WebRTC oyuncularını toplu düşürebilir
+      console.log(`[WebRTC] DataChannel kapandı - peer ${peerId}`);
+      setTimeout(() => { try { udpSocket.close(); } catch (e) { /* ignore */ } }, 500);
     });
   });
 
@@ -80,15 +78,12 @@ app.post('/webrtc/offer', (req, res) => {
 
   peer.onStateChange((state) => {
     console.log(`[WebRTC] Peer ${peerId} state: ${state}`);
-    if (state === 'failed' || state === 'closed' || state === 'disconnected') {
-      // Disconnect sinyali gönder
-      const disc = Buffer.from([0xff,0xff,0xff,0xff,...Buffer.from('disconnect\n')]);
-      try { udpSocket.send(disc, gamePort, '127.0.0.1'); } catch(e) {}
-      // Cleanup'ı geciktir: client hala candidates polling yapıyor olabilir
+    // 'disconnected' geçici — kick/cleanup yok
+    if (state === 'failed' || state === 'closed') {
       setTimeout(() => {
-        try { udpSocket.close(); } catch(e) {}
+        try { udpSocket.close(); } catch (e) { /* ignore */ }
         peers.delete(peerId);
-        try { peer.close(); } catch(e) {}
+        try { peer.close(); } catch (e) { /* ignore */ }
       }, 5000);
     }
   });

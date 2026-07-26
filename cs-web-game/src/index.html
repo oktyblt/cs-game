@@ -3,178 +3,624 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BrowserCS — Tarayıcıdan İndirmeden CS 1.5 Oyna</title>
-  <meta name="description" content="Counter-Strike 1.5'i hiçbir indirme ve kurulum yapmadan tarayıcınızda oynayın. Ücretsiz, arkadaşlarınızla online maç yapabileceğiniz WebGL destekli FPS oyunu." />
+  <title>BrowserCS — Tarayıcıda CS 1.5 Oyna · Kurulum Yok</title>
+  <meta name="description" content="Counter-Strike 1.5'i tarayıcıda oynayın. Kurulum yok, Steam yok — ücretsiz online FPS. VIP, rank takip, Dust2, Inferno ve onlarca klasik harita." />
+  <meta name="keywords" content="tarayıcıda CS 1.5, BrowserCS, online CS 1.5, kurulum yok, dust2 tarayıcıda, CS 1.5 oyna, VIP CS" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+  <meta name="googlebot" content="index,follow" />
   <link rel="canonical" href="https://browsercs.com/" />
-  
-  <meta property="og:title" content="BrowserCS — Tarayıcıdan İndirmeden CS 1.5 Oyna" />
-  <meta property="og:description" content="Counter-Strike 1.5'i hiçbir indirme ve kurulum yapmadan tarayıcınızda oynayın." />
+  <link rel="alternate" hreflang="tr" href="https://browsercs.com/" />
+  <link rel="alternate" hreflang="x-default" href="https://browsercs.com/" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <meta property="og:title" content="BrowserCS — Tarayıcıda CS 1.5 · Kurulum Yok" />
+  <meta property="og:description" content="Counter-Strike 1.5 tarayıcıda. Kurulum yok — ücretsiz oyna, VIP ve klasik haritalar." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://browsercs.com/" />
+  <meta property="og:image" content="https://browsercs.com/og-image.jpg" />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:site_name" content="BrowserCS" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="BrowserCS — Tarayıcıda CS 1.5 · Kurulum Yok" />
+  <meta name="twitter:description" content="CS 1.5 tarayıcıda. Kurulum yok — hemen oyna." />
+  <meta name="twitter:image" content="https://browsercs.com/og-image.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
-
-  <style>
-    :root {
-      --cs-yellow: #f0a000;
-      --cs-yellow-dim: #8a5c00;
-      --bg-deep: #040608;
-      --bg-dark: #0a0e14;
-      --text-primary: #c8d8e8;
-      --font-ui: 'Rajdhani', sans-serif;
-      --font-title: 'Orbitron', sans-serif;
-    }
-    body {
-      margin: 0;
-      font-family: var(--font-ui);
-      background-color: var(--bg-deep);
-      color: var(--text-primary);
-      line-height: 1.6;
-    }
-    header {
-      padding: 2rem;
-      text-align: center;
-      background: var(--bg-dark);
-      border-bottom: 2px solid var(--cs-yellow-dim);
-    }
-    h1 {
-      font-family: var(--font-title);
-      color: var(--cs-yellow);
-      font-size: 3rem;
-      margin: 0;
-    }
-    .hero {
-      text-align: center;
-      padding: 4rem 2rem;
-    }
-    .hero p {
-      font-size: 1.25rem;
-      max-width: 600px;
-      margin: 1rem auto 2rem;
-    }
-    .cta-button {
-      display: inline-block;
-      background: var(--cs-yellow);
-      color: #000;
-      font-family: var(--font-title);
-      font-size: 1.5rem;
-      font-weight: 700;
-      padding: 1rem 3rem;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: all 0.2s;
-      text-transform: uppercase;
-    }
-    .cta-button:hover {
-      background: #fff;
-      box-shadow: 0 0 20px rgba(240, 160, 0, 0.6);
-    }
-    .features {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      padding: 3rem 2rem;
-      flex-wrap: wrap;
-      background: var(--bg-dark);
-    }
-    .feature-card {
-      background: var(--bg-deep);
-      padding: 2rem;
-      border: 1px solid var(--cs-yellow-dim);
-      border-radius: 8px;
-      max-width: 300px;
-      text-align: center;
-    }
-    .feature-card h3 {
-      color: var(--cs-yellow);
-      font-family: var(--font-title);
-    }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.9rem;
-      border-top: 1px solid #1e2d3d;
-      margin-top: 2rem;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    .content-section {
-      margin-bottom: 3rem;
-    }
-    .content-section h2 {
-      color: var(--cs-yellow);
-      font-family: var(--font-title);
-    }
-  </style>
+  <link rel="stylesheet" href="/site.css" />
+  <link rel="preload" as="image" href="/browsercs-bg.png" fetchpriority="high" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "BrowserCS - Counter-Strike 1.5",
-    "description": "Counter-Strike 1.5'i kurulum ve indirme yapmadan doğrudan tarayıcı üzerinden oynayın.",
-    "playMode": "MultiPlayer",
-    "applicationCategory": "Game",
-    "operatingSystem": "Web Browser",
-    "genre": "First-Person Shooter",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    }
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://browsercs.com/#org",
+        "name": "BrowserCS",
+        "url": "https://browsercs.com/",
+        "logo": "https://browsercs.com/assets/bcs-logo.png",
+        "description": "Tarayıcıda Counter-Strike 1.5 oynatma platformu. Valve veya Steam ile resmi bağlantısı yoktur."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://browsercs.com/#website",
+        "url": "https://browsercs.com/",
+        "name": "BrowserCS",
+        "publisher": { "@id": "https://browsercs.com/#org" },
+        "inLanguage": "tr-TR"
+      },
+      {
+        "@type": "VideoGame",
+        "@id": "https://browsercs.com/#game",
+        "name": "BrowserCS — Counter-Strike 1.5",
+        "url": "https://browsercs.com/",
+        "image": "https://browsercs.com/og-image.jpg",
+        "description": "Counter-Strike 1.5'i doğrudan tarayıcı üzerinden oynayın. Kurulum yok.",
+        "playMode": ["MultiPlayer", "CoOp"],
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any (Web Browser)",
+        "genre": ["First-Person Shooter", "Action"],
+        "gamePlatform": "Web Browser",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Ücretsiz oyna",
+            "price": "0",
+            "priceCurrency": "TRY",
+            "availability": "https://schema.org/InStock",
+            "url": "https://browsercs.com/oyna"
+          },
+          {
+            "@type": "Offer",
+            "name": "Özel sunucu kiralama (aylık)",
+            "price": "350",
+            "priceCurrency": "TRY",
+            "availability": "https://schema.org/InStock",
+            "url": "https://browsercs.com/sunucu-kirala",
+            "description": "ENPARA havale/EFT ile ödeme; onay sonrası aktivasyon."
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "BrowserCS nedir?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "BrowserCS, Counter-Strike 1.5 deneyimini tarayıcıda sunan bağımsız bir nostalji projesidir. Valve veya Steam ile resmi bağlantısı yoktur."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Kurulum gerekir mi?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Kurulum yok. Modern bir tarayıcı (Chrome, Edge, Firefox) yeterlidir. Hemen Oyna ile maça katılabilirsiniz."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "VIP nedir?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "VIP; scoreboard rozeti, rezerve slot, votekick bağışıklığı, klasik modeller ve altın silahlar gibi ayrıcalıklar sunar. Silver, Gold ve Platinum paketleri: https://browsercs.com/vip/"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Hangi haritalar var?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "de_dust2, de_inferno, de_nuke, cs_assault, cs_office ve onlarca klasik CS 1.5 haritası. Tam liste: https://browsercs.com/haritalar"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Özel sunucu nasıl kiralanır?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Aylık 350 TL. Ödeme ENPARA havale/EFT ile yapılır; açıklamaya sipariş numarası yazılır. Admin onayından sonra sunucu kurulur."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Ücretsiz mi?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oynamak ücretsizdir. İsteğe bağlı özel 7/24 sunucu kiralama ücretlidir."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Tarayıcıda CS 1.5 nasıl oynanır?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "https://browsercs.com/oyna adresine gidin, bir oyuncu adı seçin ve sunucu listesinden odaya katılın. Kurulum yok — Steam istemcisi gerekmez."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Bu CS2 veya CS:GO mu?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Hayır. BrowserCS klasik Counter-Strike 1.5 deneyimidir; CS2 veya CS:GO değildir."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Hangi tarayıcı gerekir?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Güncel Chrome, Edge veya Firefox önerilir. Donanım hızlandırmasının açık olması gerekir."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": "https://browsercs.com/" }
+        ]
+      }
+    ]
   }
   </script>
 </head>
 <body>
+  <nav class="site-nav" aria-label="Ana menü">
+    <a class="site-brand" href="/">
+      <img class="site-brand-mark" src="/assets/bcs-mark.png" width="34" height="34" alt="" />
+      <span class="site-brand-text">BrowserCS<small>BCS</small></span>
+    </a>
+    <div class="site-nav-links">
+      <a href="/" aria-current="page">Anasayfa</a>
+      <a href="/sunucular">Sunucular</a>
+      <a href="/haritalar">Haritalar</a>
+      <a href="/rank-takip/">Rank Takip</a>
+      <a href="/nasil-oynanir/">Rehber</a>
+      <a href="/vip/">VIP</a>
+      <a href="/sunucu-kirala">Kirala</a>
+      <a class="nav-cta" href="/oyna">Oyna</a>
+    </div>
+  </nav>
 
-  <header>
-    <h1>BrowserCS</h1>
+  <header class="hero">
+    <div class="hero-bg" style="background-image:url('/browsercs-bg.png')" role="img" aria-label="Counter-Strike atmosfer görseli"></div>
+    <div class="hero-inner">
+      <p class="hero-brand">
+        <img src="/assets/bcs-mark.png" width="48" height="48" alt="" style="display:inline-block;vertical-align:middle;margin-right:0.55rem;border-radius:10px;box-shadow:0 0 18px rgba(240,160,0,0.3);" />
+        <span style="vertical-align:middle;">BrowserCS</span>
+      </p>
+      <h1 class="hero-title">Tarayıcıda CS 1.5 — kurulum yok</h1>
+      <p class="hero-lead">Nostaljik Counter-Strike 1.5 saniyeler içinde tarayıcıda. Kurulum yok, Steam yok — hesap aç, arkadaşlarınla sunucuya gir.</p>
+      <div class="cta-row">
+        <a class="cta cta-primary" href="/oyna">Hemen Oyna</a>
+        <a class="cta cta-ghost" href="/vip/">VIP</a>
+        <a class="cta cta-ghost" href="/sunucular">Sunucular</a>
+        <button type="button" class="cta cta-ghost" id="bcs-hero-register">Kayıt Ol</button>
+      </div>
+    </div>
   </header>
 
-  <div class="hero">
-    <h2>Tarayıcıdan İndirmeden CS 1.5 Oyna</h2>
-    <p>Nostaljik Counter-Strike 1.5 deneyimi artık saniyeler içinde tarayıcınızda. Hiçbir kurulum yapmadan hemen oynamaya başlayın.</p>
-    <a href="/oyna" class="cta-button">Hemen Oyna</a>
-  </div>
+  <section class="section" id="nedir" style="padding-top:3rem;">
+    <div class="section-inner">
+      <div class="section-head">
+        <h2>Tarayıcıda Counter-Strike 1.5</h2>
+        <p>BrowserCS ile klasik CS’i doğrudan tarayıcıda oynayın. Kurulum yok — Steam istemcisi veya ayrı launcher gerekmez; Chrome veya Edge yeter.</p>
+      </div>
+      <div class="home-highlights">
+        <div class="home-highlight">
+          <strong>Kurulum yok</strong>
+          <span>Tarayıcıda aç, maça gir. İstemci veya sihirbaz yok.</span>
+        </div>
+        <div class="home-highlight">
+          <strong>Ücretsiz oyna</strong>
+          <span>Dust2, Inferno, Nuke ve onlarca klasik harita.</span>
+        </div>
+        <div class="home-highlight">
+          <strong>VIP ayrıcalık</strong>
+          <span>Rozet, rezerve slot, modeller, altın silahlar.</span>
+        </div>
+        <div class="home-highlight">
+          <strong>Rank takip</strong>
+          <span>Aylık sıralama ve Top 10 VIP hediyeleri.</span>
+        </div>
+      </div>
+      <p style="max-width:42rem;color:var(--text-dim);line-height:1.65;margin:2rem auto 0;text-align:center;">
+        Online maç ücretsiz; istersen VIP al veya arkadaşların için özel sunucu kirala.
+        Resmi Valve ürünü değildir — bağımsız nostalji projesidir.
+      </p>
+    </div>
+  </section>
 
-  <div class="features">
-    <div class="feature-card">
-      <h3>İndirme Yok</h3>
-      <p>Büyük dosyalar indirmeye veya kurulum yapmaya gerek kalmadan, doğrudan tarayıcınız üzerinden oynayın.</p>
+  <section class="section section-alt" id="nasil">
+    <div class="section-inner">
+      <div class="section-head">
+        <h2>Nasıl çalışır</h2>
+        <p>Kurulum yok. Oyun tarayıcınızda açılır; sunucu listesinden seçip bağlanırsınız.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Oyna’ya tıkla</h3>
+          <p>Kurulum yok — motor tarayıcıda açılır, haritalar önbelleğe alınır.</p>
+        </div>
+        <div class="step">
+          <h3>Sunucu seç</h3>
+          <p>Resmi odalar veya oyuncu sunucuları. Dust2’den Nuke’a klasik modlar.</p>
+        </div>
+        <div class="step">
+          <h3>Maça gir</h3>
+          <p>Takım seç, satın al, raundu kazan. İstersen VIP veya 7/24 sunucu kirala.</p>
+        </div>
+      </div>
     </div>
-    <div class="feature-card">
-      <h3>Arkadaşlarla Oyna</h3>
-      <p>Özel sunucular oluşturarak arkadaşlarınızla 5v5 maçlar atabilir ve nostaljiyi birlikte yaşayabilirsiniz.</p>
-    </div>
-    <div class="feature-card">
-      <h3>Özel Sunucular</h3>
-      <p>Kendi kurallarınızı belirlemek için 7/24 açık özel sunucu kiralayabilir, tam RCON yetkisine sahip olabilirsiniz.</p>
-    </div>
-  </div>
+  </section>
 
-  <div class="container">
-    <div class="content-section">
-      <h2>Counter-Strike 1.5 Nasıl Oynanır?</h2>
-      <p>Oyun tamamen WebGL ve WebAssembly teknolojileriyle tarayıcınız içinde render edilir. <strong>Hemen Oyna</strong> butonuna bastıktan sonra oyun dosyaları önbelleğe alınır ve oyun başlar. Oyuna girdikten sonra bir sunucu seçerek çatışmaya katılabilirsiniz.</p>
+  <section class="section" id="haritalar">
+    <div class="section-inner">
+      <div class="section-head">
+        <h2>Klasik haritalar</h2>
+        <p>Sistemdeki CS 1.5 haritalarından bir seçki. Tam katalog ve tüm görseller için haritalar sayfasına bakın.</p>
+      </div>
+      <div class="map-grid">
+        <a class="map-tile" href="/haritalar/de-dust2">
+          <img src="/assets/maps/de_dust2.jpg" alt="de_dust2 CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_dust2</strong><span>Bomba İmha</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/de-inferno">
+          <img src="/assets/maps/de_inferno.jpg" alt="de_inferno CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_inferno</strong><span>Bomba İmha</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/de-nuke">
+          <img src="/assets/maps/de_nuke.jpg" alt="de_nuke CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_nuke</strong><span>Bomba İmha</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/de-aztec">
+          <img src="/assets/maps/de_aztec.jpg" alt="de_aztec CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_aztec</strong><span>Bomba İmha</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/cs-assault">
+          <img src="/assets/maps/cs_assault.jpg" alt="cs_assault CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>cs_assault</strong><span>Rehine</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/cs-office">
+          <img src="/assets/maps/cs_office.jpg" alt="cs_office CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>cs_office</strong><span>Rehine</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/de-train">
+          <img src="/assets/maps/de_train.jpg" alt="de_train CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_train</strong><span>Bomba İmha</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/fy-iceworld">
+          <img src="/assets/maps/fy_iceworld.jpg" alt="fy_iceworld CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>fy_iceworld</strong><span>Arena</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/de-cbble">
+          <img src="/assets/maps/de_cbble.jpg" alt="de_cbble CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_cbble</strong><span>Bomba İmha</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/as-oilrig">
+          <img src="/assets/maps/as_oilrig.jpg" alt="as_oilrig CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>as_oilrig</strong><span>VIP</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/cs-italy">
+          <img src="/assets/maps/cs_italy.jpg" alt="cs_italy CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>cs_italy</strong><span>Rehine</span></div>
+        </a>
+        <a class="map-tile" href="/haritalar/de-vertigo">
+          <img src="/assets/maps/de_vertigo.jpg" alt="de_vertigo CS 1.5 BrowserCS" width="640" height="400" loading="lazy" />
+          <div class="map-tile-meta"><strong>de_vertigo</strong><span>Bomba İmha</span></div>
+        </a>
+      </div>
+      <div class="cta-row" style="margin-top:2rem;">
+        <a class="cta cta-ghost" href="/haritalar">Tüm haritalar</a>
+        <a class="cta cta-ghost" href="/haritalar/de-dust2">Dust2 rehberi</a>
+      </div>
     </div>
-    <div class="content-section">
-      <h2>Bağlantılar</h2>
-      <ul>
-        <li><a href="/sunucular" style="color:var(--text-primary)">Aktif Sunucular</a></li>
-        <li><a href="/sunucu-kirala" style="color:var(--text-primary)">CS 1.5 Sunucu Kirala</a></li>
-        <li><a href="/haritalar/de-dust2" style="color:var(--text-primary)">Dust2 Haritası</a></li>
-      </ul>
-    </div>
-  </div>
+  </section>
 
-  <footer>
-    <p>&copy; 2026 BrowserCS. Bağımsız bir nostalji projesidir. Valve veya Steam ile resmi bir bağlantısı bulunmamaktadır.</p>
+  <section class="section section-alt" id="vip">
+    <div class="section-inner">
+      <div class="section-head">
+        <h2>VIP ayrıcalıkları</h2>
+        <p>Scoreboard’da VIP, rezerve slot, votekick bağışıklığı. Gold ile VIP ODA’ya gir; Platinum ile ayda 4 kez votemap’e harita öner.</p>
+      </div>
+      <div class="home-vip-grid">
+        <article class="home-vip-tier">
+          <h3>Silver</h3>
+          <p class="home-vip-price">49₺ <small>/ ay</small></p>
+          <ul class="feature-list">
+            <li>VIP rozeti · rezerve slot</li>
+            <li>Votekick bağışıklığı</li>
+            <li>Rank’ta VIP rozeti</li>
+          </ul>
+        </article>
+        <article class="home-vip-tier featured">
+          <h3>Gold</h3>
+          <p class="home-vip-price">99₺ <small>/ ay</small></p>
+          <ul class="feature-list">
+            <li>Silver’daki tüm ayrıcalıklar</li>
+            <li>VIP ODA girişi (Gold+)</li>
+            <li>Modeller · altın silah · kevlar</li>
+          </ul>
+        </article>
+        <article class="home-vip-tier">
+          <h3>Platinum</h3>
+          <p class="home-vip-price">199₺ <small>/ ay</small></p>
+          <ul class="feature-list">
+            <li>Gold’daki tüm ayrıcalıklar</li>
+            <li>[BCS] tag · öncelikli slot</li>
+            <li>Ayda 4 votemap harita önerisi</li>
+          </ul>
+        </article>
+      </div>
+      <p class="home-vip-note">
+        Açılış kampanyası: <strong>15 Ağustos’a kadar</strong> kayıt olanlara <strong>30 gün Gold VIP</strong> hediye.
+        Aylık Top 10 rank’a da VIP ödülü.
+      </p>
+      <div class="cta-row" style="margin-top:1.5rem;">
+        <a class="cta cta-primary" href="/vip/">VIP paketleri</a>
+        <a class="cta cta-ghost" href="/rank-takip/">Rank takip</a>
+        <button type="button" class="cta cta-ghost" id="bcs-home-vip-register">Hediye VIP al</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="sunucu">
+    <div class="section-inner pitch">
+      <div>
+        <h2>Kendi sunucun</h2>
+        <p>7/24 açık özel CS 1.5 sunucusu, RCON ve admin paneli. Arkadaşlarınla şifreli oda veya herkese açık sunucu.</p>
+        <p style="color:var(--text-dim);font-size:0.95rem;">Ödeme: ENPARA havale/EFT — onay sonrası aktivasyon.</p>
+        <a class="cta cta-primary" href="/sunucu-kirala">Sunucu kirala</a>
+      </div>
+      <div>
+        <p class="price-line">350 ₺ <small>/ ay</small></p>
+        <ul class="feature-list">
+          <li>Tam RCON ve admin yetkisi</li>
+          <li>Harita değiştirme, şifre</li>
+          <li>Kesintisiz yayın</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="sss">
+    <div class="section-inner">
+      <div class="section-head">
+        <h2>Sık sorulanlar</h2>
+        <p>Arama motorları ve asistanlar için net cevaplar.</p>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>BrowserCS nedir?</summary>
+          <p>Counter-Strike 1.5’i tarayıcıda oynatan bağımsız bir nostalji projesidir. Valve veya Steam ile resmi bağlantısı yoktur.</p>
+        </details>
+        <details>
+          <summary>Kurulum gerekir mi?</summary>
+          <p>Kurulum yok. Desteklenen bir web tarayıcısı yeterlidir.</p>
+        </details>
+        <details>
+          <summary>VIP nedir, ne işe yarar?</summary>
+          <p>Scoreboard rozeti, rezerve slot, votekick bağışıklığı; Gold ve üstünde klasik modeller ile altın silahlar. Detaylar: <a href="/vip/">VIP paketleri</a>.</p>
+        </details>
+        <details>
+          <summary>Hangi haritalar var?</summary>
+          <p>Dust2, Inferno, Nuke, Assault, Office ve daha fazlası. <a href="/haritalar">Tüm harita listesi</a>.</p>
+        </details>
+        <details>
+          <summary>Özel sunucu ücreti nasıl ödenir?</summary>
+          <p>350 ₺ / ay. ENPARA havale veya EFT; sipariş numarası açıklamada. Onay sonrası sunucu kurulur.</p>
+        </details>
+        <details>
+          <summary>Oyun ücretsiz mi?</summary>
+          <p>Evet, oynamak ücretsizdir. VIP ve özel sunucu kiralama isteğe bağlıdır.</p>
+        </details>
+        <details>
+          <summary>Tarayıcıda CS 1.5 nasıl oynanır?</summary>
+          <p><a href="/oyna">Oyna</a> sayfasına girin, isim seçin, sunucuya katılın. Kurulum yok. Kontroller, konsol ve AMXX için <a href="/nasil-oynanir/">rehbere</a> bakın.</p>
+        </details>
+        <details>
+          <summary>Bu CS2 veya CS:GO mu?</summary>
+          <p>Hayır. Klasik Counter-Strike 1.5 deneyimidir.</p>
+        </details>
+        <details>
+          <summary>Hangi tarayıcı gerekir?</summary>
+          <p>Güncel Chrome, Edge veya Firefox. Donanım hızlandırması açık olsun.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <nav aria-label="Alt menü">
+        <a href="/oyna">Oyna</a>
+        <a href="/vip/">VIP</a>
+        <a href="/sunucular">Sunucular</a>
+        <a href="/haritalar">Haritalar</a>
+        <a href="/nasil-oynanir/">Rehber</a>
+        <a href="/sunucu-kirala">Kirala</a>
+        <a href="/llms.txt">llms.txt</a>
+      </nav>
+      <p>&copy; 2026 BrowserCS. Bağımsız nostalji projesi. Valve, Steam veya Counter-Strike ile resmi bir bağlantısı bulunmamaktadır. Fan / nostalji amaçlıdır.</p>
+    </div>
   </footer>
 
+  <!-- Açılış kampanyası — 15 Ağustos 2026'ya kadar kayıt olana 30 gün Gold VIP -->
+  <div id="bcs-promo-overlay" role="dialog" aria-modal="true" aria-labelledby="bcs-promo-title" hidden>
+    <style>
+      #bcs-promo-overlay {
+        position: fixed; inset: 0; z-index: 9000;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(5, 8, 12, 0.78);
+        backdrop-filter: blur(4px);
+        padding: 1rem;
+      }
+      #bcs-promo-overlay[hidden] { display: none; }
+      .bcs-promo-card {
+        position: relative;
+        width: min(430px, 94vw);
+        border-radius: 14px;
+        overflow: hidden;
+        background: linear-gradient(165deg, #10151d 0%, #0b0e13 60%, #101720 100%);
+        border: 1px solid rgba(231, 237, 241, 0.28);
+        box-shadow: 0 0 0 1px rgba(231, 237, 241, 0.06), 0 18px 60px rgba(0, 0, 0, 0.65),
+          0 0 42px rgba(200, 215, 225, 0.10);
+        animation: bcsPromoIn 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
+        font-family: 'Rajdhani', sans-serif;
+      }
+      @keyframes bcsPromoIn {
+        from { opacity: 0; transform: translateY(14px) scale(0.97); }
+        to { opacity: 1; transform: none; }
+      }
+      .bcs-promo-visual {
+        position: relative; height: 168px; overflow: hidden;
+        border-bottom: 1px solid rgba(231, 237, 241, 0.16);
+      }
+      .bcs-promo-visual img {
+        width: 100%; height: 100%; object-fit: cover; object-position: center 28%;
+        display: block; filter: saturate(0.9) brightness(0.9);
+      }
+      .bcs-promo-visual::after {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(11,14,19,0) 40%, rgba(11,14,19,0.92) 100%);
+      }
+      .bcs-promo-ribbon {
+        position: absolute; top: 12px; left: 12px; z-index: 2;
+        font-family: 'Orbitron', sans-serif; font-size: 0.62rem; font-weight: 700;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #0b0e13; background: linear-gradient(90deg, #e7edf1, #b9c6cf);
+        padding: 0.3rem 0.6rem; border-radius: 3px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+      }
+      .bcs-promo-close {
+        position: absolute; top: 10px; right: 10px; z-index: 3;
+        width: 30px; height: 30px; border-radius: 50%;
+        border: 1px solid rgba(231,237,241,0.35); background: rgba(11,14,19,0.72);
+        color: #e7edf1; font-size: 15px; line-height: 1; cursor: pointer;
+      }
+      .bcs-promo-close:hover { background: rgba(231,237,241,0.16); }
+      .bcs-promo-body { padding: 1.1rem 1.25rem 1.3rem; text-align: center; }
+      .bcs-promo-title {
+        margin: 0 0 0.4rem; font-family: 'Orbitron', sans-serif;
+        font-size: 1.12rem; font-weight: 900; letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #ffffff, #c3d2dc 55%, #8fa3b0);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .bcs-promo-sub {
+        margin: 0 0 0.9rem; color: #b8c4cd; font-size: 0.98rem; line-height: 1.55;
+      }
+      .bcs-promo-sub strong { color: #e7edf1; }
+      .bcs-promo-perks {
+        display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center;
+        margin: 0 0 1.05rem; padding: 0; list-style: none;
+      }
+      .bcs-promo-perks li {
+        font-size: 0.78rem; letter-spacing: 0.03em; color: #d5dde3;
+        border: 1px solid rgba(231,237,241,0.22); border-radius: 999px;
+        padding: 0.22rem 0.66rem; background: rgba(231,237,241,0.05);
+      }
+      .bcs-promo-cta-row { display: flex; gap: 0.6rem; justify-content: center; }
+      .bcs-promo-cta {
+        font-family: 'Orbitron', sans-serif; font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.09em; text-transform: uppercase; text-decoration: none;
+        padding: 0.62rem 1.05rem; border-radius: 5px; cursor: pointer;
+      }
+      .bcs-promo-cta.primary {
+        color: #0b0e13; background: linear-gradient(90deg, #f0f4f7, #aebcc6);
+        box-shadow: 0 4px 18px rgba(200,215,225,0.25);
+      }
+      .bcs-promo-cta.primary:hover { filter: brightness(1.08); }
+      .bcs-promo-cta.ghost {
+        color: #cdd7de; border: 1px solid rgba(231,237,241,0.3); background: transparent;
+      }
+      .bcs-promo-cta.ghost:hover { background: rgba(231,237,241,0.08); }
+      .bcs-promo-deadline {
+        margin: 0.85rem 0 0; font-size: 0.74rem; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #7f8d97;
+      }
+      .bcs-promo-form { display: grid; gap: 0.55rem; text-align: left; margin: 0 0 0.75rem; }
+      .bcs-promo-form label {
+        display: block; font-size: 0.72rem; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #8fa3b0; margin-bottom: 0.2rem;
+      }
+      .bcs-promo-form input {
+        width: 100%; box-sizing: border-box;
+        padding: 0.55rem 0.7rem; border-radius: 4px;
+        border: 1px solid rgba(231,237,241,0.28);
+        background: rgba(0,0,0,0.35); color: #e7edf1;
+        font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+      }
+      .bcs-promo-form input:focus {
+        outline: none; border-color: rgba(200,215,225,0.55);
+      }
+      .bcs-promo-form-error {
+        min-height: 1.2em; margin: 0 0 0.4rem; color: #ff8e8e;
+        font-size: 0.85rem; text-align: center;
+      }
+      button.bcs-promo-cta {
+        border: none; appearance: none;
+      }
+    </style>
+    <div class="bcs-promo-card">
+      <div class="bcs-promo-visual">
+        <span class="bcs-promo-ribbon">Açılış Kampanyası</span>
+        <button class="bcs-promo-close" type="button" aria-label="Kapat" onclick="window.bcsClosePromo()">✕</button>
+        <img src="/assets/vip/vip-golden-weapons-banner.webp" alt="BrowserCS Gold VIP" loading="lazy" />
+      </div>
+      <div class="bcs-promo-body">
+        <div id="bcs-promo-info-panel">
+          <h2 class="bcs-promo-title" id="bcs-promo-title">30 Gün Gold VIP Hediye</h2>
+          <p class="bcs-promo-sub">
+            <strong>15 Ağustos'a kadar</strong> kayıt olan herkese üyelik anında
+            <strong>30 günlük Gold VIP otomatik tanımlanır</strong> — kod yok, başvuru yok.
+          </p>
+          <ul class="bcs-promo-perks">
+            <li>VIP ODA girişi</li>
+            <li>Klasik modeller · altın silah</li>
+            <li>Rezerve slot · votekick koruması</li>
+          </ul>
+          <div class="bcs-promo-cta-row">
+            <button type="button" class="bcs-promo-cta primary" id="bcs-promo-open-form">Üye Ol</button>
+            <a class="bcs-promo-cta ghost" href="/vip/">VIP Detayları</a>
+          </div>
+          <p class="bcs-promo-deadline">Son gün: 15 Ağustos 2026</p>
+        </div>
+        <div id="bcs-promo-form-panel" hidden>
+          <h2 class="bcs-promo-title">Hemen Kayıt Ol</h2>
+          <p class="bcs-promo-sub" style="margin-bottom:0.7rem;">
+            Kayıt + otomatik giriş + <strong>Gold VIP</strong> — ardından sunucu listesine yönlendirilirsin.
+          </p>
+          <div class="bcs-promo-form">
+            <div>
+              <label for="bcs-promo-username">Kullanıcı adı</label>
+              <input id="bcs-promo-username" name="username" autocomplete="username" maxlength="32" />
+            </div>
+            <div>
+              <label for="bcs-promo-email">E-posta</label>
+              <input id="bcs-promo-email" name="email" type="email" autocomplete="email" />
+            </div>
+            <div>
+              <label for="bcs-promo-pass">Şifre</label>
+              <input id="bcs-promo-pass" name="password" type="password" autocomplete="new-password" />
+            </div>
+          </div>
+          <p class="bcs-promo-form-error" id="bcs-promo-form-error" role="alert"></p>
+          <div class="bcs-promo-cta-row">
+            <button type="button" class="bcs-promo-cta primary" id="bcs-promo-submit">Kayıt Ol &amp; Oyna</button>
+            <button type="button" class="bcs-promo-cta ghost" id="bcs-promo-form-back">Geri</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/promoSignup.js"></script>
 </body>
 </html>
