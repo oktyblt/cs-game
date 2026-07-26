@@ -43,11 +43,22 @@ function genOrderCode() {
 }
 
 function bankInfoFromEnv() {
-  return {
-    bankName: process.env.BANK_NAME || 'ENPARA',
-    bankHolder: process.env.BANK_HOLDER || 'OKTAY BULUT',
-    bankIban: process.env.BANK_IBAN || 'TRXXXXXXXXXXXXXXXXXXXXXXXX',
-  };
+  try {
+    const commerce = require('./commerce');
+    const b = commerce.getBankInfo();
+    return {
+      bankName: b.bankName,
+      bankHolder: b.bankHolder,
+      bankIban: b.bankIban,
+      note: b.note,
+    };
+  } catch (_) {
+    return {
+      bankName: process.env.BANK_NAME || 'ENPARA',
+      bankHolder: process.env.BANK_HOLDER || 'OKTAY BULUT',
+      bankIban: process.env.BANK_IBAN || 'TRXXXXXXXXXXXXXXXXXXXXXXXX',
+    };
+  }
 }
 
 async function probeTable(sb) {
@@ -90,6 +101,13 @@ async function createOrder(sb, { ownerId, username, tier }) {
   if (!normTier || normTier === 'none') {
     throw new Error('Geçersiz paket');
   }
+  const commerce = require('./commerce');
+  const pack = commerce.getVipPackage(normTier);
+  if (!pack || pack.enabled === false) {
+    const err = new Error('Bu VIP paketi şu an satışta değil');
+    err.status = 400;
+    throw err;
+  }
   const now = new Date().toISOString();
   const row = {
     id: crypto.randomUUID(),
@@ -98,7 +116,7 @@ async function createOrder(sb, { ownerId, username, tier }) {
     username: username || null,
     tier: normTier,
     days: 30,
-    amount_try: VIP_PRICES_TRY[normTier],
+    amount_try: Number(pack.priceTry),
     status: 'pending_payment',
     admin_note: null,
     paid_at: null,

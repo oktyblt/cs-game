@@ -125,13 +125,23 @@ function registerVipRoutes(app, ctx = {}) {
 
   /** Public package prices + feature lists (no secrets) */
   app.get('/api/vip/prices', (_req, res) => {
+      const commerce = require('../lib/commerce');
+      const prices = commerce.getVipPricesMap();
+      const labels = commerce.getVipLabelsMap();
+      const features = commerce.getVipFeaturesMap();
+      const packs = commerce.getCommerce().vip;
       res.json({
         success: true,
         currency: 'TRY',
         interval: 'month',
-        prices: VIP_PRICES_TRY,
-        labels: VIP_LABELS_TR,
-        features: VIP_FEATURES,
+        prices,
+        labels,
+        features,
+        enabled: {
+          silver: packs.silver.enabled !== false,
+          gold: packs.gold.enabled !== false,
+          platinum: packs.platinum.enabled !== false,
+        },
         tiers: VIP_TIERS.filter((t) => t !== 'none'),
         mapSuggest: {
           quotaPerMonth: QUOTA_PER_MONTH,
@@ -142,7 +152,7 @@ function registerVipRoutes(app, ctx = {}) {
           minTier: 'gold',
           note: 'VIP ODA — sadece Gold ve Platinum girebilir',
         },
-        paymentNote: 'Online ödeme yakında. Şimdilik abonelik Master Admin tarafından tanımlanır.',
+        paymentNote: 'Ödeme havale/EFT ile. Sipariş numarasını açıklamaya yazın.',
       });
     });
 
@@ -574,7 +584,12 @@ function registerVipRoutes(app, ctx = {}) {
    * Havale açıklamasına sipariş no yazılır; admin onaylayınca 30 gün otomatik VIP tanımlanır.
    */
   app.get('/api/vip/payment-info', (_req, res) => {
-    res.json({ success: true, ...vipOrders.bankInfoFromEnv(), pricesTry: VIP_PRICES_TRY });
+    const commerce = require('../lib/commerce');
+    res.json({
+      success: true,
+      ...vipOrders.bankInfoFromEnv(),
+      pricesTry: commerce.getVipPricesMap(),
+    });
   });
 
   app.post('/api/vip/order', requireAuth, json, async (req, res) => {

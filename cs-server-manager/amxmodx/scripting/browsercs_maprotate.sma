@@ -1,7 +1,7 @@
 #include <amxmodx>
 
 #define PLUGIN_NAME "BrowserCS Map Rotate"
-#define PLUGIN_VERSION "1.3.0"
+#define PLUGIN_VERSION "1.3.2"
 #define PLUGIN_AUTHOR "BrowserCS"
 
 #define VOTE_TIMELEFT_SEC 180
@@ -17,6 +17,7 @@ new const g_OfficialMaps[][] = {
 	"de_aztec",
 	"de_dust",
 	"fy_iceworld",
+	"fy_pool_day",
 	"de_nuke",
 	"cs_assault",
 	"cs_office",
@@ -144,16 +145,22 @@ stock BrowserCS_SplitQueueLine(const line[], map[], mapLen, portStr[], portLen)
 	portStr[j] = 0;
 }
 
+/* Kept off the plugin stack — keep[64][192] (~12KB local) smashed Xash's
+ * stack canary every map-vote (~1620s = mp_timelimit 30 - 180s). Symptom:
+ * exit 139 SIGSEGV on all cs15-* OR Host_Main *** stack smashing *** abort loop. */
+new g_queueKeep[32][160];
+new g_queueKeepCount;
+
 stock BrowserCS_ConsumePinned(pinned[], &pinnedCount, const currentMap[])
 {
 	pinnedCount = 0;
+	g_queueKeepCount = 0;
 	if (!file_exists(QUEUE_FILE))
 		return;
 
-	new line[192], map[32], portStr[16], keep[64][192], keepCount;
+	new line[160], map[32], portStr[16];
 	new len, linePort, mapIdx, i, fh, size;
 	new bool:alreadyPinned;
-	keepCount = 0;
 	size = file_size(QUEUE_FILE, 1);
 	if (size < 0)
 		size = 0;
@@ -184,16 +191,16 @@ stock BrowserCS_ConsumePinned(pinned[], &pinnedCount, const currentMap[])
 
 		if (mapIdx == -1 || equali(map, currentMap) || BrowserCS_IsInMenu(mapIdx) || alreadyPinned)
 		{
-			if (keepCount < 64)
-				copy(keep[keepCount++], 191, line);
+			if (g_queueKeepCount < sizeof(g_queueKeep))
+				copy(g_queueKeep[g_queueKeepCount++], 159, line);
 			continue;
 		}
 
-		/* Port eşleşmesi: 0 = her sunucu, aksi halde bu sunucu */
+		/* Port match: 0 = any server, else this server only */
 		if (linePort > 0 && g_port > 0 && linePort != g_port)
 		{
-			if (keepCount < 64)
-				copy(keep[keepCount++], 191, line);
+			if (g_queueKeepCount < sizeof(g_queueKeep))
+				copy(g_queueKeep[g_queueKeepCount++], 159, line);
 			continue;
 		}
 
@@ -203,21 +210,21 @@ stock BrowserCS_ConsumePinned(pinned[], &pinnedCount, const currentMap[])
 			client_print(0, print_chat, "[BrowserCS] VIP harita onerisi oylamada: %s", g_OfficialMaps[mapIdx]);
 			log_amx("[BrowserCS] VIP pin map=%s port=%d", g_OfficialMaps[mapIdx], g_port);
 		}
-		else if (keepCount < 64)
+		else if (g_queueKeepCount < sizeof(g_queueKeep))
 		{
-			copy(keep[keepCount++], 191, line);
+			copy(g_queueKeep[g_queueKeepCount++], 159, line);
 		}
 	}
 
 	delete_file(QUEUE_FILE);
-	if (keepCount > 0)
+	if (g_queueKeepCount > 0)
 	{
 		fh = fopen(QUEUE_FILE, "wt");
 		if (fh)
 		{
-			for (i = 0; i < keepCount; i++)
+			for (i = 0; i < g_queueKeepCount; i++)
 			{
-				fputs(fh, keep[i]);
+				fputs(fh, g_queueKeep[i]);
 				fputs(fh, "^n");
 			}
 			fclose(fh);
@@ -235,7 +242,7 @@ stock BrowserCS_StartVote()
 	get_mapname(currentMap, charsmax(currentMap));
 
 	new menu[512];
-	new pos = format(menu, charsmax(menu), "\yBrowserCS — Sonraki harita:\w^n^n");
+	new pos = format(menu, charsmax(menu), "\yBrowserCS - Sonraki harita:\w^n^n");
 	new keys = 0;
 
 	g_mapVoteNum = 0;
@@ -276,9 +283,12 @@ stock BrowserCS_StartVote()
 	keys |= (1 << SELECTMAPS);
 	g_voteCount[SELECTMAPS] = 0;
 
-	show_menu(0, keys, menu, VOTE_MENU_SEC, "BrowserCS Next Map");
-	client_cmd(0, "spk Gman/Gman_Choose2");
-	client_print(0, print_chat, "[BrowserCS] Sonraki harita oylamasi — %d saniye!", VOTE_MENU_SEC);
+	/* Broadcast to humans only — client_cmd/show_menu on bots crashes some Xash builds */
+	new players[32], num, pi;
+	get_players(players, num, "ch");
+	for (pi = 0; pi < num; pi++)
+		show_menu(players[pi], keys, menu, VOTE_MENU_SEC, "BrowserCS Next Map");
+	client_print(0, print_chat, "[BrowserCS] Sonraki harita oylamasi - %d saniye!", VOTE_MENU_SEC);
 	log_amx("[BrowserCS] Map vote started (timeleft=%d pinned=%d)", get_timeleft(), pinnedCount);
 	set_task(float(VOTE_MENU_SEC) + 0.5, "BrowserCS_FinishVote");
 }

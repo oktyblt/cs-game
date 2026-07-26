@@ -1,7 +1,7 @@
 const Docker = require('dockerode');
 const docker = new Docker();
 const getNextMapName = (currentMap) => {
-  const officialRotation = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld'];
+  const officialRotation = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld', 'fy_pool_day'];
   const idx = officialRotation.indexOf(currentMap);
   return idx !== -1 ? officialRotation[(idx + 1) % officialRotation.length] : 'de_dust2';
 };

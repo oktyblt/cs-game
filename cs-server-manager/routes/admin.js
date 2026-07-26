@@ -1201,6 +1201,88 @@ app.post('/api/admin/servers/:id/bots', requireAdmin, express.json(), async (req
     }
   });
 
+  // ── Commerce + Announcements CMS ──────────────────────────────────────
+  const commerce = require('../lib/commerce');
+
+  app.get('/api/admin/commerce', requireAdmin, (_req, res) => {
+    try {
+      res.json({ success: true, commerce: commerce.getCommerce() });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  app.put('/api/admin/commerce', requireAdmin, express.json({ limit: '1mb' }), (req, res) => {
+    try {
+      const saved = commerce.saveCommerce(req.body || {});
+      res.json({ success: true, commerce: saved });
+    } catch (e) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  });
+
+  app.get('/api/admin/announcements', requireAdmin, (_req, res) => {
+    try {
+      res.json({ success: true, announcements: commerce.getAnnouncements() });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  app.put('/api/admin/announcements', requireAdmin, express.json({ limit: '2mb' }), (req, res) => {
+    try {
+      const list = Array.isArray(req.body?.announcements) ? req.body.announcements : null;
+      if (!list) return res.status(400).json({ success: false, error: 'announcements dizisi gerekli' });
+      const saved = commerce.saveAnnouncements(list);
+      res.json({ success: true, announcements: saved });
+    } catch (e) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  });
+
+  app.post('/api/admin/announcements', requireAdmin, express.json({ limit: '1mb' }), (req, res) => {
+    try {
+      const item = commerce.upsertAnnouncement(req.body || {});
+      res.json({ success: true, announcement: item, announcements: commerce.getAnnouncements() });
+    } catch (e) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  });
+
+  app.patch('/api/admin/announcements/:id', requireAdmin, express.json({ limit: '1mb' }), (req, res) => {
+    try {
+      const item = commerce.upsertAnnouncement({ ...(req.body || {}), id: req.params.id });
+      res.json({ success: true, announcement: item, announcements: commerce.getAnnouncements() });
+    } catch (e) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  });
+
+  app.delete('/api/admin/announcements/:id', requireAdmin, (req, res) => {
+    try {
+      const next = commerce.deleteAnnouncement(req.params.id);
+      if (!next) return res.status(404).json({ success: false, error: 'Duyuru bulunamadı' });
+      res.json({ success: true, announcements: next });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  app.post('/api/admin/uploads', requireAdmin, express.json({ limit: '6mb' }), (req, res) => {
+    try {
+      const dataUrl = req.body?.dataUrl || req.body?.data_url;
+      if (!dataUrl) return res.status(400).json({ success: false, error: 'dataUrl gerekli' });
+      const saved = commerce.saveUploadFromDataUrl(dataUrl);
+      const origin = process.env.PUBLIC_API_ORIGIN || process.env.SITE_ORIGIN || '';
+      // Prefer absolute media URL via API host when available
+      const apiBase = process.env.PUBLIC_API_URL || '';
+      const url = apiBase ? `${apiBase.replace(/\/$/, '')}${saved.url}` : saved.url;
+      res.json({ success: true, ...saved, url, absoluteUrl: url });
+    } catch (e) {
+      res.status(400).json({ success: false, error: e.message });
+    }
+  });
+
   return { requireAdmin };
 }
 

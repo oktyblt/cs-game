@@ -96,6 +96,17 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// CMS uploaded media (announcement images etc.)
+(() => {
+  try {
+    const commerce = require('./lib/commerce');
+    const uploadsDir = commerce.ensureUploadsDir();
+    app.use('/media', express.static(uploadsDir, { maxAge: '7d', fallthrough: true }));
+  } catch (e) {
+    console.warn('[media] static mount failed:', e.message);
+  }
+})();
+
 // Nginx/proxy arkasında çalışırken X-Forwarded-For güvenini aç
 app.set('trust proxy', 1);
 
@@ -123,7 +134,7 @@ const docker = new Docker(); // Connects to local docker socket by default
 const PORT = process.env.PORT || 4000;
 const DOCKER_IMAGE = process.env.DOCKER_IMAGE || 'xash3d-cs15-server:latest';
 
-const OFFICIAL_MAP_ROTATION = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld'];
+const OFFICIAL_MAP_ROTATION = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld', 'fy_pool_day'];
 
 /** Klasik (non-DM) sunucu standartları — resmi + yeni açılanlar. DM ayrı format. */
 const CLASSIC_SERVER_DEFAULTS = Object.freeze({
@@ -2092,29 +2103,69 @@ app.get('/api/servers/:id/status', requireAuth, async (req, res) => {
 });
 
 // --- ENPARA / havale sipariş API ---
-app.get('/api/payment-info', (req, res) => {
-  res.json({ success: true, ...bankInfoFromEnv() });
+app.get('/api/payment-info', async (req, res) => {
+  try {
+    const maxplayers = req.query.maxplayers || req.query.maxPlayers || req.query.slots;
+    const commerce = require('./lib/commerce');
+    const { isActiveVip, normalizeVipTier } = require('./lib/vipConstants');
+    let vipOpts = {};
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ') && supabaseAdmin) {
+      try {
+        const token = authHeader.slice(7);
+        const { data: { user } } = await supabase.auth.getUser(token);
+        if (user?.id) {
+          const { data: prof } = await supabaseAdmin
+            .from('profiles')
+            .select('vip_tier, vip_expires_at')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (prof && isActiveVip(prof) && normalizeVipTier(prof.vip_tier) === 'platinum') {
+            vipOpts = { profile: prof };
+          }
+        }
+      } catch (_) { /* public fallback */ }
+    }
+    res.json({ success: true, ...commerce.getBankInfo(maxplayers, vipOpts) });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 app.post('/api/rental-orders', loginLimiter, requireAuth, express.json(), async (req, res) => {
   try {
     const { name, map, maxplayers, max_players } = req.body || {};
+    const slots = maxplayers || max_players;
     const order = await createOrder(supabaseAdmin, {
       ownerId: req.user.id,
       serverName: name,
       map,
-      maxPlayers: maxplayers || max_players
+      maxPlayers: slots
     });
+    const pricing = order._pricing || {};
+    const bank = order._bank || bankInfoFromEnv(order.max_players);
+    delete order._pricing;
+    delete order._bank;
     res.json({
       success: true,
       order,
-      payment: bankInfoFromEnv(),
-      instruction:
-        'Havale/EFT açıklamasına mutlaka sipariş numarasını yazın. Ödeme onaylanınca sunucunuz kurulur.'
+      payment: {
+        ...bank,
+        amountTry: order.amount_try,
+        listPriceTry: pricing.listPriceTry ?? bank.listPriceTry ?? order.amount_try,
+        discountPct: pricing.discountPct ?? bank.discountPct ?? 0,
+        discountTry: pricing.discountTry ?? bank.discountTry ?? 0,
+        vipDiscount: !!(pricing.vipDiscount || bank.vipDiscount),
+        vipTier: pricing.vipTier || bank.vipTier || null,
+      },
+      instruction: pricing.vipDiscount
+        ? `Platinum VIP %${pricing.discountPct} indirim uygulandı (${pricing.listPriceTry}₺ → ${pricing.amountTry}₺). Havale açıklamasına sipariş numarasını yazın.`
+        : 'Havale/EFT açıklamasına mutlaka sipariş numarasını yazın. Ödeme onaylanınca sunucunuz kurulur.'
     });
   } catch (e) {
     console.error('[rental-orders] create:', e);
-    res.status(500).json({ success: false, error: e.message });
+    const status = e.status || 500;
+    res.status(status).json({ success: false, error: e.message });
   }
 });
 
@@ -2174,6 +2225,32 @@ registerVipRoutes(app, {
 });
 startRankVipRewardLoop(supabaseAdmin, applyVipGrant);
 
+/* Client WASM crash breadcrumbs (no auth — rate-limited dump for VIP debug). */
+const _clientCrashRecent = [];
+app.post('/api/client-crash', express.json({ limit: '32kb' }), (req, res) => {
+  try {
+    const body = req.body || {};
+    const entry = {
+      at: new Date().toISOString(),
+      ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '',
+      port: body.port || '',
+      message: String(body.message || '').slice(0, 300),
+      flags: body.flags || {},
+      crumbs: Array.isArray(body.crumbs) ? body.crumbs.slice(-24) : [],
+      stack: String(body.stack || '').slice(0, 500),
+    };
+    _clientCrashRecent.push(entry);
+    if (_clientCrashRecent.length > 40) _clientCrashRecent.shift();
+    console.warn('[client-crash]', entry.port, entry.message, JSON.stringify(entry.flags), entry.crumbs?.slice(-6));
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false });
+  }
+});
+app.get('/api/admin/client-crashes', requireAdmin, (_req, res) => {
+  res.json({ success: true, crashes: _clientCrashRecent.slice().reverse() });
+});
+
 // Public site CMS (MOTD / promo / playable maps from admin catalog)
 app.get('/api/site/settings', (req, res) => {
   try {
@@ -2196,6 +2273,24 @@ app.get('/api/site/sitemap.xml', (req, res) => {
     res.type('application/xml').send(siteContent.buildSitemapXml());
   } catch (e) {
     res.status(500).send('<!-- sitemap error -->');
+  }
+});
+
+app.get('/api/site/commerce', (_req, res) => {
+  try {
+    const commerce = require('./lib/commerce');
+    res.json({ success: true, ...commerce.publicCommercePayload() });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.get('/api/site/announcements', (_req, res) => {
+  try {
+    const commerce = require('./lib/commerce');
+    res.json({ success: true, ...commerce.publicAnnouncementsPayload() });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
 
@@ -2626,7 +2721,7 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
 
 // Start official servers on startup
 async function startOfficialServers() {
-  const officialMaps = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld'];
+  const officialMaps = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld', 'fy_pool_day'];
   let startingPort = 27015;
 
   try {

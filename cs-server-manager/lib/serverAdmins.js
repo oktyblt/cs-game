@@ -46,7 +46,7 @@ function assertAllowedGameName(name) {
   const nick = normalizeName(name);
   if (!nick) throw new Error('Oyun nicki zorunlu');
   if (nickContainsBrowserCS(nick) && nick !== PLATFORM_ADMIN_NAME) {
-    throw new Error('"browsercs" içeren nickler saklıdır. Yalnızca resmi nick BrowserCS kullanılabilir.');
+    throw new Error('"browsercs" içeren nickler saklıdır. Yalnızca resmi admin nicki \"BrowserCS\" kullanılabilir.');
   }
   return nick;
 }

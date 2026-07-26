@@ -1,0 +1,57 @@
+# BrowserCS — https://browsercs.com
+User-agent: *
+Allow: /
+Allow: /llms.txt
+Allow: /.well-known/llms.txt
+Disallow: /*?*
+Disallow: /*modal=*
+Disallow: /*server=*
+
+# AI / LLM crawlers — açıkça izin (özetler ve asistanlar için)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://browsercs.com/sitemap.xml
+
+# AI discovery
+# https://browsercs.com/llms.txt
+# https://browsercs.com/.well-known/llms.txt
