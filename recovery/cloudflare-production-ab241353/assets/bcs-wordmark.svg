@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" role="img" aria-label="BrowserCS">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffc14a"/>
+      <stop offset="0.5" stop-color="#f0a000"/>
+      <stop offset="1" stop-color="#c97800"/>
+    </linearGradient>
+  </defs>
+  <!-- mark -->
+  <rect x="4" y="8" width="80" height="80" rx="12" fill="#040608" stroke="#1a2535" stroke-width="2"/>
+  <g fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="square">
+    <path d="M16 30V18h12"/><path d="M72 30V18H60"/><path d="M16 66v12h12"/><path d="M72 66v12H60"/>
+  </g>
+  <text x="44" y="58" text-anchor="middle"
+    font-family="Orbitron, Rajdhani, Arial Black, sans-serif"
+    font-size="26" font-weight="800" letter-spacing="1.5"
+    fill="url(#g)">BCS</text>
+  <!-- wordmark -->
+  <text x="104" y="58"
+    font-family="Orbitron, Rajdhani, Arial Black, sans-serif"
+    font-size="36" font-weight="700" letter-spacing="1"
+    fill="#f0a000">Browser</text>
+  <text x="278" y="58"
+    font-family="Orbitron, Rajdhani, Arial Black, sans-serif"
+    font-size="36" font-weight="700" letter-spacing="1"
+    fill="#ffffff">CS</text>
+  <text x="104" y="78"
+    font-family="'Share Tech Mono', monospace"
+    font-size="11" letter-spacing="3"
+    fill="#5a7a9a">BROWSER COUNTER-STRIKE</text>
+</svg>

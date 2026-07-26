@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17702906757"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-17702906757');
+</script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nasıl Oynanır — BrowserCS Rehber | CS 1.5 Kontroller, Konsol, AMXX</title>
+  <meta name="description" content="BrowserCS nasıl oynanır: kontroller, H tuşu silah eli, konsol, oyun içi menüler, sohbet komutları ve admin AMXX kullanımı." />
+  <meta name="keywords" content="browsercs nasıl oynanır, cs 1.5 kontroller, amxmodx, konsol, silah sağ sol el, h tuşu" />
+  <link rel="canonical" href="https://browsercs.com/nasil-oynanir/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://browsercs.com/nasil-oynanir/" />
+  <meta property="og:title" content="Nasıl Oynanır — BrowserCS Rehber" />
+  <meta property="og:description" content="Kontroller, konsol, menüler, komutlar ve admin AMXX rehberi." />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:site_name" content="BrowserCS" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Nasıl Oynanır — BrowserCS" />
+  <meta name="twitter:description" content="CS 1.5 tarayıcı rehberi: kontroller, konsol, AMXX." />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/site.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "BrowserCS Nasıl Oynanır",
+    "description": "Tarayıcıda Counter-Strike 1.5 kontrolleri, konsol, menüler ve admin AMXX kullanımı.",
+    "url": "https://browsercs.com/nasil-oynanir/",
+    "inLanguage": "tr",
+    "step": [
+      { "@type": "HowToStep", "name": "Oyuna gir", "text": "Oyna sayfasından isim seçip sunucuya katıl." },
+      { "@type": "HowToStep", "name": "Takım ve silah", "text": "M ile takım, B ile satın alma menüsü, 1-0 ile silah slotları." },
+      { "@type": "HowToStep", "name": "Konsol ve komutlar", "text": "Üst bardaki Konsol ile komut gir; sohbette timeleft / nextmap yaz." }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">İçeriğe geç</a>
+  <nav class="site-nav" aria-label="Ana menü">
+    <a class="site-brand" href="/">
+      <img class="site-brand-mark" src="/assets/bcs-mark.png" width="34" height="34" alt="" />
+      <span class="site-brand-text">BrowserCS<small>BCS</small></span>
+    </a>
+    <div class="site-nav-links">
+      <a href="/">Anasayfa</a>
+      <a href="/sunucular">Sunucular</a>
+      <a href="/haritalar">Haritalar</a>
+      <a href="/rank-takip/">Rank Takip</a>
+      <a href="/nasil-oynanir/" aria-current="page">Rehber</a>
+      <a href="/vip/">VIP</a>
+      <a href="/sunucu-kirala">Kirala</a>
+      <a class="nav-cta" href="/oyna">Oyna</a>
+    </div>
+  </nav>
+
+  <main id="main">
+    <header class="hero hero-compact">
+      <div class="hero-bg" style="background-image:url('/browsercs-bg.png')" role="img" aria-label="BrowserCS"></div>
+      <div class="hero-inner">
+        <p class="hero-brand">Rehber</p>
+        <h1 class="hero-title">Nasıl oynanır</h1>
+        <p class="hero-lead">Kontroller, konsol, oyun menüleri, sohbet komutları ve admin AMXX — hepsi tek sayfada.</p>
+        <div class="cta-row">
+          <a class="cta cta-primary" href="/oyna">Hemen Oyna</a>
+          <a class="cta cta-ghost" href="#kontroller">Kontrollere git</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="section">
+      <div class="section-inner guide">
+        <div class="guide-tabs" role="tablist" aria-label="Rehber bölümleri">
+          <button type="button" class="guide-tab is-active" role="tab" aria-selected="true" data-tab="baslangic">Başlangıç</button>
+          <button type="button" class="guide-tab" role="tab" aria-selected="false" data-tab="kontroller">Kontroller</button>
+          <button type="button" class="guide-tab" role="tab" aria-selected="false" data-tab="konsol">Konsol</button>
+          <button type="button" class="guide-tab" role="tab" aria-selected="false" data-tab="menuler">Menüler</button>
+          <button type="button" class="guide-tab" role="tab" aria-selected="false" data-tab="komutlar">Komutlar</button>
+          <button type="button" class="guide-tab" role="tab" aria-selected="false" data-tab="admin">Admin / AMXX</button>
+        </div>
+
+        <div class="guide-panels prose">
+          <article class="guide-panel is-active" id="tab-baslangic" role="tabpanel">
+            <h2>Oyuna girmek</h2>
+            <ol class="guide-steps">
+              <li><a href="/oyna">Oyna</a> sayfasına gir.</li>
+              <li>Oyuncu adını yaz, sunucu listesinden bir sunucu seç veya <a href="/sunucular">Sunucular</a> sayfasından katıl.</li>
+              <li>İlk tıklamada ses ve kontroller aktif olur — tarayıcı izin isterse “İzin ver”.</li>
+              <li>Bağlandıktan sonra <kbd>M</kbd> ile takım seç, spawn olunca <kbd>B</kbd> ile silah al.</li>
+            </ol>
+            <p>Steam, kurulum veya launcher gerekmez. Güncel Chrome, Edge veya Firefox önerilir.</p>
+            <h2>Harita süresi ve oy</h2>
+            <p>Klasik sunucularda harita süresi genelde <strong>30 dakika</strong>dır. Süre bitmeden yaklaşık <strong>3 dakika kala</strong> otomatik harita oylaması açılır — sohbetteki numaralarla oyunu kullan.</p>
+            <p><a class="btn btn-primary" href="/oyna">Hemen oyna</a></p>
+          </article>
+
+          <article class="guide-panel" id="tab-kontroller" role="tabpanel" hidden>
+            <h2>Temel hareket ve nişan</h2>
+            <div class="key-grid">
+              <div class="key-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Hareket</span></div>
+              <div class="key-row"><kbd>Fare</kbd><span>Bakış / nişan</span></div>
+              <div class="key-row"><kbd>Sol tık</kbd><span>Ateş</span></div>
+              <div class="key-row"><kbd>Sağ tık</kbd><span>İkincil ateş / nişangâh (silaha göre)</span></div>
+              <div class="key-row"><kbd>Space</kbd><span>Zıpla</span></div>
+              <div class="key-row"><kbd>Ctrl</kbd><span>Eğil</span></div>
+              <div class="key-row"><kbd>Shift</kbd><span>Yavaş yürü (sessiz)</span></div>
+              <div class="key-row"><kbd>R</kbd><span>Şarjör değiştir</span></div>
+              <div class="key-row"><kbd>E</kbd><span>Kullan / kapı / bomba kur-sök</span></div>
+              <div class="key-row"><kbd>G</kbd><span>Silahı bırak</span></div>
+            </div>
+
+            <h2>Silah slotları ve özel tuşlar</h2>
+            <div class="key-grid">
+              <div class="key-row"><kbd>1</kbd>–<kbd>0</kbd><span>Silah / ekipman slotları</span></div>
+              <div class="key-row"><kbd>B</kbd><span>Satın alma menüsü (buy)</span></div>
+              <div class="key-row"><kbd>M</kbd><span>Takım seç (chooseteam)</span></div>
+              <div class="key-row"><kbd>H</kbd><span><strong>Komut menüsü:</strong> Sağ El / Sol El seçimi</span></div>
+              <div class="key-row"><kbd>TAB</kbd><span>Skor tablosu (BrowserCS özel skorboard)</span></div>
+              <div class="key-row"><kbd>Esc</kbd><span>Oyun menüsü / duraklat</span></div>
+              <div class="key-row"><kbd>Y</kbd> / <kbd>U</kbd><span>Sohbet (herkese / takıma — klasik CS)</span></div>
+            </div>
+            <p class="guide-callout">
+              <strong>H tuşu:</strong> Komut menüsünü açar — menüden <strong>Sağ El</strong> / <strong>Sol El</strong> seçilir.
+              Tercihine göre bir kez basman yeterli; ayar oturumda kalır.
+            </p>
+          </article>
+
+          <article class="guide-panel" id="tab-konsol" role="tabpanel" hidden>
+            <h2>Konsol nedir?</h2>
+            <p>
+              Konsol, oyuna komut yazdığın paneldir. Klasik CS’teki <kbd>~</kbd> yerine BrowserCS’te
+              oyun ekranının üstündeki <strong>Konsol</strong> butonunu kullanırsın.
+            </p>
+            <h2>Nasıl açılır?</h2>
+            <ol class="guide-steps">
+              <li>Oyuna bağlandıktan sonra üst bardaki <strong>Konsol</strong> düğmesine tıkla.</li>
+              <li>Komutu yazıp <kbd>Enter</kbd> ile gönder.</li>
+              <li><kbd>Esc</kbd> veya tekrar Konsol ile kapat.</li>
+              <li>Yukarı / aşağı ok tuşlarıyla önceki komut geçmişine gidebilirsin.</li>
+            </ol>
+            <h2>Sık kullanılan konsol komutları</h2>
+            <table class="guide-table">
+              <thead>
+                <tr><th>Komut</th><th>Ne işe yarar</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>disconnect</code></td><td>Sunucudan ayrıl</td></tr>
+                <tr><td><code>retry</code></td><td>Aynı sunucuya yeniden bağlan</td></tr>
+                <tr><td><code>status</code></td><td>Oyuncu / sunucu bilgisi</td></tr>
+                <tr><td><code>name "YeniAd"</code></td><td>İsim değiştir</td></tr>
+                <tr><td><code>sensitivity 3</code></td><td>Fare hassasiyeti</td></tr>
+                <tr><td><code>volume 0.8</code></td><td>Ses seviyesi (0–1)</td></tr>
+                <tr><td><code>fps_max 100</code></td><td>FPS üst sınırı</td></tr>
+                <tr><td><code>cl_righthand 1</code></td><td>Sağ el silah (0 = sol)</td></tr>
+                <tr><td><code>cl_righthand</code></td><td>Sağ/sol el (<kbd>H</kbd> menüsü)</td></tr>
+                <tr><td><code>toggle_hand</code></td><td>Eli anında değiştir (konsol)</td></tr>
+              </tbody>
+            </table>
+            <p>Yanlış komut veya hata mesajları da bu panelde görünür. Logları kopyalayıp destek için kullanabilirsin.</p>
+          </article>
+
+          <article class="guide-panel" id="tab-menuler" role="tabpanel" hidden>
+            <h2>Oyun içi menüler</h2>
+            <table class="guide-table">
+              <thead>
+                <tr><th>Menü</th><th>Nasıl açılır</th><th>Ne yapar</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Takım seçimi</td>
+                  <td><kbd>M</kbd></td>
+                  <td>T / CT / izleyici seç</td>
+                </tr>
+                <tr>
+                  <td>Satın alma</td>
+                  <td><kbd>B</kbd></td>
+                  <td>Silah, zırh, el bombası, ekipman</td>
+                </tr>
+                <tr>
+                  <td>Skor tablosu</td>
+                  <td><kbd>TAB</kbd></td>
+                  <td>İsim, skor, ping, ölü/canlı durumu</td>
+                </tr>
+                <tr>
+                  <td>Duraklat / çıkış</td>
+                  <td><kbd>Esc</kbd></td>
+                  <td>Oyun menüsü, ayarlar, ayrıl</td>
+                </tr>
+                <tr>
+                  <td>Harita oylaması</td>
+                  <td>Otomatik (süre bitmeden ~3 dk kala)</td>
+                  <td>Sohbette numaraya basarak oy ver</td>
+                </tr>
+                <tr>
+                  <td>AMXX menüleri</td>
+                  <td>Konsolda <code>amxmodmenu</code> vb.</td>
+                  <td>Sadece yetkili admin (aşağıdaki sekme)</td>
+                </tr>
+              </tbody>
+            </table>
+            <h2>Satın alma ipuçları</h2>
+            <ul>
+              <li>Round başında spawn bölgesindeyken <kbd>B</kbd> açılır.</li>
+              <li>Menüdeki numaralarla (1, 2, 3…) seçim yaparsın — klasik CS menü stili.</li>
+              <li>Para yetmezse seçenek gri / alınamaz; önceki round’dan biriken para kullanılır.</li>
+            </ul>
+          </article>
+
+          <article class="guide-panel" id="tab-komutlar" role="tabpanel" hidden>
+            <h2>Sohbet komutları</h2>
+            <p>
+              Bunları sohbete yazman yeterli. İstersen başına <code>/</code>, <code>!</code> veya <code>.</code> koyabilirsin
+              (ör. <code>!timeleft</code>).
+            </p>
+            <table class="guide-table">
+              <thead>
+                <tr><th>Komut</th><th>Açıklama</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>timeleft</code> / <code>kalansure</code></td><td>Haritada kalan süre</td></tr>
+                <tr><td><code>nextmap</code> / <code>sonrakiharita</code></td><td>Sıradaki harita</td></tr>
+                <tr><td><code>saat</code> / <code>thetime</code></td><td>Sunucu saati</td></tr>
+              </tbody>
+            </table>
+            <h2>Oyuncu konsol komutları (özet)</h2>
+            <ul>
+              <li><code>chooseteam</code> — takım menüsü (<kbd>M</kbd>)</li>
+              <li><code>buy</code> — satın alma (<kbd>B</kbd>)</li>
+              <li><kbd>H</kbd> — komut menüsü (sağ/sol el)</li>
+              <li><code>toggle_hand</code> — silah sağ/sol (konsol)</li>
+              <li><code>say merhaba</code> — herkese mesaj</li>
+              <li><code>say_team merhaba</code> — takıma mesaj</li>
+            </ul>
+            <p>Admin komutları bir sonraki sekmede.</p>
+          </article>
+
+          <article class="guide-panel" id="tab-admin" role="tabpanel" hidden>
+            <h2>Admin / AMXX nasıl kullanılır?</h2>
+            <p>
+              Kiralık sunucu veya yetki verilen hesaplarda <strong>AMX Mod X</strong> menüleri ve komutları açıktır.
+              Menüler <em>RCON ile uzaktan açılmaz</em> — oyuna bağlanıp kendi konsolundan çalıştırman gerekir.
+            </p>
+
+            <h3>1) Şifreyi kaydet</h3>
+            <p>Sunucu sahibinin verdiği admin şifresini konsola bir kez yaz:</p>
+            <pre class="guide-code">setinfo _pw "sifren"</pre>
+            <p>Sonra yeniden bağlan veya <code>retry</code> at. Yetki yüklendiyse sohbette / konsolda admin olduğunu görürsün.</p>
+
+            <h3>2) Ana menü</h3>
+            <pre class="guide-code">amxmodmenu</pre>
+            <p>Ekranda numaralı AMXX menüsü açılır. Alt menülere sayı ile girersin.</p>
+
+            <h3>3) Sık kullanılan menü komutları</h3>
+            <table class="guide-table">
+              <thead>
+                <tr><th>Komut</th><th>Menü</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>amxmodmenu</code></td><td>Ana admin menü</td></tr>
+                <tr><td><code>amx_mapmenu</code></td><td>Harita değiştir</td></tr>
+                <tr><td><code>amx_kickmenu</code></td><td>Oyuncu at</td></tr>
+                <tr><td><code>amx_banmenu</code></td><td>Ban</td></tr>
+                <tr><td><code>amx_slapmenu</code></td><td>Slap / slay</td></tr>
+                <tr><td><code>amx_teammenu</code></td><td>Takım değiştir</td></tr>
+                <tr><td><code>amx_votemap</code></td><td>Harita oylaması başlat</td></tr>
+              </tbody>
+            </table>
+
+            <h3>4) Panelden yönetim</h3>
+            <p>
+              Kiralık sunucu paneli (<a href="/sunucu-kirala">Sunucu Kirala</a> / hesabın sunucu ayarları) üzerinden de
+              harita değiştirme, kick, bot ekleme-çıkarma gibi işlemler yapılabilir.
+              AMXX <em>menü</em> komutları ise yalnızca oyundayken client konsolunda çalışır.
+            </p>
+
+            <h3>5) Örnek komutlar (yetkiye göre)</h3>
+            <table class="guide-table">
+              <thead>
+                <tr><th>Komut</th><th>Örnek</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Kick</td><td><code>amx_kick "oyuncu"</code></td></tr>
+                <tr><td>Harita</td><td><code>amx_map de_dust2</code></td></tr>
+                <tr><td>Slap</td><td><code>amx_slap "oyuncu"</code></td></tr>
+                <tr><td>Slay</td><td><code>amx_slay "oyuncu"</code></td></tr>
+                <tr><td>God / noclip</td><td>Yetki ve eklentiye bağlı menüden</td></tr>
+              </tbody>
+            </table>
+            <p class="guide-callout">
+              Yetkin yoksa komutlar “access” / yetkisiz uyarısı verir. Şifreyi sunucu sahibinden al;
+              genel oyunculuk için admin gerekmez.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <nav aria-label="Alt menü">
+        <a href="/oyna">Oyna</a>
+        <a href="/vip/">VIP</a>
+        <a href="/sunucular">Sunucular</a>
+        <a href="/haritalar">Haritalar</a>
+        <a href="/nasil-oynanir/">Rehber</a>
+        <a href="/sunucu-kirala">Kirala</a>
+        <a href="/llms.txt">llms.txt</a>
+      </nav>
+      <p>&copy; 2026 BrowserCS. Bağımsız nostalji projesi. Valve, Steam veya Counter-Strike ile resmi bir bağlantısı bulunmamaktadır.</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.guide-tab');
+      var panels = document.querySelectorAll('.guide-panel');
+      function activate(id) {
+        tabs.forEach(function (t) {
+          var on = t.getAttribute('data-tab') === id;
+          t.classList.toggle('is-active', on);
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach(function (p) {
+          var on = p.id === 'tab-' + id;
+          p.classList.toggle('is-active', on);
+          if (on) p.removeAttribute('hidden');
+          else p.setAttribute('hidden', '');
+        });
+        if (history.replaceState) {
+          history.replaceState(null, '', '#' + id);
+        }
+      }
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          activate(t.getAttribute('data-tab'));
+        });
+      });
+      function fromHash() {
+        var hash = (location.hash || '').replace(/^#/, '');
+        if (hash && document.getElementById('tab-' + hash)) activate(hash);
+      }
+      window.addEventListener('hashchange', fromHash);
+      fromHash();
+    })();
+  </script>
+</body>
+</html>
