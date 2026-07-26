@@ -6,6 +6,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: 'src',
+  // root=src olduğu için .env varsayılan olarak src/ altında aranır; paket kökünü sabitle.
+  envDir: path.resolve(__dirname),
   publicDir: path.resolve(__dirname, 'public'),
 
   server: {
