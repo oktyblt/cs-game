@@ -25,7 +25,11 @@ import { ensureMapBspInVfs, recoverMissingMapBsp, extractMissingMapFromLog, norm
 import { initEngine, changeMap } from './game/engine.js';
 import { toggleConsole } from './game/console.js';
 import { isDeathmatchServer, buildModePill } from './game/serverMeta.js';
+import { initBrowserShortcuts } from './game/browserShortcuts.js';
 import { initRankGiftPopup } from './ui/rankGiftPopup.js';
+
+// Windows/Chrome: Ctrl+W (ve benzeri) oyun sırasında sekmeyi kapatmasın.
+initBrowserShortcuts();
 
 // Fix for Xash3D Emscripten Black Sky Bug + compositor jitter.
 // desynchronized:true tears/flickers on Windows Chrome — keep compositor-synced.
