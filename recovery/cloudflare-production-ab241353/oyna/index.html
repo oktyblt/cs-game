@@ -36,6 +36,44 @@
       rel="stylesheet" />
   </noscript>
   
+  <!-- Ctrl+W / reload shortcuts: oyun sırasında sekmeyi kapatmayı engelle (Windows Chrome) -->
+  <script>
+  (function () {
+    function typing(el) {
+      if (!el) return false;
+      var t = (el.tagName || '').toLowerCase();
+      return t === 'input' || t === 'textarea' || t === 'select' || !!el.isContentEditable;
+    }
+    function inGame() {
+      if (window.engineRunning) return true;
+      var c = document.getElementById('canvas');
+      return !!(c && document.pointerLockElement === c);
+    }
+    function dangerous(e) {
+      if (!(e.ctrlKey || e.metaKey)) return false;
+      var c = e.code || '';
+      var k = (e.key || '').toLowerCase();
+      return c === 'KeyW' || k === 'w' || c === 'KeyT' || k === 't' ||
+             c === 'KeyN' || k === 'n' || c === 'KeyR' || k === 'r';
+    }
+    window.addEventListener('keydown', function (e) {
+      if (!inGame()) return;
+      if (typing(e.target) || typing(document.activeElement)) return;
+      if (dangerous(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      var c = document.getElementById('canvas');
+      if (c && document.pointerLockElement === c) e.preventDefault();
+    }, true);
+    window.addEventListener('beforeunload', function (e) {
+      if (!window.engineRunning) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  })();
+  </script>
   <script type="module" crossorigin src="/assets/oyna-DkF3HDE8.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="modulepreload" crossorigin href="/assets/supabase-B05oRxV8.js">
