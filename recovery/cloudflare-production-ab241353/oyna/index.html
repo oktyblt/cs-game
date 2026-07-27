@@ -172,6 +172,142 @@
     }, 800);
   })();
   </script>
+  <!-- Düşük donanım kalite preset (Intel HD 620 vb.) — rebuild yok -->
+  <script>
+  (function () {
+    var PRESETS = {
+      low: {
+        scale: 0.65,
+        cmds: [
+          'fps_max 60', 'fps_override 1', 'gl_vsync 0', 'gl_fog 0', 'gl_clear 0',
+          'r_dynamic 0', 'r_decals 0', 'mp_decals 0',
+          'max_shells 0', 'max_smokepuffs 0',
+          'hisound 0', 'cl_himodels 0',
+          'violence_ablood 0', 'violence_hblood 0'
+        ]
+      },
+      med: {
+        scale: 0.8,
+        cmds: [
+          'fps_max 75', 'fps_override 1', 'gl_vsync 0', 'gl_fog 0',
+          'r_dynamic 0', 'r_decals 20', 'mp_decals 20',
+          'max_shells 4', 'max_smokepuffs 4',
+          'hisound 0', 'cl_himodels 0'
+        ]
+      },
+      high: {
+        scale: 1,
+        cmds: [
+          'fps_max 100', 'fps_override 1', 'gl_vsync 0',
+          'r_dynamic 0', 'r_decals 50', 'mp_decals 50',
+          'max_shells 8', 'max_smokepuffs 8',
+          'hisound 0', 'cl_himodels 0'
+        ]
+      }
+    };
+
+    function detectLowEndGpu() {
+      try {
+        var c = document.createElement('canvas');
+        var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (!gl) return true;
+        var info = gl.getExtension('WEBGL_debug_renderer_info');
+        var renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '') : '';
+        var cores = navigator.hardwareConcurrency || 4;
+        // HD/UHD 5xx–6xx, eski HD 4xxx — fillrate zayıf
+        if (/intel/i.test(renderer) && /(hd|uhd)\s*(graphics\s*)?(4000|4400|4600|5000|5500|510|515|520|530|610|615|620|630)/i.test(renderer)) {
+          return true;
+        }
+        if (/intel.*(hd|uhd)\s*graphics/i.test(renderer) && cores <= 4) return true;
+        if (/mali|adreno|powervr|swiftshader|llvmpipe/i.test(renderer)) return true;
+        if (cores <= 2) return true;
+      } catch (e) { /* ignore */ }
+      return false;
+    }
+
+    function savedQuality() {
+      try { return localStorage.getItem('bcs_quality') || ''; } catch (e) { return ''; }
+    }
+
+    function defaultQuality() {
+      var s = savedQuality();
+      if (s === 'low' || s === 'med' || s === 'high') return s;
+      return detectLowEndGpu() ? 'low' : 'med';
+    }
+
+    function runCmds(cmds) {
+      if (typeof window.executeEngineCommand !== 'function') return false;
+      for (var i = 0; i < cmds.length; i++) {
+        try { window.executeEngineCommand(cmds[i]); } catch (e) { /* ignore */ }
+      }
+      return true;
+    }
+
+    function applyScale(scale) {
+      if (typeof window.__bcsSetRenderScale === 'function') {
+        window.__bcsSetRenderScale(scale);
+        return;
+      }
+      try { localStorage.setItem('bcs_q_scale', String(scale)); } catch (e) { /* ignore */ }
+      // Fallback: doğrudan buffer (ResizeObserver SCALE=1 ile ezebilir — JS patch asıl yol)
+      var canvas = document.getElementById('canvas');
+      if (!canvas) return;
+      var r = canvas.getBoundingClientRect();
+      var w = Math.max(1, Math.round((r.width || canvas.clientWidth || 1) * scale));
+      var h = Math.max(1, Math.round((r.height || canvas.clientHeight || 1) * scale));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    }
+
+    function applyQuality(q, opts) {
+      opts = opts || {};
+      var preset = PRESETS[q] || PRESETS.med;
+      try { localStorage.setItem('bcs_quality', q); } catch (e) { /* ignore */ }
+      applyScale(preset.scale);
+      var applied = runCmds(preset.cmds);
+      var sel = document.getElementById('bcs-quality');
+      if (sel && sel.value !== q) sel.value = q;
+      if (opts.notify && typeof window.notify === 'function') {
+        var label = q === 'low' ? 'Düşük' : (q === 'high' ? 'Yüksek' : 'Orta');
+        window.notify('Kalite: ' + label + (applied ? '' : ' (oyuna girince uygulanır)'), 'info');
+      }
+      return applied;
+    }
+
+    function boot() {
+      var q = defaultQuality();
+      var sel = document.getElementById('bcs-quality');
+      if (sel) {
+        sel.value = q;
+        sel.addEventListener('pointerdown', function () {
+          // Kalite menüsü tıklanınca ESC pause menü açılmasın
+          window._browserCSIgnorePointerLockLoss = true;
+          setTimeout(function () { window._browserCSIgnorePointerLockLoss = false; }, 800);
+        }, true);
+        sel.addEventListener('change', function () {
+          applyQuality(sel.value, { notify: true });
+        });
+      }
+      applyQuality(q, { notify: false });
+
+      // Motor ayağa kalkınca cvar'ları tekrar bas
+      var last = false;
+      setInterval(function () {
+        var on = !!window.engineRunning;
+        if (on && !last) applyQuality(savedQuality() || q, { notify: false });
+        last = on;
+      }, 1000);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
   <script type="module" crossorigin src="/assets/oyna-DkF3HDE8.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="modulepreload" crossorigin href="/assets/supabase-B05oRxV8.js">
@@ -1387,6 +1523,14 @@
           </div>
           <div class="fps-counter" id="ram-display" style="color:var(--cs-yellow);">— RAM</div>
           <div class="fps-counter" id="fps-display">— FPS</div>
+          <label for="bcs-quality" title="Düşük donanımda FPS artırır" style="display:flex;align-items:center;gap:0.3rem;font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.06em;user-select:none;">
+            KALİTE
+            <select id="bcs-quality" tabindex="-1" style="background:#0c121a;color:var(--cs-yellow);border:1px solid var(--border);font-family:var(--font-hud);font-size:0.58rem;padding:0.15rem 0.25rem;cursor:pointer;">
+              <option value="low">Düşük</option>
+              <option value="med">Orta</option>
+              <option value="high">Yüksek</option>
+            </select>
+          </label>
           <button class="toolbar-btn" id="btn-console" tabindex="-1">KONSOL [F1]</button>
           <button class="toolbar-btn" id="btn-vip-f2" tabindex="-1" title="VIP aç/kapa">VIP [F2]</button>
           <button class="toolbar-btn" id="btn-clantag-f3" tabindex="-1" title="Clan tag">TAG [F3]</button>
