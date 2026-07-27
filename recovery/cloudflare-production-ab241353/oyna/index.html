@@ -73,6 +73,8 @@
           else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
         }
         if (document.fullscreenElement || document.webkitFullscreenElement) {
+          // Escape kilitli kalsın: basılı tutunca Chrome fullscreen'den çıkar;
+          // tek basışta biz pointer-lock bırakıp pause menüyü açtırırız.
           await navigator.keyboard.lock([
             'KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyF', 'KeyG', 'Escape'
           ]);
@@ -92,11 +94,39 @@
         }
       } catch (err) { /* ignore */ }
     }
+    function openPauseMenuFromEsc() {
+      var escMenu = document.getElementById('esc-pause-menu');
+      var c = document.getElementById('canvas');
+      if (!escMenu || !window.engineRunning) return;
+      if (window._browserCSTouchControls) return;
+      if (document.getElementById('console-panel')?.classList.contains('open')) return;
+      // Oyun kodu pointerlockchange ile menüyü açar; kilit kilitliyken Esc
+      // tarayıcıda pointer-lock'u bırakmaz — biz bırakıyoruz.
+      if (c && document.pointerLockElement === c) {
+        try { document.exitPointerLock(); } catch (err) { /* ignore */ }
+      }
+      // Fallback: pointerlockchange gecikirse / kaçırılırsa menüyü doğrudan göster
+      setTimeout(function () {
+        if (!window.engineRunning) return;
+        if (c && document.pointerLockElement === c) return;
+        if (escMenu.classList.contains('show')) return;
+        if (window._browserCSIgnorePointerLockLoss) return;
+        escMenu.classList.add('show');
+      }, 100);
+    }
 
     // En iyi çaba: preventDefault (Chrome çoğu zaman yutmaz; asıl koruma keyboard.lock)
     window.addEventListener('keydown', function (e) {
       if (!inGame()) return;
       if (typing(e.target) || typing(document.activeElement)) return;
+      if (e.repeat) return;
+
+      // Tek Esc → duraklat menüsü (fullscreen + keyboard.lock açıkken)
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        openPauseMenuFromEsc();
+        return;
+      }
+
       if (dangerous(e)) {
         e.preventDefault();
         e.stopPropagation();
