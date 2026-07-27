@@ -36,9 +36,12 @@
       rel="stylesheet" />
   </noscript>
   
-  <!-- Ctrl+W / reload shortcuts: oyun sırasında sekmeyi kapatmayı engelle (Windows Chrome) -->
+  <!-- Ctrl+W koruması: beforeunload YOK. Chrome'da yalnızca Fullscreen + Keyboard Lock gerçekten engeller. -->
   <script>
   (function () {
+    var lockWanted = false;
+    var lockBusy = false;
+
     function typing(el) {
       if (!el) return false;
       var t = (el.tagName || '').toLowerCase();
@@ -56,22 +59,87 @@
       return c === 'KeyW' || k === 'w' || c === 'KeyT' || k === 't' ||
              c === 'KeyN' || k === 'n' || c === 'KeyR' || k === 'r';
     }
+    function canKeyboardLock() {
+      return !!(navigator.keyboard && typeof navigator.keyboard.lock === 'function');
+    }
+    async function armKeyboardLock() {
+      if (!canKeyboardLock() || lockBusy) return;
+      lockBusy = true;
+      try {
+        // Chrome: tarayıcı kısayollarını (Ctrl+W vb.) yalnızca fullscreen + lock ile yakalar
+        if (!document.fullscreenElement) {
+          var root = document.documentElement;
+          if (root.requestFullscreen) await root.requestFullscreen();
+          else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+        }
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          await navigator.keyboard.lock([
+            'KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyF', 'KeyG', 'Escape'
+          ]);
+          lockWanted = true;
+        }
+      } catch (err) {
+        /* kullanıcı reddetti / destek yok — sessizce geç */
+      } finally {
+        lockBusy = false;
+      }
+    }
+    function disarmKeyboardLock() {
+      lockWanted = false;
+      try {
+        if (navigator.keyboard && typeof navigator.keyboard.unlock === 'function') {
+          navigator.keyboard.unlock();
+        }
+      } catch (err) { /* ignore */ }
+    }
+
+    // En iyi çaba: preventDefault (Chrome çoğu zaman yutmaz; asıl koruma keyboard.lock)
     window.addEventListener('keydown', function (e) {
       if (!inGame()) return;
       if (typing(e.target) || typing(document.activeElement)) return;
       if (dangerous(e)) {
         e.preventDefault();
         e.stopPropagation();
-        return;
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
       }
-      var c = document.getElementById('canvas');
-      if (c && document.pointerLockElement === c) e.preventDefault();
     }, true);
-    window.addEventListener('beforeunload', function (e) {
-      if (!window.engineRunning) return;
-      e.preventDefault();
-      e.returnValue = '';
+
+    // Canvas tıklaması = kullanıcı jesti → fullscreen + keyboard.lock
+    document.addEventListener('pointerdown', function (e) {
+      if (!inGame()) return;
+      var c = document.getElementById('canvas');
+      if (!c) return;
+      if (e.target !== c && !c.contains(e.target)) return;
+      armKeyboardLock();
+    }, true);
+
+    document.addEventListener('pointerlockchange', function () {
+      var c = document.getElementById('canvas');
+      if (c && document.pointerLockElement === c) {
+        // Jest dışında olabilir; fullscreen zaten açıksa lock'u yenile
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          armKeyboardLock();
+        }
+      } else if (!inGame()) {
+        disarmKeyboardLock();
+      }
     });
+
+    document.addEventListener('fullscreenchange', function () {
+      if (document.fullscreenElement && inGame()) {
+        armKeyboardLock();
+      } else if (!document.fullscreenElement) {
+        disarmKeyboardLock();
+      }
+    });
+
+    // Menüye dönüş / motor kapanınca kilidi bırak
+    var lastEng = false;
+    setInterval(function () {
+      var eng = !!window.engineRunning;
+      if (lastEng && !eng) disarmKeyboardLock();
+      lastEng = eng;
+    }, 800);
   })();
   </script>
   <script type="module" crossorigin src="/assets/oyna-DkF3HDE8.js"></script>
