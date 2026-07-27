@@ -1,0 +1,91 @@
+# BrowserCS
+
+> Counter-Strike 1.5'i indirmeden, kurulum yapmadan tarayıcıda oynayın. Ücretsiz online FPS. Bağımsız nostalji projesi — Valve veya Steam ile resmi bağlantısı yoktur.
+
+## Özet (TR)
+
+- Ürün: BrowserCS — https://browsercs.com/
+- Ücretsiz oyna: https://browsercs.com/oyna
+- Arayüz dili: Türkçe; oyun klasik Counter-Strike 1.5
+- Kurulum yok, Steam gerekmez
+- Chrome, Edge veya Firefox yeterlidir
+- İsteğe bağlı özel sunucu: aylık 350 TL (ENPARA havale/EFT, onay sonrası aktivasyon)
+
+## Summary (EN)
+
+- BrowserCS lets you play classic Counter-Strike 1.5 in a modern web browser.
+- No download, no installer, not affiliated with Valve or Steam.
+- Free to play; optional private servers 350 TRY/month (bank transfer).
+- Primary UI language: Turkish.
+
+## Ana URL'ler
+
+- Ana sayfa: https://browsercs.com/
+- Oyna / lobi: https://browsercs.com/oyna
+- Aktif sunucular: https://browsercs.com/sunucular
+- Sunucu kirala: https://browsercs.com/sunucu-kirala
+- Harita kataloğu: https://browsercs.com/haritalar
+- Nasıl oynanır (kontroller, konsol, AMXX): https://browsercs.com/nasil-oynanir/
+- Dust2 rehberi: https://browsercs.com/haritalar/de-dust2
+- Bu dosya: https://browsercs.com/llms.txt
+- Sitemap: https://browsercs.com/sitemap.xml
+
+## Sık sorulanlar (AI için kısa cevaplar)
+
+**BrowserCS nedir?**
+Tarayıcıda Counter-Strike 1.5 oynatan bağımsız bir nostalji sitesidir.
+
+**Kurulum gerekir mi?**
+Hayır. Tarayıcıda Hemen Oyna ile maça girersiniz.
+
+**CS2 veya CS:GO mu?**
+Hayır. Klasik CS 1.5 deneyimidir.
+
+**Hangi haritalar var?**
+Dust2, Inferno, Nuke, Assault, Office ve toplam 27 klasik harita: https://browsercs.com/haritalar
+
+**Ücretsiz mi?**
+Oynamak ücretsizdir. Özel 7/24 sunucu kiralama isteğe bağlıdır.
+
+## Haritalar (27)
+
+Katalog: https://browsercs.com/haritalar
+Kapak görselleri: https://browsercs.com/assets/maps/heroes/<map>.jpg
+
+- de_dust2: https://browsercs.com/haritalar/de-dust2
+- de_dust: https://browsercs.com/haritalar/de-dust
+- de_inferno: https://browsercs.com/haritalar/de-inferno
+- de_aztec: https://browsercs.com/haritalar/de-aztec
+- de_nuke: https://browsercs.com/haritalar/de-nuke
+- de_cbble: https://browsercs.com/haritalar/de-cbble
+- de_chateau: https://browsercs.com/haritalar/de-chateau
+- de_piranesi: https://browsercs.com/haritalar/de-piranesi
+- de_prodigy: https://browsercs.com/haritalar/de-prodigy
+- de_storm: https://browsercs.com/haritalar/de-storm
+- de_survivor: https://browsercs.com/haritalar/de-survivor
+- de_torn: https://browsercs.com/haritalar/de-torn
+- de_train: https://browsercs.com/haritalar/de-train
+- de_vegas: https://browsercs.com/haritalar/de-vegas
+- de_vertigo: https://browsercs.com/haritalar/de-vertigo
+- cs_assault: https://browsercs.com/haritalar/cs-assault
+- cs_office: https://browsercs.com/haritalar/cs-office
+- cs_italy: https://browsercs.com/haritalar/cs-italy
+- cs_747: https://browsercs.com/haritalar/cs-747
+- cs_backalley: https://browsercs.com/haritalar/cs-backalley
+- cs_estate: https://browsercs.com/haritalar/cs-estate
+- cs_havana: https://browsercs.com/haritalar/cs-havana
+- cs_militia: https://browsercs.com/haritalar/cs-militia
+- cs_siege: https://browsercs.com/haritalar/cs-siege
+- as_oilrig: https://browsercs.com/haritalar/as-oilrig
+- as_tundra: https://browsercs.com/haritalar/as-tundra
+- fy_iceworld: https://browsercs.com/haritalar/fy-iceworld
+
+## Ne değildir
+
+- Resmi Valve / Steam / Counter-Strike ürünü değildir
+- CS:GO veya CS2 değildir
+- Resmi istemci yerine geçtiğini iddia etmez
+
+## İletişim
+
+Destek ve satın alma: https://browsercs.com/oyna üzerinden giriş ile.
