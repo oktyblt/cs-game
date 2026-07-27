@@ -3846,6 +3846,34 @@ window.openServerJoinPasswordModal = function (port, serverName) {
       openServerSettings(meta.serverId);
     }
   });
+
+  // F5 → Yönet (sayfa yenilemeyi engelle)
+  window.addEventListener('keydown', function (e) {
+    if (e.repeat) return;
+    if (e.key !== 'F5' && e.code !== 'F5') return;
+    if (!state.engineRunning) return;
+    const tag = (e.target && e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || (e.target && e.target.isContentEditable)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof window.openBrowserCSManage === 'function') {
+      window.openBrowserCSManage();
+      return;
+    }
+    window._browserCSIgnorePointerLockLoss = true;
+    setTimeout(function () { window._browserCSIgnorePointerLockLoss = false; }, 1500);
+    try { document.exitPointerLock?.(); } catch (_) { /* ignore */ }
+    escMenu.classList.remove('show');
+    const btn = document.getElementById('btn-game-manage');
+    if (btn && btn.style.display !== 'none' && typeof btn.onclick === 'function') {
+      btn.onclick();
+      return;
+    }
+    const meta = window._motdServerMeta || {};
+    if (meta.serverId && typeof openServerSettings === 'function') {
+      openServerSettings(meta.serverId);
+    }
+  }, true);
 })();
 
 // ================================================================

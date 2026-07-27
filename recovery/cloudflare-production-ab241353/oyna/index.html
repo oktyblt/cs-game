@@ -113,7 +113,7 @@
     }
     function openManagePanel() {
       window._browserCSIgnorePointerLockLoss = true;
-      setTimeout(function () { window._browserCSIgnorePointerLockLoss = false; }, 1200);
+      setTimeout(function () { window._browserCSIgnorePointerLockLoss = false; }, 1500);
       try {
         if (document.pointerLockElement) document.exitPointerLock();
       } catch (err) { /* ignore */ }
@@ -121,20 +121,32 @@
       if (escMenu) escMenu.classList.remove('show');
 
       var btn = document.getElementById('btn-game-manage');
-      if (btn && btn.style.display !== 'none' && typeof btn.onclick === 'function') {
-        btn.onclick();
+      var visible = btn && btn.style.display !== 'none' && btn.style.display !== '';
+      if (btn && visible) {
+        if (typeof btn.onclick === 'function') {
+          btn.onclick();
+          return true;
+        }
+        btn.click();
         return true;
       }
+      var escBtn = document.getElementById('esc-btn-manage');
       var meta = window._motdServerMeta || {};
       if (meta.serverId && typeof window.openServerSettings === 'function') {
         window.openServerSettings(meta.serverId);
         return true;
       }
+      if (escBtn && escBtn.style.display !== 'none') {
+        escBtn.click();
+        return true;
+      }
       if (typeof window.notify === 'function') {
-        window.notify('Yönet: sadece kendi sunucunda (VIP) kullanılabilir', 'warn');
+        window.notify('Yönet [F5]: sadece kendi sunucunda (VIP) kullanılabilir', 'warn');
       }
       return false;
     }
+    // Dışarıdan da çağrılabilsin (toolbar / pause)
+    window.openBrowserCSManage = openManagePanel;
 
     window.addEventListener('keydown', function (e) {
       if (!inGame()) return;
@@ -1626,7 +1638,7 @@
             <button class="esc-btn" id="esc-btn-resume">▶ OYUNA DEVAM ET</button>
             <button class="esc-btn" id="esc-btn-retry">🔄 YENİDEN BAĞLAN</button>
             <button class="esc-btn" id="esc-btn-settings">🖥 KONSOL</button>
-            <button class="esc-btn" id="esc-btn-manage">🛠 SUNUCUYU YÖNET</button>
+            <button class="esc-btn" id="esc-btn-manage">🛠 SUNUCUYU YÖNET [F5]</button>
             <button class="esc-btn" id="esc-btn-disconnect">✕ SUNUCUDAN ÇIK</button>
           </div>
         </div>
