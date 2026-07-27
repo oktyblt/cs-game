@@ -22,3 +22,8 @@ loggan_s_15_transformation_pack_18.7z
 *_rsa
 *_dsa
 *_ed25519
+
+# Allow production snapshot binaries (exact Cloudflare live backup)
+!recovery/cloudflare-production-ab241353/
+!recovery/cloudflare-production-ab241353/**/*.pk3
+!recovery/cloudflare-production-ab241353/**/*.pak
