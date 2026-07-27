@@ -36,7 +36,7 @@
       rel="stylesheet" />
   </noscript>
   
-  <!-- Ctrl+W koruması: beforeunload YOK. Chrome'da yalnızca Fullscreen + Keyboard Lock gerçekten engeller. -->
+  <!-- Ctrl+W koruması: zorunlu tam ekran YOK. Keyboard Lock yalnızca kullanıcı zaten tam ekrandaysa. -->
   <script>
   (function () {
     var lockWanted = false;
@@ -62,26 +62,21 @@
     function canKeyboardLock() {
       return !!(navigator.keyboard && typeof navigator.keyboard.lock === 'function');
     }
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
     async function armKeyboardLock() {
-      if (!canKeyboardLock() || lockBusy) return;
+      // Zorla fullscreen açma — üst toolbar/header tıklanamaz oluyordu.
+      // Ctrl+W kilidi yalnızca kullanıcı F11 / tam ekrandaysa.
+      if (!canKeyboardLock() || lockBusy || !isFullscreen()) return;
       lockBusy = true;
       try {
-        // Chrome: tarayıcı kısayollarını (Ctrl+W vb.) yalnızca fullscreen + lock ile yakalar
-        if (!document.fullscreenElement) {
-          var root = document.documentElement;
-          if (root.requestFullscreen) await root.requestFullscreen();
-          else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
-        }
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          // Escape kilitli kalsın: basılı tutunca Chrome fullscreen'den çıkar;
-          // tek basışta biz pointer-lock bırakıp pause menüyü açtırırız.
-          await navigator.keyboard.lock([
-            'KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyF', 'KeyG', 'Escape'
-          ]);
-          lockWanted = true;
-        }
+        await navigator.keyboard.lock([
+          'KeyW', 'KeyT', 'KeyN', 'KeyR', 'KeyF', 'KeyG', 'Escape'
+        ]);
+        lockWanted = true;
       } catch (err) {
-        /* kullanıcı reddetti / destek yok — sessizce geç */
+        /* ignore */
       } finally {
         lockBusy = false;
       }
@@ -100,12 +95,9 @@
       if (!escMenu || !window.engineRunning) return;
       if (window._browserCSTouchControls) return;
       if (document.getElementById('console-panel')?.classList.contains('open')) return;
-      // Oyun kodu pointerlockchange ile menüyü açar; kilit kilitliyken Esc
-      // tarayıcıda pointer-lock'u bırakmaz — biz bırakıyoruz.
       if (c && document.pointerLockElement === c) {
         try { document.exitPointerLock(); } catch (err) { /* ignore */ }
       }
-      // Fallback: pointerlockchange gecikirse / kaçırılırsa menüyü doğrudan göster
       setTimeout(function () {
         if (!window.engineRunning) return;
         if (c && document.pointerLockElement === c) return;
@@ -115,18 +107,14 @@
       }, 100);
     }
 
-    // En iyi çaba: preventDefault (Chrome çoğu zaman yutmaz; asıl koruma keyboard.lock)
     window.addEventListener('keydown', function (e) {
       if (!inGame()) return;
       if (typing(e.target) || typing(document.activeElement)) return;
       if (e.repeat) return;
-
-      // Tek Esc → duraklat menüsü (fullscreen + keyboard.lock açıkken)
       if (e.key === 'Escape' || e.code === 'Escape') {
         openPauseMenuFromEsc();
         return;
       }
-
       if (dangerous(e)) {
         e.preventDefault();
         e.stopPropagation();
@@ -134,7 +122,7 @@
       }
     }, true);
 
-    // Canvas tıklaması = kullanıcı jesti → fullscreen + keyboard.lock
+    // Canvas tıklaması: fullscreen zorlama yok; sadece mevcut fullscreen'de lock
     document.addEventListener('pointerdown', function (e) {
       if (!inGame()) return;
       var c = document.getElementById('canvas');
@@ -143,168 +131,72 @@
       armKeyboardLock();
     }, true);
 
+    // Toolbar / header tıklanınca pointer-lock bırak + fullscreen'den çık ki butonlar çalışsın
+    document.addEventListener('pointerdown', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var bar = t.closest('#game-toolbar, #header');
+      if (!bar) return;
+      window._browserCSIgnorePointerLockLoss = true;
+      setTimeout(function () { window._browserCSIgnorePointerLockLoss = false; }, 1000);
+      try {
+        if (document.pointerLockElement) document.exitPointerLock();
+      } catch (err) { /* ignore */ }
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } catch (err) { /* ignore */ }
+      disarmKeyboardLock();
+    }, true);
+
     document.addEventListener('pointerlockchange', function () {
       var c = document.getElementById('canvas');
       if (c && document.pointerLockElement === c) {
-        // Jest dışında olabilir; fullscreen zaten açıksa lock'u yenile
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          armKeyboardLock();
-        }
+        if (isFullscreen()) armKeyboardLock();
       } else if (!inGame()) {
         disarmKeyboardLock();
       }
     });
 
     document.addEventListener('fullscreenchange', function () {
-      if (document.fullscreenElement && inGame()) {
-        armKeyboardLock();
-      } else if (!document.fullscreenElement) {
-        disarmKeyboardLock();
-      }
+      if (isFullscreen() && inGame()) armKeyboardLock();
+      else disarmKeyboardLock();
     });
 
-    // Menüye dönüş / motor kapanınca kilidi bırak
     var lastEng = false;
     setInterval(function () {
       var eng = !!window.engineRunning;
       if (lastEng && !eng) disarmKeyboardLock();
       lastEng = eng;
     }, 800);
-  })();
-  </script>
-  <!-- Düşük donanım kalite preset (Intel HD 620 vb.) — rebuild yok -->
-  <script>
-  (function () {
-    var PRESETS = {
-      low: {
-        scale: 0.65,
-        cmds: [
-          'fps_max 60', 'fps_override 1', 'gl_vsync 0', 'gl_fog 0', 'gl_clear 0',
-          'r_dynamic 0', 'r_decals 0', 'mp_decals 0',
-          'max_shells 0', 'max_smokepuffs 0',
-          'hisound 0', 'cl_himodels 0',
-          'violence_ablood 0', 'violence_hblood 0'
-        ]
-      },
-      med: {
-        scale: 0.8,
-        cmds: [
-          'fps_max 75', 'fps_override 1', 'gl_vsync 0', 'gl_fog 0',
-          'r_dynamic 0', 'r_decals 20', 'mp_decals 20',
-          'max_shells 4', 'max_smokepuffs 4',
-          'hisound 0', 'cl_himodels 0'
-        ]
-      },
-      high: {
-        scale: 1,
-        cmds: [
-          'fps_max 100', 'fps_override 1', 'gl_vsync 0',
-          'r_dynamic 0', 'r_decals 50', 'mp_decals 50',
-          'max_shells 8', 'max_smokepuffs 8',
-          'hisound 0', 'cl_himodels 0'
-        ]
+
+    // Eski kalite ölçeği localStorage temizliği
+    try {
+      localStorage.removeItem('bcs_q_scale');
+      localStorage.removeItem('bcs_quality');
+    } catch (e) { /* ignore */ }
+
+    // Pause menü toolbar'ın altında kalsın; üst butonlar tıklanabilsin
+    function fixToolbarLayer() {
+      var tb = document.getElementById('game-toolbar');
+      var esc = document.getElementById('esc-pause-menu');
+      if (tb) {
+        tb.style.position = 'relative';
+        tb.style.zIndex = '9000';
       }
-    };
-
-    function detectLowEndGpu() {
-      try {
-        var c = document.createElement('canvas');
-        var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
-        if (!gl) return true;
-        var info = gl.getExtension('WEBGL_debug_renderer_info');
-        var renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '') : '';
-        var cores = navigator.hardwareConcurrency || 4;
-        // HD/UHD 5xx–6xx, eski HD 4xxx — fillrate zayıf
-        if (/intel/i.test(renderer) && /(hd|uhd)\s*(graphics\s*)?(4000|4400|4600|5000|5500|510|515|520|530|610|615|620|630)/i.test(renderer)) {
-          return true;
-        }
-        if (/intel.*(hd|uhd)\s*graphics/i.test(renderer) && cores <= 4) return true;
-        if (/mali|adreno|powervr|swiftshader|llvmpipe/i.test(renderer)) return true;
-        if (cores <= 2) return true;
-      } catch (e) { /* ignore */ }
-      return false;
-    }
-
-    function savedQuality() {
-      try { return localStorage.getItem('bcs_quality') || ''; } catch (e) { return ''; }
-    }
-
-    function defaultQuality() {
-      var s = savedQuality();
-      if (s === 'low' || s === 'med' || s === 'high') return s;
-      return detectLowEndGpu() ? 'low' : 'med';
-    }
-
-    function runCmds(cmds) {
-      if (typeof window.executeEngineCommand !== 'function') return false;
-      for (var i = 0; i < cmds.length; i++) {
-        try { window.executeEngineCommand(cmds[i]); } catch (e) { /* ignore */ }
-      }
-      return true;
-    }
-
-    function applyScale(scale) {
-      if (typeof window.__bcsSetRenderScale === 'function') {
-        window.__bcsSetRenderScale(scale);
-        return;
-      }
-      try { localStorage.setItem('bcs_q_scale', String(scale)); } catch (e) { /* ignore */ }
-      // Fallback: doğrudan buffer (ResizeObserver SCALE=1 ile ezebilir — JS patch asıl yol)
-      var canvas = document.getElementById('canvas');
-      if (!canvas) return;
-      var r = canvas.getBoundingClientRect();
-      var w = Math.max(1, Math.round((r.width || canvas.clientWidth || 1) * scale));
-      var h = Math.max(1, Math.round((r.height || canvas.clientHeight || 1) * scale));
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
+      if (esc) {
+        esc.style.top = '34px';
+        esc.style.bottom = '0';
+        esc.style.left = '0';
+        esc.style.right = '0';
+        // inset vardı — top override için inset'i temizle
+        esc.style.inset = '';
       }
     }
-
-    function applyQuality(q, opts) {
-      opts = opts || {};
-      var preset = PRESETS[q] || PRESETS.med;
-      try { localStorage.setItem('bcs_quality', q); } catch (e) { /* ignore */ }
-      applyScale(preset.scale);
-      var applied = runCmds(preset.cmds);
-      var sel = document.getElementById('bcs-quality');
-      if (sel && sel.value !== q) sel.value = q;
-      if (opts.notify && typeof window.notify === 'function') {
-        var label = q === 'low' ? 'Düşük' : (q === 'high' ? 'Yüksek' : 'Orta');
-        window.notify('Kalite: ' + label + (applied ? '' : ' (oyuna girince uygulanır)'), 'info');
-      }
-      return applied;
-    }
-
-    function boot() {
-      var q = defaultQuality();
-      var sel = document.getElementById('bcs-quality');
-      if (sel) {
-        sel.value = q;
-        sel.addEventListener('pointerdown', function () {
-          // Kalite menüsü tıklanınca ESC pause menü açılmasın
-          window._browserCSIgnorePointerLockLoss = true;
-          setTimeout(function () { window._browserCSIgnorePointerLockLoss = false; }, 800);
-        }, true);
-        sel.addEventListener('change', function () {
-          applyQuality(sel.value, { notify: true });
-        });
-      }
-      applyQuality(q, { notify: false });
-
-      // Motor ayağa kalkınca cvar'ları tekrar bas
-      var last = false;
-      setInterval(function () {
-        var on = !!window.engineRunning;
-        if (on && !last) applyQuality(savedQuality() || q, { notify: false });
-        last = on;
-      }, 1000);
-    }
-
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', boot);
+      document.addEventListener('DOMContentLoaded', fixToolbarLayer);
     } else {
-      boot();
+      fixToolbarLayer();
     }
   })();
   </script>
@@ -1523,14 +1415,6 @@
           </div>
           <div class="fps-counter" id="ram-display" style="color:var(--cs-yellow);">— RAM</div>
           <div class="fps-counter" id="fps-display">— FPS</div>
-          <label for="bcs-quality" title="Düşük donanımda FPS artırır" style="display:flex;align-items:center;gap:0.3rem;font-family:var(--font-hud);font-size:0.58rem;color:var(--text-dim);letter-spacing:0.06em;user-select:none;">
-            KALİTE
-            <select id="bcs-quality" tabindex="-1" style="background:#0c121a;color:var(--cs-yellow);border:1px solid var(--border);font-family:var(--font-hud);font-size:0.58rem;padding:0.15rem 0.25rem;cursor:pointer;">
-              <option value="low">Düşük</option>
-              <option value="med">Orta</option>
-              <option value="high">Yüksek</option>
-            </select>
-          </label>
           <button class="toolbar-btn" id="btn-console" tabindex="-1">KONSOL [F1]</button>
           <button class="toolbar-btn" id="btn-vip-f2" tabindex="-1" title="VIP aç/kapa">VIP [F2]</button>
           <button class="toolbar-btn" id="btn-clantag-f3" tabindex="-1" title="Clan tag">TAG [F3]</button>
