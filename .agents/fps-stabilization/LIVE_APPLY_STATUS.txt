@@ -43,3 +43,11 @@ Phase 4: C++/WASM rebuild NOT applied — wasm_build/ absent in checkout (gitign
 - /oyna COOP + COEP credentialless for SAB readiness
 - Worker/OffscreenCanvas still blocked without xash WASM rebuild
 - GPU upgrade: optional if fillrate-bound; not required for 60Hz~50FPS case
+
+Next (Phase 4) — decided 2026-07-28:
+1. User hard-refresh /oyna → confirm crossOriginIsolated + SharedArrayBuffer
+2. Provide custom wasm_build (or zip) with BrowserCS patches to build host
+3. Install emsdk; rebuild engine with Worker/OffscreenCanvas path
+4. Stage behind ?bcsworker=1; never replace live oyna-DkF3HDE8.js until PerfDiag
+   shows longTask/gcLike drop on Win + Mac Chrome
+5. Additive CF deploy only after staging OK; keep Functions cwd rule
