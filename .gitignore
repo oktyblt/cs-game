@@ -25,3 +25,5 @@ loggan_s_15_transformation_pack_18.7z
 
 # Runtime analytics store
 cs-server-manager/data/
+
+.wrangler/
