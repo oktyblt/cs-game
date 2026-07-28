@@ -1739,16 +1739,28 @@
 
     <!-- ADMIN PANEL OVERLAY -->
     <div id="master-admin-panel"
-      style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.98);backdrop-filter:blur(16px);z-index:8000;flex-direction:column;padding:2rem;">
+      style="display:none;position:absolute;inset:0;background:rgba(4,6,10,0.98);backdrop-filter:blur(16px);z-index:8000;flex-direction:column;padding:1.25rem 1.5rem;">
       <div
-        style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1rem;">
-        <h1 style="color:var(--cs-yellow);font-family:var(--font-title);">MASTER ADMIN PANELİ</h1>
-        <button class="toolbar-btn danger" id="btn-admin-panel-close" style="padding:0.5rem 1rem;">KAPAT</button>
+        style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:0.85rem;margin-bottom:0.85rem;gap:1rem;flex-wrap:wrap;">
+        <h1 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1.15rem;letter-spacing:0.06em;">MASTER ADMIN PANELİ</h1>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <div id="admin-main-tabs" style="display:flex;gap:0.25rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:2px;">
+            <button type="button" class="admin-main-tab active" data-admin-tab="servers"
+              style="font-family:var(--font-hud);font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.75rem;border:none;border-radius:3px;cursor:pointer;background:var(--cs-yellow);color:#111;font-weight:700;">SUNUCULAR</button>
+            <button type="button" class="admin-main-tab" data-admin-tab="visitors"
+              style="font-family:var(--font-hud);font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.75rem;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-dim);">ZİYARETÇİLER</button>
+            <button type="button" class="admin-main-tab" data-admin-tab="stripe"
+              style="font-family:var(--font-hud);font-size:0.65rem;letter-spacing:0.08em;padding:0.4rem 0.75rem;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-dim);">STRIPE</button>
+          </div>
+          <button class="toolbar-btn" id="btn-admin-refresh" style="padding:0.4rem 0.7rem;font-size:0.65rem;">YENİLE</button>
+          <button class="toolbar-btn danger" id="btn-admin-panel-close" style="padding:0.4rem 0.7rem;">KAPAT</button>
+        </div>
       </div>
-      <div style="flex:1;overflow-y:auto;display:flex;gap:2rem;">
-        <div style="flex:2;">
-          <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1.1rem;margin-bottom:1rem;">AKTİF
-            SUNUCULAR</h2>
+
+      <!-- TAB: SUNUCULAR -->
+      <div id="admin-view-servers" class="admin-main-view" style="flex:1;overflow-y:auto;display:flex;gap:2rem;">
+        <div style="flex:1;min-width:0;">
+          <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1rem;margin-bottom:1rem;">AKTİF SUNUCULAR</h2>
           <table
             style="width:100%;border-collapse:collapse;font-family:var(--font-hud);font-size:0.8rem;text-align:left;">
             <thead>
@@ -1766,10 +1778,60 @@
             </tbody>
           </table>
         </div>
+      </div>
+
+      <!-- TAB: ZİYARETÇİLER -->
+      <div id="admin-view-visitors" class="admin-main-view" style="flex:1;overflow-y:auto;display:none;flex-direction:column;gap:1rem;">
+        <div id="admin-visitor-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.65rem;"></div>
+
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1rem;min-height:0;" class="admin-visitors-grid">
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;gap:0.5rem;flex-wrap:wrap;">
+              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.95rem;">GÜNLÜK İSTATİSTİKLER</h2>
+              <span id="admin-visitor-updated" style="font-family:var(--font-hud);font-size:0.6rem;color:var(--text-dim);"></span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-family:var(--font-hud);font-size:0.72rem;text-align:left;min-width:560px;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border-bright);color:var(--text-dim);">
+                    <th style="padding:0.4rem;">TARİH</th>
+                    <th style="padding:0.4rem;">ZİYARETÇİ</th>
+                    <th style="padding:0.4rem;">GİRİŞ</th>
+                    <th style="padding:0.4rem;">MİSAFİR</th>
+                    <th style="padding:0.4rem;">OYNAYAN</th>
+                    <th style="padding:0.4rem;">KAYITLI</th>
+                    <th style="padding:0.4rem;">KAYITSIZ</th>
+                    <th style="padding:0.4rem;">OTURUM</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-visitor-daily-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:1rem;min-width:0;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem;flex:1;min-height:180px;">
+              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.95rem;margin-bottom:0.75rem;">ŞU AN ÇEVRİMİÇİ</h2>
+              <div id="admin-visitor-online" style="display:flex;flex-direction:column;gap:0.35rem;max-height:260px;overflow-y:auto;font-family:var(--font-hud);font-size:0.72rem;"></div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1rem;flex:1.2;min-height:220px;">
+              <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:0.95rem;margin-bottom:0.75rem;">SON HAREKETLER</h2>
+              <div id="admin-visitor-recent" style="display:flex;flex-direction:column;gap:0.35rem;max-height:320px;overflow-y:auto;font-family:var(--font-hud);font-size:0.7rem;"></div>
+            </div>
+          </div>
+        </div>
+        <style>
+          @media (max-width: 960px) {
+            .admin-visitors-grid { grid-template-columns: 1fr !important; }
+          }
+        </style>
+      </div>
+
+      <!-- TAB: STRIPE -->
+      <div id="admin-view-stripe" class="admin-main-view" style="flex:1;overflow-y:auto;display:none;">
         <div
-          style="flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1.5rem;height:fit-content;">
-          <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1.1rem;margin-bottom:1rem;">STRIPE
-            AYARLARI</h2>
+          style="max-width:420px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1.5rem;height:fit-content;">
+          <h2 style="color:var(--cs-yellow);font-family:var(--font-title);font-size:1.1rem;margin-bottom:1rem;">STRIPE AYARLARI</h2>
           <div class="admin-field" style="margin-bottom:1rem;">
             <label>STRIPE SECRET KEY (sk_live_... veya sk_test_...)</label>
             <input type="password" id="admin-stripe-secret" class="room-input" placeholder="Gizli Anahtar" />
@@ -1779,8 +1841,7 @@
             <input type="password" id="admin-stripe-webhook" class="room-input" placeholder="Webhook Anahtarı" />
           </div>
           <button class="toolbar-btn" id="btn-admin-save-stripe"
-            style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">AYARLARI
-            KAYDET</button>
+            style="width:100%;border-color:var(--cs-yellow);color:var(--cs-yellow);padding:0.6rem;">AYARLARI KAYDET</button>
           <div
             style="font-family:var(--font-hud);font-size:0.65rem;color:var(--text-dim);margin-top:1rem;line-height:1.6;">
             * Stripe anahtarları Cloudflare Worker (backend) tarafına iletilir. <br>
@@ -2486,9 +2547,9 @@
         </div>
 
         <!-- ESC Pause Menu -->
-        <div id="esc-pause-menu" style="display:none;position:absolute;inset:0;z-index:8000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;font-family:var(--font-hud);">
-          <style>
-            #esc-pause-menu.show { display:flex !important; }
+        <div id="esc-pause-menu" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;font-family:var(--font-hud);">
+            <style>
+            #esc-pause-menu.show { display:flex !important; align-items:center !important; justify-content:center !important; }
             #esc-panel { background:linear-gradient(145deg,rgba(6,10,18,0.97),rgba(10,18,30,0.95)); border:1px solid rgba(255,204,0,0.2); border-top:3px solid var(--cs-yellow,#ffcc00); border-radius:8px; padding:2rem 2.5rem; min-width:260px; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,0.8); }
             #esc-panel h2 { font-size:1.1rem; color:var(--cs-yellow,#ffcc00); letter-spacing:0.15em; margin:0 0 0.3rem; }
             #esc-panel .esc-sub { font-size:0.65rem; color:rgba(255,255,255,0.3); letter-spacing:0.1em; margin-bottom:1.5rem; }
@@ -2651,7 +2712,7 @@
     </div>
   </div>
 
-  <script type="module" src="/main.js?v=46"></script>
+  <script type="module" src="/main.js?v=47"></script>
 
 
   <!-- AUTH GATE MODAL: shows when unauthenticated user tries a premium action -->

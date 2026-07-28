@@ -22,3 +22,8 @@ loggan_s_15_transformation_pack_18.7z
 *_rsa
 *_dsa
 *_ed25519
+
+# Runtime analytics store
+cs-server-manager/data/
+
+.wrangler/

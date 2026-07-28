@@ -7,6 +7,7 @@ require('dotenv').config();
 const dgram = require('dgram');
 const fs = require('fs');
 const path = require('path');
+const analytics = require('./analytics');
 
 // Node.js < 22 için global WebSocket polyfill
 global.WebSocket = require('ws');
@@ -70,6 +71,17 @@ const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 dakika
   max: 60, // 60 istek/dakika
   message: { success: false, error: 'Too many requests. Please slow down.' },
+  validate: { xForwardedForHeader: false },
+  skip: (req) => {
+    const p = req.path || '';
+    return p === '/track' || p.endsWith('/track');
+  }
+});
+
+const trackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { success: false, error: 'Too many track requests.' },
   validate: { xForwardedForHeader: false }
 });
 
@@ -137,6 +149,20 @@ mp_roundtime ${serverSettings.round_time}
 mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
+sv_allowdownload 1
+sv_downloadurl "https://browsercs.com/cs-assets/"
+sv_timeout 999
+sv_lan 1
+sv_maxrate 25000
+sv_minrate 20000
+sv_maxupdaterate 100
+sv_minupdaterate 60
+sys_ticrate 100
+fps_max 0
+sv_unlag 1
+sv_maxunlag 0.5
+sv_unlagpush 0.0
+sv_unlagsamples 1
 `;
   fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent);
 
@@ -191,7 +217,7 @@ sv_fileconsistency 0
   try {
     const mapCycleCmd = isOfficial ? ` && echo '${map}' > cstrike/mapcycle.txt` : '';
     const exec = await container.exec({
-      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsys_ticrate 100\n' >> cstrike/server.cfg${mapCycleCmd}`],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsv_maxrate 25000\nsv_minrate 20000\nsv_maxupdaterate 100\nsv_minupdaterate 60\nsys_ticrate 100\nfps_max 0\nsv_unlag 1\n' >> cstrike/server.cfg${mapCycleCmd}`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
@@ -740,6 +766,28 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// Ziyaretçi / oyuncu analitik — istemci event kaydı
+app.post('/api/track', trackLimiter, express.json(), (req, res) => {
+  try {
+    const result = analytics.trackEvent(req, req.body || {});
+    if (!result.success) return res.status(400).json(result);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Master admin — ziyaretçi & günlük istatistikler
+app.get('/api/admin/visitors', requireAdmin, (req, res) => {
+  try {
+    const days = parseInt(req.query.days, 10) || 14;
+    const recentLimit = parseInt(req.query.limit, 10) || 80;
+    res.json(analytics.getAdminStats({ days, recentLimit }));
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 
 
 // GET /api/servers/:id — tek sunucu detayı (UUID veya Docker container ID)
@@ -978,6 +1026,20 @@ mp_roundtime ${s_round}
 mp_consistency 0
 sv_consistency 0
 sv_fileconsistency 0
+sv_allowdownload 1
+sv_downloadurl "https://browsercs.com/cs-assets/"
+sv_timeout 999
+sv_lan 1
+sv_maxrate 25000
+sv_minrate 20000
+sv_maxupdaterate 100
+sv_minupdaterate 60
+sys_ticrate 100
+fps_max 0
+sv_unlag 1
+sv_maxunlag 0.5
+sv_unlagpush 0.0
+sv_unlagsamples 1
 `;
     fs.writeFileSync(path.join(configDir, 'server.cfg'), serverCfgContent);
 
@@ -1020,7 +1082,7 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
       const isOfficialContainer = info.Config.Labels.isOfficial === 'true';
       const mapCycleCmd = isOfficialContainer ? ` && echo '${currentMap}' > cstrike/mapcycle.txt` : '';
       const exec = await container.exec({
-        Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\n' >> cstrike/server.cfg${mapCycleCmd}`],
+        Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\\nsv_downloadurl "https://browsercs.com/cs-assets/"\\nsv_timeout 999\\nmp_timelimit 30\\nmp_roundtime 3\\nmp_freezetime 0\\nmp_startmoney 800\\nmp_consistency 0\\nsv_consistency 0\\nsv_lan 1\\nsv_maxrate 25000\\nsv_minrate 20000\\nsv_maxupdaterate 100\\nsv_minupdaterate 60\\nsys_ticrate 100\\nsv_unlag 1\\n' >> cstrike/server.cfg${mapCycleCmd}`],
         AttachStdout: true, AttachStderr: true
       });
       await exec.start();

@@ -1,0 +1,53 @@
+BrowserCS FPS phases — live apply status (2026-07-28)
+
+CRITICAL RULE: Never deploy GitHub main vite dist over Cloudflare production.
+Production game bundle is ahead of GitHub (oyna-DkF3HDE8.js with packet pool,
+fps_override, DPR lock, PerfDiag). CF deploys must be live-snapshot + additive
+patches only (bcs-fps.js, bcs-track.js, Pages Functions).
+
+AWS SSH: yes — ubuntu@35.159.95.54 (/home/ubuntu/cs-server-manager)
+- All 8 containers online; host mounts /home/ubuntu/server_configs/<port>/server.cfg
+- Runtime RCON applied: sv_maxupdaterate 100 (verified) on 27015-27020,27202,27203
+- No container recreate; no player/DB wipe
+
+CF production: c76b8c62 (live snapshot + bcs-fps.js only; 2 new files uploaded)
+- Same game bundle oyna-DkF3HDE8.js + xash.wasm preserved
+- Visitor track/stats KV data preserved
+
+Phase 0: PerfDiag (?bcsdiag=1) present in live bundle; reinforced via bcs-fps.js
+Phase 1: Repo aligned to live rates + packet pool + renderStability (this commit)
+Phase 2: Net GC pool in live bundle; bcs-fps overlay SAFE mode
+  (2026-07-28 hotfix: removed canvas resize/DPR/WebGL desync — caused flicker)
+Phase 3: AWS cfg + RCON aligned to client 100/100 + rate 25000
+Phase 4: C++/WASM rebuild NOT applied — wasm_build/ absent in checkout (gitignore).
+  Prebuilt wasm only. Net Worker/SAB/OffscreenCanvas is the real stutter fix
+  (PerfDiag: MAIN_THREAD_LONG_TASK + GC_LIKE_FRAME_PAUSES; gpuSuspect=false).
+
+  PLAYER platforms: Windows + Mac (+ Linux) browsers all benefit once shipped.
+  COOP/COEP + Worker path is browser-side, NOT OS-specific. Chrome/Edge on
+  Win/Mac are the primary targets; isolation already prepared on /oyna/.
+
+  BUILD machine: can be Linux (this cloud agent + emsdk), Windows, or Mac.
+  Older note "Mac + emsdk" meant a convenient build host, not a player OS.
+  Blocker: custom wasm_build (BrowserCS patches / scoreboard / live-parity)
+  is not in this checkout — stock upstream rebuild would drop those patches.
+  Do NOT ship incomplete Worker path or stock-only wasm over live CF bundle.
+
+2026-07-28 API outage hotfix (ec4ba052):
+- Flicker deploy from wrong cwd omitted Functions bundle → /api/* returned SPA HTML / 405.
+- Fix: always `cd /tmp/cf-restore-live && npx wrangler pages deploy . ...` so functions/ is compiled.
+- Restored: /api/maps, /api/wads, /api/track, visitor-stats. bcs-fps remains SAFE mode.
+
+2026-07-28 max-perf (8897431e):
+- bcs-fps MAX SAFE v3 cvars (textures/decals/dynamic lights)
+- /oyna COOP + COEP credentialless for SAB readiness
+- Worker/OffscreenCanvas still blocked without xash WASM rebuild
+- GPU upgrade: optional if fillrate-bound; not required for 60Hz~50FPS case
+
+Next (Phase 4) — decided 2026-07-28:
+1. User hard-refresh /oyna → confirm crossOriginIsolated + SharedArrayBuffer
+2. Provide custom wasm_build (or zip) with BrowserCS patches to build host
+3. Install emsdk; rebuild engine with Worker/OffscreenCanvas path
+4. Stage behind ?bcsworker=1; never replace live oyna-DkF3HDE8.js until PerfDiag
+   shows longTask/gcLike drop on Win + Mac Chrome
+5. Additive CF deploy only after staging OK; keep Functions cwd rule
