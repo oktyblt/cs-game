@@ -20,8 +20,18 @@ Phase 2: Net GC pool in live bundle; bcs-fps overlay SAFE mode
   (2026-07-28 hotfix: removed canvas resize/DPR/WebGL desync — caused flicker)
 Phase 3: AWS cfg + RCON aligned to client 100/100 + rate 25000
 Phase 4: C++/WASM rebuild NOT applied — wasm_build/ absent in checkout (gitignore).
-  Prebuilt wasm only. Net Worker/SAB remains optional future path; requires
-  Mac + emsdk rebuild of webxash3d-fwgs. Do not ship incomplete Worker path to live.
+  Prebuilt wasm only. Net Worker/SAB/OffscreenCanvas is the real stutter fix
+  (PerfDiag: MAIN_THREAD_LONG_TASK + GC_LIKE_FRAME_PAUSES; gpuSuspect=false).
+
+  PLAYER platforms: Windows + Mac (+ Linux) browsers all benefit once shipped.
+  COOP/COEP + Worker path is browser-side, NOT OS-specific. Chrome/Edge on
+  Win/Mac are the primary targets; isolation already prepared on /oyna/.
+
+  BUILD machine: can be Linux (this cloud agent + emsdk), Windows, or Mac.
+  Older note "Mac + emsdk" meant a convenient build host, not a player OS.
+  Blocker: custom wasm_build (BrowserCS patches / scoreboard / live-parity)
+  is not in this checkout — stock upstream rebuild would drop those patches.
+  Do NOT ship incomplete Worker path or stock-only wasm over live CF bundle.
 
 2026-07-28 API outage hotfix (ec4ba052):
 - Flicker deploy from wrong cwd omitted Functions bundle → /api/* returned SPA HTML / 405.
