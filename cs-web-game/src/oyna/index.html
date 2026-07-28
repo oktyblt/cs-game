@@ -2547,9 +2547,9 @@
         </div>
 
         <!-- ESC Pause Menu -->
-        <div id="esc-pause-menu" style="display:none;position:absolute;inset:0;z-index:8000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;font-family:var(--font-hud);">
-          <style>
-            #esc-pause-menu.show { display:flex !important; }
+        <div id="esc-pause-menu" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;font-family:var(--font-hud);">
+            <style>
+            #esc-pause-menu.show { display:flex !important; align-items:center !important; justify-content:center !important; }
             #esc-panel { background:linear-gradient(145deg,rgba(6,10,18,0.97),rgba(10,18,30,0.95)); border:1px solid rgba(255,204,0,0.2); border-top:3px solid var(--cs-yellow,#ffcc00); border-radius:8px; padding:2rem 2.5rem; min-width:260px; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,0.8); }
             #esc-panel h2 { font-size:1.1rem; color:var(--cs-yellow,#ffcc00); letter-spacing:0.15em; margin:0 0 0.3rem; }
             #esc-panel .esc-sub { font-size:0.65rem; color:rgba(255,255,255,0.3); letter-spacing:0.1em; margin-bottom:1.5rem; }
