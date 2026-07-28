@@ -21,3 +21,13 @@
 
 /cs-assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+/oyna
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  Cache-Control: no-cache
+
+/oyna/
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  Cache-Control: no-cache
