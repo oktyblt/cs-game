@@ -27,3 +27,9 @@ Phase 4: C++/WASM rebuild NOT applied — wasm_build/ absent in checkout (gitign
 - Flicker deploy from wrong cwd omitted Functions bundle → /api/* returned SPA HTML / 405.
 - Fix: always `cd /tmp/cf-restore-live && npx wrangler pages deploy . ...` so functions/ is compiled.
 - Restored: /api/maps, /api/wads, /api/track, visitor-stats. bcs-fps remains SAFE mode.
+
+2026-07-28 max-perf (8897431e):
+- bcs-fps MAX SAFE v3 cvars (textures/decals/dynamic lights)
+- /oyna COOP + COEP credentialless for SAB readiness
+- Worker/OffscreenCanvas still blocked without xash WASM rebuild
+- GPU upgrade: optional if fillrate-bound; not required for 60Hz~50FPS case
