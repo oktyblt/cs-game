@@ -22,3 +22,8 @@ Phase 3: AWS cfg + RCON aligned to client 100/100 + rate 25000
 Phase 4: C++/WASM rebuild NOT applied — wasm_build/ absent in checkout (gitignore).
   Prebuilt wasm only. Net Worker/SAB remains optional future path; requires
   Mac + emsdk rebuild of webxash3d-fwgs. Do not ship incomplete Worker path to live.
+
+2026-07-28 API outage hotfix (ec4ba052):
+- Flicker deploy from wrong cwd omitted Functions bundle → /api/* returned SPA HTML / 405.
+- Fix: always `cd /tmp/cf-restore-live && npx wrangler pages deploy . ...` so functions/ is compiled.
+- Restored: /api/maps, /api/wads, /api/track, visitor-stats. bcs-fps remains SAFE mode.
