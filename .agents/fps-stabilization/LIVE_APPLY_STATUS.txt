@@ -16,7 +16,8 @@ CF production: c76b8c62 (live snapshot + bcs-fps.js only; 2 new files uploaded)
 
 Phase 0: PerfDiag (?bcsdiag=1) present in live bundle; reinforced via bcs-fps.js
 Phase 1: Repo aligned to live rates + packet pool + renderStability (this commit)
-Phase 2: Net GC pool + DPR/WebGL desync overlay on live CF
+Phase 2: Net GC pool in live bundle; bcs-fps overlay SAFE mode
+  (2026-07-28 hotfix: removed canvas resize/DPR/WebGL desync — caused flicker)
 Phase 3: AWS cfg + RCON aligned to client 100/100 + rate 25000
 Phase 4: C++/WASM rebuild NOT applied — wasm_build/ absent in checkout (gitignore).
   Prebuilt wasm only. Net Worker/SAB remains optional future path; requires
