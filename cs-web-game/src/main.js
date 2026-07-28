@@ -171,6 +171,8 @@ import {
   trackPlayEnd,
   getVisitorId
 } from './analytics.js';
+import './game/frameDiagnostics.js';
+import { startRenderStability } from './game/renderStability.js';
 
 const ASSET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
@@ -796,14 +798,34 @@ Net.prototype.recvfrom = function (fd, bufPtr, bufLen, flags, sockaddrPtr, sockl
   return copyLen;
 };
 
+/** Reuse outbound packet buffers to cut GC from per-packet .slice() (live CF parity). */
+Net.prototype._outPoolRing = null;
+Net.prototype._outPoolIdx = 0;
+Net.prototype._allocOutPacket = function (len) {
+  if (!this._outPoolRing) {
+    this._outPoolRing = Array.from({ length: 16 }, () => new Uint8Array(4096));
+    this._outPoolIdx = 0;
+  }
+  let buf = this._outPoolRing[this._outPoolIdx];
+  this._outPoolIdx = (this._outPoolIdx + 1) % this._outPoolRing.length;
+  if (buf.length < len) {
+    buf = new Uint8Array(len);
+    const prev = (this._outPoolIdx + this._outPoolRing.length - 1) % this._outPoolRing.length;
+    this._outPoolRing[prev] = buf;
+  }
+  return buf.subarray(0, len);
+};
+
 // Override sendto to avoid Detached ArrayBuffer on WebAssembly Memory Grow
 Net.prototype.sendto = function (fd, bufPtr, bufLen, flags, sockaddrPtr, socklenPtr) {
   const buffer = window.wasmMemory.buffer;
   const heapU8 = new Uint8Array(buffer);
   const [ip, port] = this.readSockaddrFast(sockaddrPtr);
 
-  // Slice so we hold a separate copy in JS memory
-  const packetCopy = heapU8.slice(bufPtr, bufPtr + bufLen);
+  // Pool + copy: DC must not hold a live HEAP view; avoid allocating a new
+  // Uint8Array every packet (major GC source for 75↔45 FPS oscillation).
+  const packetCopy = this._allocOutPacket(bufLen);
+  packetCopy.set(heapU8.subarray(bufPtr, bufPtr + bufLen));
   this.sender.sendto({ data: packetCopy, ip, port });
   return bufLen;
 };
@@ -819,13 +841,14 @@ Net.prototype.sendtoBatch = function (fd, bufsPtr, lensPtr, count, flags, sockad
   for (let i = 0; i < count; ++i) {
     const size = heap32[(lensPtr >> 2) + i];
     const packetPtr = heap32[(bufsPtr >> 2) + i];
-    const slice = heapU8.slice(packetPtr, packetPtr + size);
+    const slice = this._allocOutPacket(size);
+    slice.set(heapU8.subarray(packetPtr, packetPtr + size));
     this.sender.sendto({
       data: slice,
       port,
       ip
     });
-    totalSize += slice.length;
+    totalSize += size;
   }
   return totalSize;
 };
@@ -1652,6 +1675,9 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     // ── Adım 2: Xash3D WASM instance oluştur ────────────────────────────────
     setProgress(65, 'Xash3D WASM instance oluşturuluyor...');
 
+    // DPR lock + canvas buffer sizing before WebGL context (live CF parity)
+    startRenderStability(gameCanvas);
+
     // WebGL 2.0 desteği kontrolü
     const checkGL = gameCanvas.getContext('webgl2') || gameCanvas.getContext('webgl') || gameCanvas.getContext('experimental-webgl');
     if (!checkGL) {
@@ -1673,7 +1699,8 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       '+sv_allow_download', '1',
       '+cl_allowdownload', '0',
       '+cl_download_ingame', '0',
-      '+cl_lw', '0',
+      '+cl_lw', '1',
+      '+cl_lc', '1',
       '+voice_enable', '0',
       '+sv_voiceenable', '0',
       '+touch_enable', '0',
@@ -1698,11 +1725,14 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       '-heapsize', '65536',
       '+ip', '10.0.0.2',
       '+clientport', (27000 + Math.floor(Math.random() * 1000)).toString(),
-      '+cl_updaterate', '101',
-      '+cl_cmdrate', '101',
-      '+rate', '100000',
-      '+ex_interp', '0.01',
+      // Live CF parity (oyna-DkF3HDE8): do not ship 101/100000 — mismatches AWS sv_* 100/25000
       '+fps_max', '100',
+      '+fps_override', '1',
+      '+gl_vsync', '0',
+      '+cl_updaterate', '100',
+      '+cl_cmdrate', '100',
+      '+rate', '25000',
+      '+ex_interp', '0.031',
       '+setinfo', '_vgui_menus', '0',
       '+setinfo', 'vgui_menus', '0',
       // In-game console error overlay'i kapat
@@ -1712,7 +1742,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
       '+cl_bobup', '0.5',
       '+r_drawviewmodel', '1',
       '+hud_fastswitch', '1',
-      '+gl_clear', '1',
+      '+gl_clear', '0',
       '+r_novis', '0',
       '+setinfo', '_vgui_menus', '0',
     ];
