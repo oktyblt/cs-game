@@ -1,10 +1,12 @@
 import { supabase, signUp, signIn, signOut, getProfile, getMyServers, buyServer } from './supabase.js';
+import { trackLogin, trackRegister } from './analytics.js';
 
 // API backend URL - env variable'dan al
 const API_BACKEND = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
 
 let currentUser = null;
 let currentProfile = null;
+let _loginTrackedFor = null;
 
 export async function initAuth() {
   const authSection = document.getElementById('auth-section');
@@ -83,6 +85,17 @@ export async function initAuth() {
             badge.style.display = activeProfile.is_premium ? 'block' : 'none';
           }
 
+          // Kayıtlı kullanıcı giriş kaydı (oturum başına bir kez)
+          if (_loginTrackedFor !== session.user.id) {
+            _loginTrackedFor = session.user.id;
+            trackLogin({
+              id: session.user.id,
+              username: finalUsername,
+              email: session.user.email,
+              user_metadata: session.user.user_metadata
+            });
+          }
+
         } catch (err) {
           console.warn("Auth sync failed:", err);
           currentUser = null;
@@ -98,6 +111,7 @@ export async function initAuth() {
     } else {
       currentUser = null;
       currentProfile = null;
+      _loginTrackedFor = null;
       authSection.style.display = 'flex';
       userSection.style.display = 'none';
       const badge = document.getElementById('badge-premium');
@@ -184,6 +198,7 @@ export async function initAuth() {
         const { error } = await signUp(email, pass, user);
         if (error) window.customAlert('Hata: ' + error.message);
         else {
+          trackRegister(user);
           window.customAlert('Kayıt başarılı! Giriş yapabilirsiniz.');
           registerModal.style.display = 'none';
           loginModal.style.display = 'flex';

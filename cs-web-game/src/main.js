@@ -131,6 +131,7 @@ window.openGuestNameModal = function (port, mapName) {
       if (globalNick && !globalNick.readOnly) globalNick.value = nick;
       modal.style.display = 'none';
       cleanup();
+      try { trackGuestJoin(nick); } catch (_) {}
       resolve(nick);
     };
 
@@ -163,12 +164,23 @@ window.alert = (msg) => { window.customAlert(msg); };
 import { initAuth, getCurrentUsername, getCurrentUser, getSessionToken, isUserPremium } from "./auth.js";
 import { buyServer, supabase } from './supabase.js';
 import { unzipSync } from 'fflate';
+import {
+  trackVisit,
+  trackGuestJoin,
+  trackPlayStart,
+  trackPlayEnd,
+  getVisitorId
+} from './analytics.js';
 
 const ASSET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : 'https://browsercs.com';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://backend.browsercs.com';
+
+// Ensure visitor id exists early; record page visit once per tab
+try { getVisitorId(); } catch (_) {}
+trackVisit();
 
 // Fix for Xash3D Emscripten Black Sky Bug: Force WebGL alpha to false
 // This prevents the browser from making the canvas transparent where alpha=0
@@ -3068,8 +3080,172 @@ const adminPasswordInput = $('admin-password-input');
 const masterAdminPanel = $('master-admin-panel');
 const btnAdminPanelClose = $('btn-admin-panel-close');
 const masterAdminTableBody = $('master-admin-table-body');
+const btnAdminRefresh = $('btn-admin-refresh');
 
 let adminToken = sessionStorage.getItem('cs_admin_token') || null;
+let adminActiveTab = 'servers';
+let adminVisitorsTimer = null;
+
+function setAdminTab(tab) {
+  adminActiveTab = tab || 'servers';
+  document.querySelectorAll('.admin-main-tab').forEach((btn) => {
+    const active = btn.dataset.adminTab === adminActiveTab;
+    btn.classList.toggle('active', active);
+    btn.style.background = active ? 'var(--cs-yellow)' : 'transparent';
+    btn.style.color = active ? '#111' : 'var(--text-dim)';
+    btn.style.fontWeight = active ? '700' : '400';
+  });
+  const views = {
+    servers: $('admin-view-servers'),
+    visitors: $('admin-view-visitors'),
+    stripe: $('admin-view-stripe')
+  };
+  Object.entries(views).forEach(([key, el]) => {
+    if (!el) return;
+    el.style.display = key === adminActiveTab ? (key === 'servers' || key === 'visitors' ? 'flex' : 'block') : 'none';
+  });
+  if (adminActiveTab === 'visitors') loadAdminVisitors();
+}
+
+document.querySelectorAll('.admin-main-tab').forEach((btn) => {
+  btn.addEventListener('click', () => setAdminTab(btn.dataset.adminTab));
+});
+
+if (btnAdminRefresh) {
+  btnAdminRefresh.addEventListener('click', () => {
+    if (adminActiveTab === 'visitors') loadAdminVisitors();
+    else openMasterAdminPanel(false);
+  });
+}
+
+function formatAdminTime(ts) {
+  if (!ts) return '—';
+  try {
+    return new Date(ts).toLocaleString('tr-TR', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+  } catch { return '—'; }
+}
+
+function eventTypeLabel(type) {
+  const map = {
+    visit: 'Ziyaret',
+    login: 'Giriş',
+    register: 'Kayıt',
+    guest_join: 'Misafir',
+    play_start: 'Oyuna girdi',
+    play_end: 'Oyundan çıktı'
+  };
+  return map[type] || type;
+}
+
+function visitorStatCard(label, value, sub) {
+  return `
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:0.85rem 0.9rem;">
+      <div style="font-family:var(--font-hud);font-size:0.58rem;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:0.35rem;">${label}</div>
+      <div style="font-family:var(--font-title);font-size:1.35rem;color:var(--text-bright);line-height:1;">${value ?? 0}</div>
+      ${sub ? `<div style="font-family:var(--font-hud);font-size:0.58rem;color:var(--cs-yellow);margin-top:0.35rem;">${sub}</div>` : ''}
+    </div>`;
+}
+
+async function loadAdminVisitors() {
+  const summaryEl = $('admin-visitor-summary');
+  const dailyBody = $('admin-visitor-daily-body');
+  const onlineEl = $('admin-visitor-online');
+  const recentEl = $('admin-visitor-recent');
+  const updatedEl = $('admin-visitor-updated');
+  if (!adminToken) {
+    if (summaryEl) summaryEl.innerHTML = '<div style="color:var(--cs-red);">Admin oturumu gerekli.</div>';
+    return;
+  }
+  if (dailyBody) dailyBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;text-align:center;color:var(--text-dim);">Yükleniyor...</td></tr>';
+
+  try {
+    const res = await fetch(`${API_URL}/api/admin/visitors?days=14&limit=80`, {
+      headers: { 'x-admin-token': adminToken }
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'API hatası');
+
+    const t = data.today || {};
+    const live = data.live || {};
+    if (summaryEl) {
+      summaryEl.innerHTML = [
+        visitorStatCard('BUGÜN ZİYARETÇİ', t.uniqueVisitors, `${t.visits || 0} sayfa görüntüleme`),
+        visitorStatCard('BUGÜN GİRİŞ', t.uniqueLogins, `${t.logins || 0} oturum · ${t.registers || 0} yeni kayıt`),
+        visitorStatCard('BUGÜN MİSAFİR', t.uniqueGuests, `${t.guestJoins || 0} katılım`),
+        visitorStatCard('BUGÜN OYNAYAN', t.uniquePlayers, `${t.playSessions || 0} oyun oturumu`),
+        visitorStatCard('KAYITLI OYUNCU', t.registeredPlayers, 'bugün oynayan'),
+        visitorStatCard('KAYITSIZ OYUNCU', t.guestPlayers, 'bugün oynayan'),
+        visitorStatCard('ŞU AN ONLINE', live.onlineCount, `${live.playingCount || 0} oyunda · ${live.registeredOnline || 0} kayıtlı`),
+        visitorStatCard('ŞU AN OYUNDA', live.playingCount, `${live.guestOnline || 0} misafir online`)
+      ].join('');
+    }
+
+    if (updatedEl) updatedEl.textContent = 'Son güncelleme: ' + formatAdminTime(data.generatedAt);
+
+    const daily = (data.daily || []).slice().reverse();
+    if (dailyBody) {
+      if (!daily.length) {
+        dailyBody.innerHTML = '<tr><td colspan="8" style="padding:0.75rem;text-align:center;">Henüz veri yok.</td></tr>';
+      } else {
+        dailyBody.innerHTML = daily.map((d) => `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:0.4rem;color:var(--text-bright);">${d.date}</td>
+            <td style="padding:0.4rem;">${d.uniqueVisitors} <span style="color:var(--text-dim);">(${d.visits})</span></td>
+            <td style="padding:0.4rem;">${d.uniqueLogins}</td>
+            <td style="padding:0.4rem;">${d.uniqueGuests}</td>
+            <td style="padding:0.4rem;color:var(--cs-yellow);">${d.uniquePlayers}</td>
+            <td style="padding:0.4rem;">${d.registeredPlayers}</td>
+            <td style="padding:0.4rem;">${d.guestPlayers}</td>
+            <td style="padding:0.4rem;">${d.playSessions}</td>
+          </tr>`).join('');
+      }
+    }
+
+    if (onlineEl) {
+      const players = live.players || [];
+      if (!players.length) {
+        onlineEl.innerHTML = '<div style="color:var(--text-dim);padding:0.4rem 0;">Şu an aktif ziyaretçi yok.</div>';
+      } else {
+        onlineEl.innerHTML = players.map((p) => {
+          const badge = p.isRegistered
+            ? '<span style="color:#4caf50;">KAYITLI</span>'
+            : '<span style="color:#ff9800;">MİSAFİR</span>';
+          const status = p.status === 'playing'
+            ? `<span style="color:var(--cs-yellow);">OYUNDA${p.map ? ' · ' + p.map : ''}${p.port ? ':' + p.port : ''}</span>`
+            : '<span style="color:var(--text-dim);">GEZİNİYOR</span>';
+          return `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:0.35rem 0;border-bottom:1px solid var(--border);">
+            <div><strong style="color:var(--text-bright);">${p.username || '—'}</strong> · ${badge}<div style="margin-top:0.15rem;">${status}</div></div>
+            <div style="color:var(--text-dim);white-space:nowrap;">${formatAdminTime(p.lastSeenAt)}</div>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    if (recentEl) {
+      const recent = data.recent || [];
+      if (!recent.length) {
+        recentEl.innerHTML = '<div style="color:var(--text-dim);padding:0.4rem 0;">Henüz hareket kaydı yok.</div>';
+      } else {
+        recentEl.innerHTML = recent.map((e) => {
+          const who = e.username || e.nickname || (e.isRegistered ? 'Oyuncu' : 'Misafir');
+          const kind = e.isRegistered
+            ? '<span style="color:#4caf50;">K</span>'
+            : '<span style="color:#ff9800;">M</span>';
+          const detail = [eventTypeLabel(e.type), e.map, e.port ? (':' + e.port) : ''].filter(Boolean).join(' ');
+          return `<div style="display:flex;justify-content:space-between;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--border);">
+            <div>${kind} <strong style="color:var(--text-bright);">${who}</strong> <span style="color:var(--text-dim);">· ${detail}</span></div>
+            <div style="color:var(--text-dim);white-space:nowrap;">${formatAdminTime(e.ts)}</div>
+          </div>`;
+        }).join('');
+      }
+    }
+  } catch (e) {
+    if (summaryEl) summaryEl.innerHTML = `<div style="color:var(--cs-red);">Ziyaretçi verisi alınamadı: ${e.message}</div>`;
+    if (dailyBody) dailyBody.innerHTML = `<tr><td colspan="8" style="padding:0.75rem;color:var(--cs-red);">Bağlantı hatası</td></tr>`;
+  }
+}
 
 // Supabase rol kontrolü — sadece role='admin' kullanıcılar /csadmin açabilir
 async function checkAdminRole() {
@@ -3148,11 +3324,25 @@ if (btnAdminLoginSubmit) {
 if (btnAdminPanelClose) {
   btnAdminPanelClose.addEventListener('click', () => {
     masterAdminPanel.style.display = 'none';
+    if (adminVisitorsTimer) {
+      clearInterval(adminVisitorsTimer);
+      adminVisitorsTimer = null;
+    }
   });
 }
 
-async function openMasterAdminPanel() {
+async function openMasterAdminPanel(resetTab = true) {
   masterAdminPanel.style.display = 'flex';
+  if (resetTab) setAdminTab('servers');
+  else setAdminTab(adminActiveTab);
+
+  if (adminVisitorsTimer) clearInterval(adminVisitorsTimer);
+  adminVisitorsTimer = setInterval(() => {
+    if (masterAdminPanel.style.display !== 'none' && adminActiveTab === 'visitors') {
+      loadAdminVisitors();
+    }
+  }, 30000);
+
   masterAdminTableBody.innerHTML = '<tr><td colspan="6" style="padding:1rem;text-align:center;">Yükleniyor...</td></tr>';
 
   try {
@@ -3989,6 +4179,19 @@ window.connectToServer = async function (port, mapName, isHost = false) {
     }
   }
   // ─────────────────────────────────────────────────────────────────────────
+
+  // Oyuncu oturumu kaydı (kayıtlı / misafir)
+  try {
+    const usr = getCurrentUser();
+    const nick = getCurrentUsername() || localStorage.getItem('cs_nickname') || 'Player';
+    trackPlayStart({
+      userId: usr?.id || null,
+      username: usr ? nick : null,
+      nickname: nick,
+      port,
+      map: mapName || 'de_dust2'
+    });
+  } catch (_) {}
 
   // initEngine'i çağır
   initEngine(mapName, port, isHost);

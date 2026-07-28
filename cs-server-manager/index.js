@@ -7,6 +7,7 @@ require('dotenv').config();
 const dgram = require('dgram');
 const fs = require('fs');
 const path = require('path');
+const analytics = require('./analytics');
 
 // Node.js < 22 için global WebSocket polyfill
 global.WebSocket = require('ws');
@@ -70,6 +71,17 @@ const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 dakika
   max: 60, // 60 istek/dakika
   message: { success: false, error: 'Too many requests. Please slow down.' },
+  validate: { xForwardedForHeader: false },
+  skip: (req) => {
+    const p = req.path || '';
+    return p === '/track' || p.endsWith('/track');
+  }
+});
+
+const trackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { success: false, error: 'Too many track requests.' },
   validate: { xForwardedForHeader: false }
 });
 
@@ -736,6 +748,28 @@ app.get('/api/stats', async (req, res) => {
     }
     res.json({ success: true, activeServers: running.length, totalServers: containers.length, totalPlayers });
   } catch(e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Ziyaretçi / oyuncu analitik — istemci event kaydı
+app.post('/api/track', trackLimiter, express.json(), (req, res) => {
+  try {
+    const result = analytics.trackEvent(req, req.body || {});
+    if (!result.success) return res.status(400).json(result);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Master admin — ziyaretçi & günlük istatistikler
+app.get('/api/admin/visitors', requireAdmin, (req, res) => {
+  try {
+    const days = parseInt(req.query.days, 10) || 14;
+    const recentLimit = parseInt(req.query.limit, 10) || 80;
+    res.json(analytics.getAdminStats({ days, recentLimit }));
+  } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
 });
