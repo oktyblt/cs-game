@@ -41,6 +41,7 @@ sv_minrate 20000
 sv_maxupdaterate 100
 sv_minupdaterate 60
 sys_ticrate 100
+fps_max 0
 sv_unlag 1
 sv_maxunlag 0.5
 sv_unlagpush 0.0

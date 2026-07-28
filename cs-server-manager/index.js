@@ -158,6 +158,7 @@ sv_minrate 20000
 sv_maxupdaterate 100
 sv_minupdaterate 60
 sys_ticrate 100
+fps_max 0
 sv_unlag 1
 sv_maxunlag 0.5
 sv_unlagpush 0.0
@@ -216,7 +217,7 @@ sv_unlagsamples 1
   try {
     const mapCycleCmd = isOfficial ? ` && echo '${map}' > cstrike/mapcycle.txt` : '';
     const exec = await container.exec({
-      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsv_maxrate 25000\nsv_minrate 20000\nsv_maxupdaterate 100\nsv_minupdaterate 60\nsys_ticrate 100\nsv_unlag 1\n' >> cstrike/server.cfg${mapCycleCmd}`],
+      Cmd: ['sh', '-c', `echo 'sv_allowdownload 1\nsv_downloadurl "https://browsercs.com/cs-assets/"\nsv_timeout 999\nmp_timelimit 30\nmp_roundtime 3\nmp_freezetime 0\nmp_startmoney 800\nmp_consistency 0\nsv_consistency 0\nsv_lan 1\nsv_maxrate 25000\nsv_minrate 20000\nsv_maxupdaterate 100\nsv_minupdaterate 60\nsys_ticrate 100\nfps_max 0\nsv_unlag 1\n' >> cstrike/server.cfg${mapCycleCmd}`],
       AttachStdout: true, AttachStderr: true
     });
     await exec.start();
@@ -1034,6 +1035,7 @@ sv_minrate 20000
 sv_maxupdaterate 100
 sv_minupdaterate 60
 sys_ticrate 100
+fps_max 0
 sv_unlag 1
 sv_maxunlag 0.5
 sv_unlagpush 0.0
