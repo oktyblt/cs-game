@@ -1,0 +1,34 @@
+Clan tag iptal (F3 /clantag) — client fix
+==========================================
+
+Problem
+-------
+F3 only ran `say /clantag`. HTML scoreboard kept prefixing `[BCS]` from
+`_browserCSLocalVipOverlay` / VIP roster. Empty clanTag was coerced back
+to `[BCS]` for Platinum (`t || "[BCS]"`).
+
+Fix
+---
+Additive overlay: `/assets/bcs-clantag.js` (load AFTER `oyna-*.js`)
+
+- Toggles `_browserCSClanTagActive` on every `say /clantag`
+- Allows empty clanTag on local VIP overlay
+- `getBrowserCSVipClanTag` respects local cancel for the local player
+
+Live deploy (Cloudflare Pages — additive only)
+----------------------------------------------
+1. Download current live `/oyna/` HTML + existing assets (do NOT replace with GitHub vite dist).
+2. Copy `cs-web-game/public/assets/bcs-clantag.js` → live `assets/bcs-clantag.js`.
+3. In `oyna/index.html`, after the `oyna-*.js` module script, add:
+   `<script src="/assets/bcs-clantag.js?v=1"></script>`
+4. Deploy from the live-snapshot directory so `functions/` still compile.
+
+Immediate console test (before deploy)
+--------------------------------------
+Paste contents of `bcs-clantag.js` into DevTools on /oyna/, then F2 → F3.
+Expect notify: "Clan tag: KAPALI / iptal (F3)" and scoreboard without [BCS].
+
+Server note
+-----------
+In-game name for other players still depends on AMXX `/clantag` toggle.
+This patch fixes the BrowserCS HTML scoreboard cancel path for sure.
