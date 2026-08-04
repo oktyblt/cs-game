@@ -353,6 +353,103 @@ function queryA2S(ip, port) {
   });
 }
 
+/** A2S_PLAYER (0x55) — name + score (+ duration when provided). */
+function queryA2SPlayers(ip, port) {
+  return new Promise((resolve) => {
+    const client = dgram.createSocket('udp4');
+    let resolved = false;
+    let challenged = false;
+
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timeout);
+      try { client.close(); } catch (e) { /* ignore */ }
+      resolve(value);
+    };
+
+    const timeout = setTimeout(() => finish(null), 1200);
+
+    const sendPlayerQuery = (challenge) => {
+      const req = Buffer.alloc(9);
+      req.writeUInt32LE(0xFFFFFFFF, 0);
+      req.writeUInt8(0x55, 4);
+      req.writeInt32LE(challenge, 5);
+      client.send(req, 0, req.length, port, ip);
+    };
+
+    const parsePlayers = (msg) => {
+      let offset = 4;
+      const header = msg.readUInt8(offset++);
+      if (header === 0x41 && !challenged) {
+        challenged = true;
+        sendPlayerQuery(msg.readInt32LE(offset));
+        return null; // wait for next packet
+      }
+      if (header !== 0x44) return [];
+      const count = msg.readUInt8(offset++);
+      const players = [];
+      for (let i = 0; i < count && offset < msg.length; i++) {
+        const index = msg.readUInt8(offset++);
+        const nameStart = offset;
+        while (offset < msg.length && msg.readUInt8(offset++) !== 0) { /* name */ }
+        const name = msg.toString('utf8', nameStart, offset - 1) || `Oyuncu #${index}`;
+        if (offset + 8 > msg.length) break;
+        const score = msg.readInt32LE(offset); offset += 4;
+        const duration = msg.readFloatLE(offset); offset += 4;
+        players.push({
+          index,
+          name,
+          score: Number.isFinite(score) ? score : 0,
+          duration: Number.isFinite(duration) && duration >= 0 ? Math.round(duration) : null
+        });
+      }
+      players.sort((a, b) => (b.score - a.score) || a.name.localeCompare(b.name));
+      return players;
+    };
+
+    client.on('message', (msg) => {
+      try {
+        const players = parsePlayers(msg);
+        if (players) finish(players);
+      } catch (e) {
+        finish(null);
+      }
+    });
+
+    client.on('error', () => finish(null));
+
+    // Xash often answers A2S_PLAYER immediately with challenge -1
+    sendPlayerQuery(-1);
+  });
+}
+
+const _playersCache = new Map(); // port -> { at, players, map, name }
+
+async function resolveServerPortByParam(idOrPort) {
+  const containers = await docker.listContainers({
+    filters: { label: ['cs-web-game=true'] }
+  });
+  const key = String(idOrPort || '').trim();
+  const asPort = Number(key);
+  for (const c of containers) {
+    const port = c.Ports.find(p => p.PrivatePort === 27015)?.PublicPort || 0;
+    if (!port) continue;
+    if (c.Id === key || c.Id.startsWith(key) || String(port) === key || port === asPort) {
+      return {
+        id: c.Id,
+        port,
+        name: c.Labels.serverName || 'Sunucu',
+        map: c.Labels.mapName || '',
+        maxplayers: parseInt(c.Labels.maxPlayers) || 16,
+        state: c.State,
+        isOfficial: c.Labels.isOfficial === 'true'
+      };
+    }
+  }
+  return null;
+}
+
 // GoldSrc RCON function
 function sendRcon(ip, port, password, command) {
   return new Promise((resolve, reject) => {
@@ -457,6 +554,63 @@ app.get('/api/servers', async (req, res) => {
     res.json({ success: true, servers });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Public player roster for server browser (A2S_PLAYER). :id = container id or host port.
+app.get('/api/servers/:id/players', async (req, res) => {
+  try {
+    const meta = await resolveServerPortByParam(req.params.id);
+    if (!meta) {
+      return res.status(404).json({ success: false, error: 'Sunucu bulunamadı', players: [] });
+    }
+    if (meta.state !== 'running') {
+      return res.json({
+        success: true,
+        id: meta.id,
+        port: meta.port,
+        name: meta.name,
+        map: meta.map,
+        maxplayers: meta.maxplayers,
+        players: []
+      });
+    }
+
+    const cacheKey = String(meta.port);
+    const cached = _playersCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < 4000) {
+      return res.json({
+        success: true,
+        id: meta.id,
+        port: meta.port,
+        name: meta.name,
+        map: cached.map || meta.map,
+        maxplayers: meta.maxplayers,
+        players: cached.players,
+        cached: true
+      });
+    }
+
+    const [info, players] = await Promise.all([
+      queryA2S('127.0.0.1', meta.port).catch(() => null),
+      queryA2SPlayers('127.0.0.1', meta.port)
+    ]);
+    const list = Array.isArray(players) ? players : [];
+    const map = (info && info.map) || meta.map;
+    _playersCache.set(cacheKey, { at: Date.now(), players: list, map, name: meta.name });
+
+    res.json({
+      success: true,
+      id: meta.id,
+      port: meta.port,
+      name: meta.name,
+      map,
+      maxplayers: meta.maxplayers,
+      players: list,
+      cached: false
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message, players: [] });
   }
 });
 

@@ -1,0 +1,5 @@
+Player roster live notes
+
+v4 (58399218): existing "👤 X/Y Oyuncu" styled as themed HUD pill button.
+Click opens score modal. Extra OYUNCULAR button removed.
+_headers COOP/COEP credentialless kept for SharedArrayBuffer.

@@ -2875,15 +2875,23 @@ async function loadServerList() {
               <img crossorigin="anonymous" src="${mapImgUrl}" alt="Server" style="position:absolute; inset:0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;" onerror="this.onerror=null; this.src='${defaultImgUrl}';" />
               <div style="position:absolute; inset:0; background:linear-gradient(to bottom,rgba(10,16,26,0.1),var(--bg-card)); pointer-events:none;"></div>
               <span class="server-thumb-map-text" style="z-index:5; font-size: 0.95rem;">${server.map}</span>
-              <div style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50; z-index:5;">
+              <button type="button" class="sb-players-btn" title="Oyuncu listesini göster" style="position:absolute; bottom:4px; right:4px; background:rgba(0,0,0,0.8); padding:2px 6px; border-radius:4px; font-size:0.75rem; color:#4caf50; font-weight:bold; border: 1px solid #4caf50; z-index:6; font-family:inherit; line-height:1.2;">
                 👤 ${server.playersCount}/${server.maxplayers}
-              </div>
+              </button>
             </div>
             <div style="font-weight: bold; color: var(--text-bright); text-align: center; margin-top: 6px; font-size: 0.85rem;">${server.displayName}</div>
             <div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px;">
               ${miniModePill}${miniLockPill}
             </div>
           `;
+          const miniPlayersBtn = div.querySelector('.sb-players-btn');
+          if (miniPlayersBtn) {
+            miniPlayersBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              window.openServerPlayersModal(server);
+            });
+          }
           div.addEventListener('click', async () => {
             window._motdServerMeta = { serverName: server.name || server.displayName, mapName: server.map, serverId: server.id, owner_id: server.owner_id };
             // Sifre gerekiyorsa modal aç
@@ -2926,7 +2934,7 @@ async function loadServerList() {
               </div>
               <div class="server-card-meta">
                 <span>🗺️ ${server.map}</span>
-                <span>👤 ${server.playersCount}/${server.maxplayers} Oyuncu</span>
+                <button type="button" class="sb-players-btn" title="Oyuncu listesini göster" style="background:transparent;border:1px solid transparent;border-radius:3px;padding:1px 4px;color:inherit;font:inherit;cursor:pointer;">👤 ${server.playersCount}/${server.maxplayers} Oyuncu</button>
               </div>
               <div style="font-size:0.72rem; color:var(--text-dim); margin-top:3px;">👑 Kurucu: <b>${server.displayHost}</b></div>
               <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
@@ -2937,6 +2945,14 @@ async function loadServerList() {
               </div>
             </div>
           `;
+          const fullPlayersBtn = card.querySelector('.sb-players-btn');
+          if (fullPlayersBtn) {
+            fullPlayersBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              window.openServerPlayersModal(server);
+            });
+          }
           card.querySelector('.btn-join-room').addEventListener('click', async () => {
             window._motdServerMeta = { serverName: server.name, mapName: server.map, serverId: server.id, owner_id: server.owner_id };
 
@@ -4373,6 +4389,137 @@ window._execMatchCfgWithPass = async function (svPassword) {
   window.addEventListener('keyup', modalKeyGuard, { capture: true });
   window.addEventListener('keypress', modalKeyGuard, { capture: true });
 })();
+
+// ================================================================
+// SERVER PLAYERS ROSTER MODAL (A2S_PLAYER via /api/servers/:id/players)
+// ================================================================
+function _spEscapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function _spFormatDuration(sec) {
+  if (sec == null || !Number.isFinite(sec) || sec < 0) return '—';
+  const total = Math.round(sec);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+window.openServerPlayersModal = function (server) {
+  const modal = document.getElementById('server-players-modal');
+  const subtitle = document.getElementById('sp-subtitle');
+  const meta = document.getElementById('sp-meta');
+  const listWrap = document.getElementById('sp-list-wrap');
+  const btnRefresh = document.getElementById('sp-refresh');
+  const btnClose = document.getElementById('sp-close');
+  if (!modal || !listWrap) return;
+
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  const serverKey = server.port || server.id;
+  const displayName = server.displayName || server.name || 'Sunucu';
+  if (subtitle) {
+    subtitle.textContent = displayName + (server.map ? '  ·  ' + server.map : '');
+  }
+  if (meta) {
+    meta.textContent = (server.playersCount != null ? server.playersCount : '?') +
+      '/' + (server.maxplayers || '?') + ' oyuncu';
+  }
+
+  let closed = false;
+  let fetchToken = 0;
+
+  function closeModal() {
+    if (closed) return;
+    closed = true;
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    btnClose && btnClose.removeEventListener('click', closeModal);
+    btnRefresh && btnRefresh.removeEventListener('click', onRefresh);
+    modal.removeEventListener('click', onBackdrop);
+    document.removeEventListener('keydown', onKey);
+  }
+
+  function onBackdrop(e) {
+    if (e.target === modal) closeModal();
+  }
+
+  function onKey(e) {
+    if (e.key === 'Escape') closeModal();
+  }
+
+  function onRefresh() {
+    loadPlayers(true);
+  }
+
+  function renderPlayers(players, info) {
+    if (meta && info) {
+      const count = Array.isArray(players) ? players.length : 0;
+      const max = info.maxplayers || server.maxplayers || '?';
+      const mapLabel = info.map || server.map || '';
+      meta.textContent = count + '/' + max + ' oyuncu' + (mapLabel ? '  ·  ' + mapLabel : '');
+    }
+
+    if (!players || players.length === 0) {
+      listWrap.innerHTML = '<div id="sp-empty">Sunucuda oyuncu yok.</div>';
+      return;
+    }
+
+    const rows = players.map((p, i) => {
+      const name = _spEscapeHtml(p.name || ('Oyuncu #' + (i + 1)));
+      const score = Number.isFinite(p.score) ? p.score : 0;
+      const time = _spFormatDuration(p.duration);
+      return '<tr>' +
+        '<td class="sp-rank">' + (i + 1) + '</td>' +
+        '<td class="sp-name">' + name + '</td>' +
+        '<td class="sp-score">' + score + '</td>' +
+        '<td class="sp-time">' + time + '</td>' +
+        '</tr>';
+    }).join('');
+
+    listWrap.innerHTML =
+      '<table id="sp-table">' +
+      '<thead><tr><th>#</th><th>Oyuncu</th><th style="text-align:right">Skor</th><th style="text-align:right">Süre</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  async function loadPlayers(bustCache) {
+    const token = ++fetchToken;
+    listWrap.innerHTML = '<div id="sp-loading">Oyuncular yükleniyor...</div>';
+    try {
+      const qs = bustCache ? ('?t=' + Date.now()) : '';
+      const res = await fetch(`${API_URL}/api/servers/${encodeURIComponent(serverKey)}/players${qs}`);
+      const data = await res.json();
+      if (closed || token !== fetchToken) return;
+      if (!res.ok || data.success === false) {
+        listWrap.innerHTML = '<div id="sp-error">' + _spEscapeHtml(data.error || 'Oyuncu listesi alınamadı.') + '</div>';
+        return;
+      }
+      renderPlayers(data.players || [], data);
+    } catch (err) {
+      if (closed || token !== fetchToken) return;
+      listWrap.innerHTML = '<div id="sp-error">Bağlantı hatası. Tekrar deneyin.</div>';
+    }
+  }
+
+  modal.style.display = 'flex';
+  modal.classList.add('show');
+  btnClose && btnClose.addEventListener('click', closeModal);
+  btnRefresh && btnRefresh.addEventListener('click', onRefresh);
+  modal.addEventListener('click', onBackdrop);
+  document.addEventListener('keydown', onKey);
+  loadPlayers(false);
+};
 
 // ================================================================
 // THEMED SERVER JOIN PASSWORD MODAL

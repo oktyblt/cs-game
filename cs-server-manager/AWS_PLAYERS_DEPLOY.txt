@@ -1,0 +1,26 @@
+# AWS deploy — server browser players API (2026-08-04)
+
+## Live host
+- `ubuntu@35.159.95.54`
+- PM2 process: `cs-manager` → `/home/ubuntu/cs-server-manager/index.js`
+
+## What was deployed (additive, live code)
+Live `cs-server-manager` already had `queryA2SPlayers()` (used for bot/player breakdown).
+Missing piece was the **public** HTTP route.
+
+Patched files on AWS:
+1. `routes/servers.js` — added `GET /api/servers/:id/players` (id = port / container id / UUID)
+2. `index.js` — pass `queryA2SPlayers` into `registerServerRoutes(...)`
+
+Backup on server:
+`/home/ubuntu/deploy-backup-20260804_121558-server-players/`
+
+## Verified
+```bash
+curl -s https://backend.browsercs.com/api/servers/27015/players
+# → success:true, players:[{name,score,duration}, ...] sorted by score
+```
+
+## Note
+Repo `main` `cs-server-manager/index.js` is older/smaller than live (~47KB vs ~107KB modular).
+Do **not** overwrite live with repo `main` wholesale. Prefer additive patches against the live tree.
