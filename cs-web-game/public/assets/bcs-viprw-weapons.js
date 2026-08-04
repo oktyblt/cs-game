@@ -1,8 +1,8 @@
-/*! BrowserCS — VIP weapon skin chooser v9
+/*! BrowserCS — VIP weapon skin chooser v10
  * JOIN-SAFE:
- * - Server precaches only *_vip_* (plugin 1.9.0). Never viprw / never VIP players.
- * - RW bytes are written onto *_vip_* paths BEFORE the engine `connect` command.
- * - Mid-game pick → overlay + page reload autoconnect.
+ * - Server precaches only *_vip_* (plugin 1.9.0). Never viprw.
+ * - RW bytes onto *_vip_* BEFORE connect (engine model cache is by path).
+ * - Mid-game pick → overlay + in-engine reconnect (NO full page reload).
  */
 (function () {
   'use strict';
@@ -149,15 +149,59 @@
 
   function softReconnect(reason) {
     var port = window._browserCSConnectPort || '';
-    var map = (window._motdServerMeta && window._motdServerMeta.mapName) || 'fy_iceworld';
-    var pw = '';
-    try { pw = window._pendingServerPassword || sessionStorage.getItem('_csLastPw_' + port) || ''; } catch (_) {}
+    var skin = preferredSkin();
+    crumb('viprw_ingame_reconnect', { reason: reason || '', port: port, skin: skin });
+    if (typeof window.notify === 'function') {
+      window.notify('Skin uygulanıyor — sunucuya yeniden giriliyor (sayfa yenilenmez)...', 'info');
+    }
+    try { sessionStorage.setItem('_bcsVipSkinReapply', skin); } catch (_) {}
+
+    // 1) Drop current server session so model cache reloads from VFS on reconnect
+    try { runRaw('disconnect'); } catch (_) {}
     try {
-      sessionStorage.setItem('_csAutoConnect', JSON.stringify({ port: String(port), map: map, password: pw || '' }));
+      if (typeof window.executeEngineCommand === 'function') window.executeEngineCommand('disconnect');
     } catch (_) {}
-    crumb('viprw_soft_reconnect', { reason: reason || '', port: port });
-    if (typeof window.notify === 'function') window.notify('Skin için yeniden bağlanılıyor...', 'info');
-    setTimeout(function () { window.location.reload(); }, 500);
+
+    // 2) Reconnect via existing BrowserCS pipe (no location.reload)
+    setTimeout(function () {
+      try {
+        if (window.BrowserCSReconnect && typeof window.BrowserCSReconnect.retryNow === 'function') {
+          window.BrowserCSReconnect.retryNow();
+          return;
+        }
+      } catch (_) {}
+      // Fallback: direct connect if reconnect helper missing
+      if (port) {
+        try { runRaw('connect 10.0.0.1:' + port); } catch (_) {}
+      } else {
+        // Last resort only
+        try {
+          sessionStorage.setItem('_csAutoConnect', JSON.stringify({
+            port: String(port || ''),
+            map: (window._motdServerMeta && window._motdServerMeta.mapName) || 'fy_iceworld',
+            password: ''
+          }));
+        } catch (_) {}
+        window.location.reload();
+      }
+    }, 450);
+
+    // 3) After join, re-assert skin command + VIP
+    var tries = 0;
+    var timer = setInterval(function () {
+      tries++;
+      var joined = false;
+      try {
+        joined = !!(window.BrowserCSReconnect && window.BrowserCSReconnect.sessionJoined) ||
+          !!window._browserCSInGameFlag;
+      } catch (_) {}
+      if (joined || tries > 40) {
+        clearInterval(timer);
+        try { runRaw('bcs_vipwpnskin ' + preferredSkin()); } catch (_) {}
+        try { window.injectVipTicketNow && window.injectVipTicketNow('skin_rejoin'); } catch (_) {}
+        crumb('viprw_rejoin_skin_assert', { skin: preferredSkin(), joined: joined, tries: tries });
+      }
+    }, 500);
   }
 
   function installConnectHook() {
@@ -319,10 +363,10 @@
     el.innerHTML = [
       '<div class="panel" role="dialog">',
       '<h2>VIP SİLAH SKİN</h2>',
-      '<p>Kırmızı–beyaz seçilince paket iner ve sunucuya yeniden bağlanırsın.</p>',
+      '<p>Renk değişimi için kısa yeniden giriş yapılır (sayfa yenilenmez). Join güvenli.</p>',
       '<div class="choices">',
       '<button type="button" data-skin="gold">Altın (Gold)<span class="sub">Klasik altın VIP</span></button>',
-      '<button type="button" data-skin="rw" class="rw">Kırmızı–Beyaz<span class="sub">Yeniden bağlanma ile uygulanır</span></button>',
+      '<button type="button" data-skin="rw" class="rw">Kırmızı–Beyaz<span class="sub">Paket iner, kısa yeniden giriş</span></button>',
       '</div>',
       '<button type="button" class="close" data-close="1">Kapat</button>',
       '</div>'
@@ -363,7 +407,7 @@
       if (window.state && window.state.engineRunning && window._browserCSConnectPort) {
         softReconnect('skin_' + s);
       } else if (typeof window.notify === 'function') {
-        window.notify(s === 'rw' ? 'Kırmızı–beyaz seçildi — girişte uygulanır' : 'Altın seçildi', 'success');
+        window.notify(s === 'rw' ? 'Kırmızı–beyaz seçildi — sunucuya girince uygulanır' : 'Altın seçildi', 'success');
       }
     } catch (err) {
       if (typeof window.notify === 'function') window.notify('Skin hata: ' + ((err && err.message) || err), 'error');
