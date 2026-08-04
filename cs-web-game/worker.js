@@ -40,6 +40,8 @@ export default {
         { name: 'cs_assault', size: 1041700, description: 'Hostage Rescue' },
         { name: 'cs_office', size: 4679872, description: 'Hostage Rescue' },
         { name: 'de_aztec', size: 2740604, description: 'Bomb Defusal' },
+        { name: 'fy_iceworld', size: 120000, description: 'Fight Yard' },
+        { name: 'fy_pool_day', size: 853064, description: 'Fight Yard' },
         { name: 'de_nuke', size: 2036392, description: 'Bomb Defusal' },
         { name: 'cs_italy', size: 2303480, description: 'Hostage Rescue' },
         { name: 'as_oilrig', size: 2056040, description: 'VIP Assassination' },

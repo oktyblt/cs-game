@@ -51,7 +51,7 @@
       return buildHalflifeResponse().catch(() => origFetch(input, init));
     }
     // Force revalidate mismatched official maps (cache-bust query)
-    if (/\/cs-assets\/cstrike\/maps\/(de_inferno|de_aztec)\.bsp(?:\?|$)/i.test(url) && !/[?&]v=srv-crc-/.test(url)) {
+    if (/\/cs-assets\/cstrike\/maps\/(de_inferno|fy_pool_day)\.bsp(?:\?|$)/i.test(url) && !/[?&]v=srv-crc-/.test(url)) {
       const sep = url.includes('?') ? '&' : '?';
       const busted = url.replace(/([?&])v=[^&]*/g, '').replace(/\?$/, '') + sep + 'v=srv-crc-20260804';
       return origFetch(busted, Object.assign({}, init || {}, { cache: 'no-store' }));
@@ -64,10 +64,10 @@
     '/cs-assets/valve/halflife.wad?v=full-hl-20260718',
     '/cs-assets/valve/basehalflife_required.wad',
     '/cs-assets/cstrike/maps/de_inferno.bsp',
-    '/cs-assets/cstrike/maps/de_aztec.bsp',
+    '/cs-assets/cstrike/maps/fy_pool_day.bsp',
     '/cs-assets/cstrike/de_inferno.wad',
     'https://browsercs.com/cs-assets/cstrike/maps/de_inferno.bsp',
-    'https://browsercs.com/cs-assets/cstrike/maps/de_aztec.bsp',
+    'https://browsercs.com/cs-assets/cstrike/maps/fy_pool_day.bsp',
     'https://browsercs.com/cs-assets/valve/halflife.wad',
     'https://browsercs.com/cs-assets/valve/halflife.wad?v=full-hl-20260718'
   ];
