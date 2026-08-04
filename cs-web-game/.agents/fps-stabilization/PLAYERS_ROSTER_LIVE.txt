@@ -1,0 +1,9 @@
+Server browser player roster — live CF apply (2026-08-04)
+
+Deploy: 0ad22a19 (live-snapshot + additive)
+- assets/bcs-players.js
+- oyna/index.html script after oyna-DkF3HDE8.js
+- Game bundle unchanged
+- AWS /api/servers/:id/players already live
+
+Hard refresh /oyna → click 👤 player count → skor modal.

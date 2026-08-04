@@ -51,3 +51,9 @@ Next (Phase 4) — decided 2026-07-28:
 4. Stage behind ?bcsworker=1; never replace live oyna-DkF3HDE8.js until PerfDiag
    shows longTask/gcLike drop on Win + Mac Chrome
 5. Additive CF deploy only after staging OK; keep Functions cwd rule
+
+2026-08-04 player roster (0ad22a19):
+- Additive CF deploy: assets/bcs-players.js + oyna/index.html script tag
+- Live game bundle oyna-DkF3HDE8.js preserved
+- Backend AWS GET /api/servers/:id/players already live
+- Click player count in server browser → score modal
