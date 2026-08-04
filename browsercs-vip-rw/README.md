@@ -1,29 +1,15 @@
-# BrowserCS VIP Red/White Weapon Pack + Skin Choice
+# BrowserCS VIP Weapon Skins (Gold / Kırmızı–Beyaz)
 
-## Bağlantı notu
-`cstrike_weapons_viprw.pk3` (~23MB) **otomatik yüklenmez**. Boot’ta sadece mevcut gold VIP paketleri gelir. Kırmızı–beyaz paket yalnızca VIP oyuncu seçince lazy-load edilir (WASM OOB / bağlanamama riski).
+## Kullanım
+1. Oyuna gir → F2 ile VIP aktif et
+2. Açılan menüden **Altın** veya **Kırmızı–Beyaz** seç
+3. Tekrar: `/vipskin` veya F2 → `/vip`
 
-## Davranış
-- Herkese açık gold stok skinler (`cstrike_models_vipweapons`) aynı kalır.
-- Gold/Platinum VIP sticky silahlar varsayılan **Altın** (`*_vip_*`).
-- VIP aktif edilince (F2 / `/vip`) ekranda / menüde iki seçenek:
-  1. **Altın (Gold)**
-  2. **Kırmızı–Beyaz** (ilk seçimde `cstrike_weapons_viprw.pk3` indirilir)
-- Tekrar seçim: `/vipskin` veya F2 → VIP menü
-- Client komutu: `bcs_vipwpnskin gold|rw`
+## Teknik
+| Katman | Altın | Kırmızı–Beyaz |
+|--------|-------|----------------|
+| Client boot PK3 | `cstrike_weapons_vip.pk3` (`*_vip_*`) | lazy `cstrike_weapons_viprw.pk3` |
+| FastDL | `/cs-assets/cstrike/models/*_vip_*` | `/cs-assets/.../*_viprw_*` |
+| Plugin | v1.8.4 `bcs_vipwpnskin gold\|rw` | aynı |
 
-## Dosyalar
-| Path | Role |
-|------|------|
-| `models/{v,p,w}_vip_*.mdl` | Altın VIP silah |
-| `models/{v,p,w}_viprw_*.mdl` | Kırmızı–beyaz VIP silah |
-| `/wasm/cstrike_weapons_viprw.pk3` | Client RW paketi |
-| `assets/bcs-viprw-weapons.js` | Skin menü + lazy loader |
-| `browsercs_vip` v1.8.2 | Server plugin (AMXX 1.8.2) |
-
-## Rebuild RW modelleri
-```bash
-python3 tools/recolor_vip_to_rw.py /path/to/gold_vip_mdls /path/to/out_viprw
-cd /path/to/out && mkdir -p models && cp *.mdl models/
-zip -0 -r cstrike_weapons_viprw.pk3 models
-```
+RW paketi boot’ta yüklenmez (WASM bellek). VIP seçince indirilir; diğer oyuncular FastDL’den alır.

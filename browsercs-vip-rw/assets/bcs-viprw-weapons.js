@@ -1,6 +1,6 @@
-/*! BrowserCS — VIP weapon skin chooser + lazy red/white pack v2
- * Does NOT auto-load the 23MB viprw pk3 (that caused WASM OOB / connect fails).
+/*! BrowserCS — VIP weapon skin chooser + lazy red/white pack v3
  * Gold pack stays in boot PK3s. Red/white loads only after VIP picks it.
+ * FastDL now serves real viprw MDLs under /cs-assets/ for other players.
  */
 (function () {
   'use strict';
