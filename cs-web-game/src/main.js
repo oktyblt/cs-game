@@ -2235,7 +2235,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     engineRunning = true;
 
     setProgress(100, 'Oyun başladı! 🎮');
-    setEngineStatus('Engine çalışıyor — WebGL2', 'green');
+    setEngineStatus('Motor çalışıyor', 'green');
     notify('Oyun başladı! Canvas\'a tıkla → mouse yakala', 'success');
 
     // İstemci +connect argümanı ile başladığı için ekstra komut göndermeye gerek yok.
@@ -2375,7 +2375,7 @@ async function initEngine(mapName, connectPort = null, isHost = false) {
     addLoadingLog(`⚠ HATA: ${errMsg}`, 'warn');
     addConsoleLog(`Engine başlatma hatası: ${errMsg}`, 'err');
     notify(`Engine hatası: ${errMsg}`, 'error');
-    setEngineStatus('Engine hatası', 'red');
+    setEngineStatus('Motor hatası', 'red');
 
     if (errMsg.includes('magic word')) {
       addLoadingLog('→ WASM dosyası yanlış yüklenmiş.', 'warn');
@@ -3940,7 +3940,9 @@ window.connectToServer = async function (port, mapName, isHost = false) {
 
   const engineText = document.getElementById('engine-status-text');
   if (engineText) {
-    engineText.innerHTML = `Engine hazırlanıyor... <br/><span style="color:var(--cs-yellow); font-size: 0.75rem; letter-spacing:0.05em; margin-top:5px; display:inline-block;">⚠️ İlk yükleme (harita ve modeller) internet hızınıza bağlı olarak uzun sürebilir. Lütfen bekleyin.</span>`;
+    engineText.textContent = 'Oyun yükleniyor...';
+    const engineDot = document.getElementById('engine-dot');
+    if (engineDot) engineDot.className = 'status-dot orange';
   }
 
   // ── Toolbar: kullanıcı adı + sunucu adı + VIP "Yönet" butonu ───────────────
