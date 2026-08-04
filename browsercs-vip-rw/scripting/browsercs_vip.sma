@@ -21,7 +21,7 @@
  */
 
 #define PLUGIN_NAME    "BrowserCS VIP"
-#define PLUGIN_VERSION "1.8.9"
+#define PLUGIN_VERSION "1.9.0"
 #define PLUGIN_AUTHOR  "BrowserCS"
 
 /* Linux CS 1.6 / ReGameDLL player pdata */
@@ -224,10 +224,11 @@ stock VipWpnSkinForWeapon(ent, owner)
 
 stock VipBuildWeaponModel(out[], outLen, const prefix[], skin, const base[])
 {
-	new tag[8];
-	/* gold=*_vip_* / rw=*_viprw_* — ikisi de plugin_precache'te. */
-	VipWpnTagForSkin(skin, tag, charsmax(tag));
-	formatex(out, outLen, "models/%s_%s_%s.mdl", prefix, tag, base);
+	/* JOIN-SAFE: sunucu sadece precache'li *_vip_* yollarini kullanir.
+	 * Kirmizi-beyaz istemci tarafinda ayni dosya adina RW icerigi yazar
+	 * (connect ONCESI). viprw precache WASM OOB yapiyor — ASLA ekleme. */
+	#pragma unused skin
+	formatex(out, outLen, "models/%s_vip_%s.mdl", prefix, base);
 }
 
 GoldWeaponIndexForVipWorldModel(const model[])
@@ -326,21 +327,11 @@ public plugin_init()
  * nesnesine atanir; stok silahlarin model alanlarina dokunulmaz. */
 public plugin_precache()
 {
-	/* v1.7.4: rollout tamam — VIP model + altin silah modelleri TUM
-	 * sunucularda precache edilir. */
+	/* JOIN-SAFE precache:
+	 * - Sadece altin silah *_vip_* (p/v/w)
+	 * - VIP player modelleri LAZY (cstrike_models_vip.pk3) — precache etme
+	 * - viprw ASLA precache etme (178 model = WASM OOB) */
 	new i, path[64], count;
-	for (i = 0; i < sizeof g_classicModelsCT; i++)
-	{
-		formatex(path, charsmax(path), "models/player/%s/%s.mdl", g_classicModelsCT[i], g_classicModelsCT[i]);
-		precache_model(path);
-		count++;
-	}
-	for (i = 0; i < sizeof g_classicModelsT; i++)
-	{
-		formatex(path, charsmax(path), "models/player/%s/%s.mdl", g_classicModelsT[i], g_classicModelsT[i]);
-		precache_model(path);
-		count++;
-	}
 	for (i = 0; i < sizeof g_goldBase; i++)
 	{
 		formatex(path, charsmax(path), "models/p_vip_%s.mdl", g_goldBase[i]);
@@ -351,20 +342,6 @@ public plugin_precache()
 		if (GoldHasWorldModel(i))
 		{
 			formatex(path, charsmax(path), "models/w_vip_%s.mdl", g_goldBase[i]);
-			precache_model(path);
-			count++;
-		}
-
-		/* Kirmizi-beyaz: ayri model yolu (gold overlay cache'i asmak icin sart).
-		 * FastDL'de gercek IDST + eksik dosya artik HTML degil 404. */
-		formatex(path, charsmax(path), "models/p_viprw_%s.mdl", g_goldBase[i]);
-		precache_model(path);
-		formatex(path, charsmax(path), "models/v_viprw_%s.mdl", g_goldBase[i]);
-		precache_model(path);
-		count += 2;
-		if (GoldHasWorldModel(i))
-		{
-			formatex(path, charsmax(path), "models/w_viprw_%s.mdl", g_goldBase[i]);
 			precache_model(path);
 			count++;
 		}
