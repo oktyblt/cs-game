@@ -5,13 +5,11 @@
 2. Açılan menüden **Altın** veya **Kırmızı–Beyaz** seç
 3. Tekrar: `/vipskin` veya F2 → `/vip`
 
-## Teknik (gold parity)
+## Teknik (join-safe)
 | Katman | Altın | Kırmızı–Beyaz |
 |--------|-------|----------------|
-| Client PK3 | `cstrike_weapons_vip.pk3` (`*_vip_*`) | lazy `cstrike_weapons_viprw.pk3` (`*_viprw_*`) |
-| Client extract | `ensureVipAssetsLoaded` | `bcs-viprw-weapons.js` v6 (aynı yöntem) |
-| FastDL | `/cs-assets/cstrike/models/*_vip_*` | `/cs-assets/.../*_viprw_*` |
-| Server precache | `*_vip_*` | `*_viprw_*` (plugin **1.8.7**, toplam 178) |
-| Komut | `bcs_vipwpnskin gold` | `bcs_vipwpnskin rw` |
+| Server model path | `*_vip_*` (precache 93) | aynı `*_vip_*` yolu |
+| Client | `cstrike_weapons_vip.pk3` | lazy `cstrike_weapons_viprw.pk3` → VFS’te `*_vip_*` üzerine yazılır |
+| Plugin | **1.8.8** `bcs_vipwpnskin gold\|rw` | skin kaydı + refresh |
 
-RW boot’ta yüklenmez; menü açılınca / seçince PK3 indirilip VFS’e yazılır. Sunucu precache sayesinde viewmodel yolu gold gibi geçerli model index alır.
+`viprw` sunucuda precache edilmez (178 model join/WASM OOB kırıyordu).
