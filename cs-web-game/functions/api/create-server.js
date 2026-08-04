@@ -5,7 +5,7 @@ export async function onRequest(context) {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'require-corp',
+    'Cross-Origin-Embedder-Policy': 'credentialless',
     'Content-Type': 'application/json'
   };
   
@@ -13,7 +13,7 @@ export async function onRequest(context) {
 
   try {
     const url = new URL(request.url);
-    const targetUrl = `http://35.159.95.54:4000${url.pathname}`;
+    const targetUrl = `https://backend.browsercs.com${url.pathname}`;
     
     const response = await fetch(targetUrl, {
       method: request.method,

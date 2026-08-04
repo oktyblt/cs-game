@@ -21,7 +21,7 @@
  */
 
 #define PLUGIN_NAME    "BrowserCS VIP"
-#define PLUGIN_VERSION "1.8.7"
+#define PLUGIN_VERSION "1.8.8"
 #define PLUGIN_AUTHOR  "BrowserCS"
 
 /* Linux CS 1.6 / ReGameDLL player pdata */
@@ -224,10 +224,11 @@ stock VipWpnSkinForWeapon(ent, owner)
 
 stock VipBuildWeaponModel(out[], outLen, const prefix[], skin, const base[])
 {
-	new tag[8];
-	/* viewmodel2/weaponmodel2 string — precache sart degil. RW=viprw yolu. */
-	VipWpnTagForSkin(skin, tag, charsmax(tag));
-	formatex(out, outLen, "models/%s_%s_%s.mdl", prefix, tag, base);
+	/* Join-safe: sunucu HER ZAMAN precache'li *_vip_* yollarini kullanir.
+	 * Kirmizi-beyaz istemci VFS'te ayni dosya adina RW icerigi yazar (pk3).
+	 * viprw precache (178) WASM OOB / join kirilimina yol aciyor. */
+	#pragma unused skin
+	formatex(out, outLen, "models/%s_vip_%s.mdl", prefix, base);
 }
 
 GoldWeaponIndexForVipWorldModel(const model[])
@@ -354,20 +355,7 @@ public plugin_precache()
 			precache_model(path);
 			count++;
 		}
-
-		/* Kirmizi-beyaz: gold ile ayni yol — sunucu precache + istemci PK3 extract.
-		 * FastDL'de gercek IDST mdl var; eski OOB HTML SPA kaynakliydi. */
-		formatex(path, charsmax(path), "models/p_viprw_%s.mdl", g_goldBase[i]);
-		precache_model(path);
-		formatex(path, charsmax(path), "models/v_viprw_%s.mdl", g_goldBase[i]);
-		precache_model(path);
-		count += 2;
-		if (GoldHasWorldModel(i))
-		{
-			formatex(path, charsmax(path), "models/w_viprw_%s.mdl", g_goldBase[i]);
-			precache_model(path);
-			count++;
-		}
+		/* viprw SUNUCUDA PRECACHE YOK — join kirilimina sebep oluyor. */
 	}
 	log_amx("[BrowserCS VIP] canary models precached (%d)", count);
 }

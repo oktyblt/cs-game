@@ -1,14 +1,15 @@
-/*! BrowserCS — VIP weapon skin chooser v6
- * Gold parity: load cstrike_weapons_viprw.pk3 like cstrike_weapons_vip.pk3
- * (write pk3 + extract mdl to VFS). Server precaches *_viprw_* (plugin 1.8.7+).
+/*! BrowserCS — VIP weapon skin chooser v7
+ * Join-safe: server always uses precached *_vip_* paths (plugin 1.8.8).
+ * RW = extract viprw pk3, write bytes onto models/*_vip_*.mdl (same names).
  */
 (function () {
   'use strict';
   var RW_PK3 = '/wasm/cstrike_weapons_viprw.pk3?v=2';
-  var RW_PK3_NAME = 'cstrike_weapons_viprw.pk3';
+  var GOLD_PK3 = '/wasm/cstrike_weapons_vip.pk3?v=4';
   var MENU_ID = 'bcs-vip-wpn-skin-menu';
   var busy = false;
-  var loadPromise = null;
+  var rwPromise = null;
+  var goldBytesCache = null;
 
   function crumb(phase, detail) {
     try { if (typeof window._browserCSCrumb === 'function') window._browserCSCrumb(phase, detail || {}); } catch (_) {}
@@ -57,22 +58,25 @@
     var bare = url.split('?')[0];
     var res = await fetch(bare, { cache: 'force-cache' }).catch(function () { return null; });
     if (!res || !res.ok) res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('RW pk3 HTTP ' + res.status + ' ' + bare);
+    if (!res.ok) throw new Error('pk3 HTTP ' + res.status + ' ' + bare);
     return new Uint8Array(await res.arrayBuffer());
   }
 
-  /* Same as gold ensureVipAssetsLoaded: write archive + extract mdl into /cstrike */
-  function extractRwPk3ToVfs(fs, bytes) {
-    var files = unzipStore(bytes);
+  function viprwRelToVipPath(rel) {
+    // models/v_viprw_ak47.mdl -> /cstrike/models/v_vip_ak47.mdl
+    var m = rel.match(/^(models\/[vpw]_)viprw_([^/]+\.mdl)$/i);
+    if (!m) return null;
+    return '/cstrike/' + m[1] + 'vip_' + m[2];
+  }
+
+  function applyPackToVipPaths(fs, files, mapFn) {
     var count = 0;
     Object.keys(files).forEach(function (raw) {
       if (!raw || raw.endsWith('/')) return;
       var rel = raw.replace(/^\/+/, '').replace(/^cstrike\//i, '');
-      if (!rel || rel.indexOf('..') !== -1) return;
-      if (!/\.(mdl|spr|wav|tga|bmp)$/i.test(rel)) return;
-      if (!/[\/]?[vpw]_viprw_[^/]+\.mdl$/i.test(rel) && !/\.mdl$/i.test(rel)) return;
-      if (/\.mdl$/i.test(rel) && rel.indexOf('viprw') === -1) return;
-      var path = '/cstrike/' + rel;
+      if (!rel || rel.indexOf('..') !== -1 || !/\.mdl$/i.test(rel)) return;
+      var path = mapFn(rel);
+      if (!path) return;
       mkdirp(fs, path.slice(0, path.lastIndexOf('/')));
       fs.writeFile(path, files[raw]);
       count++;
@@ -80,35 +84,55 @@
     return count;
   }
 
-  async function ensureRwModels() {
-    if (window._browserCSVipRwAssetsReady && window._browserCSVipRwVfsCount > 20) {
-      return window._browserCSVipRwVfsCount;
-    }
-    if (loadPromise) return loadPromise;
-    loadPromise = (async function () {
+  async function ensureRwPack() {
+    if (window._browserCSVipRwPackReady && window._browserCSVipRwFiles) return window._browserCSVipRwFiles;
+    if (rwPromise) return rwPromise;
+    rwPromise = (async function () {
       crumb('viprw_assets_start');
-      var fs = getFs();
-      if (!fs) {
-        crumb('viprw_assets_no_fs');
-        throw new Error('Engine FS yok — once oyuna gir');
-      }
       var bytes = await fetchPk3(RW_PK3);
-      try { fs.writeFile('/cstrike/' + RW_PK3_NAME, bytes); } catch (_) {}
-      var n = extractRwPk3ToVfs(fs, bytes);
-      window._browserCSVipRwVfsCount = n;
-      window._browserCSVipRwWeaponsReady = true;
-      window._browserCSVipRwAssetsReady = true;
-      crumb('viprw_vfs_ready', { files: n });
-      try { console.log('[bcs-viprw] gold-parity pack ready', n, 'mdl'); } catch (_) {}
-      if (n < 10) throw new Error('RW modeller yazılamadı (' + n + ')');
-      return n;
+      var files = unzipStore(bytes);
+      window._browserCSVipRwFiles = files;
+      window._browserCSVipRwPackReady = true;
+      crumb('viprw_pack_ready', { entries: Object.keys(files).length });
+      return files;
     })().catch(function (err) {
-      loadPromise = null;
-      window._browserCSVipRwAssetsReady = false;
-      crumb('viprw_assets_fail', { err: (err && err.message) || String(err) });
+      rwPromise = null;
+      window._browserCSVipRwPackReady = false;
       throw err;
     });
-    return loadPromise;
+    return rwPromise;
+  }
+
+  async function ensureGoldBytes() {
+    if (goldBytesCache) return goldBytesCache;
+    goldBytesCache = await fetchPk3(GOLD_PK3);
+    return goldBytesCache;
+  }
+
+  async function applySkinToVfs(skin) {
+    var fs = getFs();
+    if (!fs) throw new Error('Engine FS yok — once oyuna gir');
+    var n;
+    if (skin === 'rw') {
+      var rwFiles = await ensureRwPack();
+      n = applyPackToVipPaths(fs, rwFiles, viprwRelToVipPath);
+      crumb('viprw_vfs_overlay', { files: n });
+    } else {
+      var goldFiles = unzipStore(await ensureGoldBytes());
+      n = applyPackToVipPaths(fs, goldFiles, function (rel) {
+        if (!/^(models\/[vpw]_)vip_[^/]+\.mdl$/i.test(rel)) return null;
+        return '/cstrike/' + rel;
+      });
+      crumb('vip_gold_vfs_restore', { files: n });
+    }
+    if (n < 10) throw new Error('Skin dosyalari yazilamadi (' + n + ')');
+    return n;
+  }
+
+  function nudgeWeapon() {
+    setTimeout(function () { try { runRaw('lastinv'); } catch (_) {} }, 80);
+    setTimeout(function () { try { runRaw('lastinv'); } catch (_) {} }, 250);
+    setTimeout(function () { try { runRaw('lastinv'); } catch (_) {} }, 600);
   }
 
   function ensureStyle() {
@@ -139,10 +163,10 @@
     el.innerHTML = [
       '<div class="panel" role="dialog">',
       '<h2>VIP SİLAH SKİN</h2>',
-      '<p>Gold ile aynı paket sistemi. Kırmızı–beyaz seçince ayrı PK3 yüklenir.</p>',
+      '<p>Kırmızı–beyaz ayrı paket; join güvenli (sunucu precache yok).</p>',
       '<div class="choices">',
       '<button type="button" data-skin="gold">Altın (Gold)<span class="sub">Klasik altın VIP silahlar</span></button>',
-      '<button type="button" data-skin="rw" class="rw">Kırmızı–Beyaz<span class="sub">Ayrı VIP paket (viprw)</span></button>',
+      '<button type="button" data-skin="rw" class="rw">Kırmızı–Beyaz<span class="sub">Özel VIP paket</span></button>',
       '</div>',
       '<button type="button" class="close" data-close="1">Kapat</button>',
       '</div>'
@@ -159,8 +183,7 @@
   function openMenu() {
     ensureMenu().classList.add('show');
     crumb('vip_wpn_skin_menu_open');
-    // Preload RW pack while menu is open (gold VIP pk3 style)
-    try { ensureRwModels().catch(function () {}); } catch (_) {}
+    try { ensureRwPack().catch(function () {}); } catch (_) {}
   }
   function closeMenu() {
     var el = document.getElementById(MENU_ID);
@@ -172,15 +195,12 @@
     if (busy) return;
     busy = true;
     try {
-      if (s === 'rw') {
-        if (typeof window.notify === 'function') window.notify('Kırmızı–beyaz paket yükleniyor...', 'info');
-        await ensureRwModels();
-        await new Promise(function (r) { setTimeout(r, 250); });
+      if (typeof window.notify === 'function') {
+        window.notify(s === 'rw' ? 'Kırmızı–beyaz paket uygulanıyor...' : 'Altın skin uygulanıyor...', 'info');
       }
+      await applySkinToVfs(s);
       runRaw('bcs_vipwpnskin ' + s);
-      setTimeout(function () { try { runRaw('lastinv'); } catch (_) {} }, 120);
-      setTimeout(function () { try { runRaw('lastinv'); } catch (_) {} }, 400);
-      setTimeout(function () { try { runRaw('lastinv'); } catch (_) {} }, 800);
+      nudgeWeapon();
       try { localStorage.setItem('_bcsVipWpnSkin', s); } catch (_) {}
       window._browserCSVipWpnSkin = s;
       if (typeof window.notify === 'function') {
@@ -214,7 +234,7 @@
 
   window.openVipWeaponSkinMenu = openMenu;
   window.pickVipWeaponSkin = pickSkin;
-  window.ensureVipRwWeaponsLoaded = ensureRwModels;
+  window.ensureVipRwWeaponsLoaded = ensureRwPack;
 
   function boot() { hookActivate(); setInterval(hookActivate, 1500); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
