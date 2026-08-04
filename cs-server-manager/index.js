@@ -1035,7 +1035,7 @@ app.post('/api/servers/:id/restart', requireAuth, async (req, res) => {
 
 // Start official servers on startup
 async function startOfficialServers() {
-  const officialMaps = ['de_dust2', 'de_inferno', 'de_aztec', 'de_dust', 'fy_iceworld'];
+  const officialMaps = ['de_dust2', 'de_inferno', 'fy_pool_day', 'de_dust', 'fy_iceworld'];
   let startingPort = 27015;
 
   try {

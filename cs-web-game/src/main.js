@@ -1319,6 +1319,7 @@ async function loadMapList() {
       { name: 'de_dust', size: 1986440, description: 'Bomb Defusal' },
       { name: 'cs_assault', size: 2100000, description: 'Hostage Rescue' },
       { name: 'de_inferno', size: 2450000, description: 'Bomb Defusal' },
+      { name: 'fy_pool_day', size: 853064, description: 'Fight Yard' },
       { name: 'cs_office', size: 2300000, description: 'Hostage Rescue' },
       { name: 'de_aztec', size: 2800000, description: 'Bomb Defusal' }
     ];
@@ -1332,6 +1333,7 @@ async function loadMapList() {
       { name: 'de_dust', size: 1986440, description: 'Bomb Defusal' },
       { name: 'cs_assault', size: 2100000, description: 'Hostage Rescue' },
       { name: 'de_inferno', size: 2450000, description: 'Bomb Defusal' },
+      { name: 'fy_pool_day', size: 853064, description: 'Fight Yard' },
       { name: 'cs_office', size: 2300000, description: 'Hostage Rescue' },
       { name: 'de_aztec', size: 2800000, description: 'Bomb Defusal' }
     ];

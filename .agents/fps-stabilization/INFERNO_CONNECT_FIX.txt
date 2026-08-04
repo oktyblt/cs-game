@@ -1,0 +1,17 @@
+# de_inferno connect fix (2026-08-04)
+
+## Root causes
+1. CDN `de_inferno.bsp` CRC/MD5 != server BSP (same size, different file).
+   Client loaded CDN map → connect rejected / dropped. dust2 matched; inferno+aztec did not.
+2. Live oyna also fetched missing `valve/halflife.wad` (CF 37MB limit). Split hl1+hl2 exist.
+
+## Fixes (live)
+- Synced server BSPs to CF Pages: de_inferno + de_aztec
+- Additive `/assets/bcs-halflife-fix.js?v=2`:
+  - fetch-intercept concatenates halflife1+2 → halflife.wad
+  - cache-busts de_inferno/de_aztec bsp downloads
+  - purges stale Cache Storage entries
+- YaPB `yb_chat 0` on official servers
+
+## Verify
+md5 CDN de_inferno.bsp must equal host /home/ubuntu/cstrike/maps/de_inferno.bsp

@@ -1,0 +1,11 @@
+# Official 27017: de_aztec → fy_pool_day (2026-08-04)
+
+## Live
+- Container `cs15-27017` recreated with `+map fy_pool_day`
+- `server.cfg` / `mapcycle.txt` / hostname / `browsercs_nextmap` → fy_pool_day
+- Manager `officialMaps` + `OFFICIAL_MAP_ROTATION`: aztec replaced by fy_pool_day
+- CDN: `fy_pool_day.bsp` (+ txt/res + sprayer.wav); MD5 matches server
+- `/api/maps` includes fy_pool_day
+
+## Ports (classic official)
+27015 de_dust2 · 27016 de_inferno · 27017 fy_pool_day · 27018 de_dust · 27019 fy_iceworld
