@@ -1,9 +1,11 @@
-Server browser player roster — live CF apply (2026-08-04)
+Server browser player roster — live CF apply
 
-Deploy: 0ad22a19 (live-snapshot + additive)
-- assets/bcs-players.js
-- oyna/index.html script after oyna-DkF3HDE8.js
-- Game bundle unchanged
-- AWS /api/servers/:id/players already live
+v2 deploy: 970698f6 (2026-08-04)
+- Visible button on each online server card: "👥 OYUNCULAR" (next to ODAYA KATIL)
+- Opens score/name modal via AWS GET /api/servers/:port/players
+- Additive only; oyna-DkF3HDE8.js unchanged
 
-Hard refresh /oyna → click 👤 player count → skor modal.
+How to open:
+1. Open https://browsercs.com/oyna/
+2. Open SUNUCU TARAYICI
+3. On a live server card click "👥 OYUNCULAR"
