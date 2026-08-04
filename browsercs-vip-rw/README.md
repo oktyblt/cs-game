@@ -1,29 +1,29 @@
-# BrowserCS VIP Red/White Weapon Pack
+# BrowserCS VIP Red/White Weapon Pack + Skin Choice
 
-Gold stock weapon skins (`cstrike_models_vipweapons.pk3` → stock `v_*.mdl`) stay for everyone.
+## Bağlantı notu
+`cstrike_weapons_viprw.pk3` (~23MB) **otomatik yüklenmez**. Boot’ta sadece mevcut gold VIP paketleri gelir. Kırmızı–beyaz paket yalnızca VIP oyuncu seçince lazy-load edilir (WASM OOB / bağlanamama riski).
 
-Gold/Platinum VIP sticky weapons now use a separate **red/white** pack:
+## Davranış
+- Herkese açık gold stok skinler (`cstrike_models_vipweapons`) aynı kalır.
+- Gold/Platinum VIP sticky silahlar varsayılan **Altın** (`*_vip_*`).
+- VIP aktif edilince (F2 / `/vip`) ekranda / menüde iki seçenek:
+  1. **Altın (Gold)**
+  2. **Kırmızı–Beyaz** (ilk seçimde `cstrike_weapons_viprw.pk3` indirilir)
+- Tekrar seçim: `/vipskin` veya F2 → VIP menü
+- Client komutu: `bcs_vipwpnskin gold|rw`
 
+## Dosyalar
 | Path | Role |
 |------|------|
-| `models/v_viprw_*.mdl` | 1st-person view |
-| `models/p_viprw_*.mdl` | 3rd-person |
-| `models/w_viprw_*.mdl` | world / weaponbox |
-| `cstrike_weapons_viprw.pk3` | client CDN pack |
-| `bcs-viprw-weapons.js` | additive VFS loader |
+| `models/{v,p,w}_vip_*.mdl` | Altın VIP silah |
+| `models/{v,p,w}_viprw_*.mdl` | Kırmızı–beyaz VIP silah |
+| `/wasm/cstrike_weapons_viprw.pk3` | Client RW paketi |
+| `assets/bcs-viprw-weapons.js` | Skin menü + lazy loader |
+| `browsercs_vip` v1.8.2 | Server plugin (AMXX 1.8.2) |
 
-Existing `cstrike_weapons_vip.pk3` (gold `*_vip_*`) is left on CDN for rollback.
-
-## Rebuild models
-
+## Rebuild RW modelleri
 ```bash
 python3 tools/recolor_vip_to_rw.py /path/to/gold_vip_mdls /path/to/out_viprw
-cd /path/to/out_viprw && mkdir -p models && mv *.mdl models/  # or zip from models/
+cd /path/to/out && mkdir -p models && cp *.mdl models/
 zip -0 -r cstrike_weapons_viprw.pk3 models
 ```
-
-## Server
-
-1. Copy `*_viprw_*.mdl` into `cstrike/models/`
-2. Compile/deploy `browsercs_vip.sma` (uses `VIP_WPN_TAG "viprw"`)
-3. Map change / plugin reload on official containers

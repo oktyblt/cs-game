@@ -21,7 +21,7 @@
  */
 
 #define PLUGIN_NAME    "BrowserCS VIP"
-#define PLUGIN_VERSION "1.8.1"
+#define PLUGIN_VERSION "1.8.2"
 #define PLUGIN_AUTHOR  "BrowserCS"
 
 /* Linux CS 1.6 / ReGameDLL player pdata */
@@ -75,8 +75,10 @@ new g_vipRoomMinTier;
  * ayni /home/ubuntu/cstrike bind mount'unu paylastigi icin tek .amxx dosyasi
  * herkese ayni anda gider. */
 #define GOLD_FEATURES_ENABLED true
-/* VIP silah gorunumu: kirmizi-beyaz paket (gold stok skinleri ayridir). */
-#define VIP_WPN_TAG "viprw"
+/* VIP silah skin: 1=altin (vip_), 2=kirmizi-beyaz (viprw_). Default altin. */
+#define WPN_SKIN_GOLD 1
+#define WPN_SKIN_RW   2
+#define MENU_VIP_WPN_SKIN "BCS Vip Weapon Skin"
 new g_port;
 new g_msgMoney;
 
@@ -90,6 +92,7 @@ new bool:g_roundBonusDone[MAX_PLAYERS + 1];
 new bool:g_goldVisualReady[MAX_PLAYERS + 1];
 new bool:g_vipModelVisualReady[MAX_PLAYERS + 1];
 new g_vipModel[MAX_PLAYERS + 1][16];
+new g_wpnSkin[MAX_PLAYERS + 1];
 /* Platinum clan tag artik SABIT "[BCS]" (backend g_clanTag'a fixed deger yazar) —
  * oyuncu sadece acik/kapali durumunu /clantag ile degistirir (scoreboard/chat rozeti). */
 new bool:g_clanTagEnabled[MAX_PLAYERS + 1];
@@ -162,6 +165,7 @@ new const g_goldBase[][] = {
 
 #define MAX_EDICTS_GOLD 2048
 new bool:g_weaponGolden[MAX_EDICTS_GOLD];
+new g_weaponSkin[MAX_EDICTS_GOLD];
 
 /* Misafir/Silver'in yerden aldigi altin silah: weaponbox -> envanter
  * transferinde oyun DLL'i silah edict'ini yeniden kullanip/spawn edip
@@ -192,6 +196,39 @@ GoldWeaponIndexForWorldModel(const model[])
 	return -1;
 }
 
+stock VipWpnTagForSkin(skin, out[], outLen)
+{
+	if (skin == WPN_SKIN_RW)
+		copy(out, outLen, "viprw");
+	else
+		copy(out, outLen, "vip");
+}
+
+stock VipWpnSkinForPlayer(id)
+{
+	if (id < 1 || id > MAX_PLAYERS)
+		return WPN_SKIN_GOLD;
+	if (g_wpnSkin[id] != WPN_SKIN_RW)
+		return WPN_SKIN_GOLD;
+	return WPN_SKIN_RW;
+}
+
+stock VipWpnSkinForWeapon(ent, owner)
+{
+	if (ent > 0 && ent < MAX_EDICTS_GOLD && g_weaponSkin[ent] == WPN_SKIN_RW)
+		return WPN_SKIN_RW;
+	if (is_user_connected(owner) && g_vip[owner] && g_tier[owner] >= TIER_GOLD)
+		return VipWpnSkinForPlayer(owner);
+	return WPN_SKIN_GOLD;
+}
+
+stock VipBuildWeaponModel(out[], outLen, const prefix[], skin, const base[])
+{
+	new tag[8];
+	VipWpnTagForSkin(skin, tag, charsmax(tag));
+	formatex(out, outLen, "models/%s_%s_%s.mdl", prefix, tag, base);
+}
+
 GoldWeaponIndexForVipWorldModel(const model[])
 {
 	new i, vipPath[64];
@@ -200,12 +237,11 @@ GoldWeaponIndexForVipWorldModel(const model[])
 		if (!GoldHasWorldModel(i))
 			continue;
 
-		formatex(vipPath, charsmax(vipPath), "models/w_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[i]);
+		formatex(vipPath, charsmax(vipPath), "models/w_vip_%s.mdl", g_goldBase[i]);
 		if (equal(model, vipPath))
 			return i;
 
-		/* Eski altin sticky kutular (w_vip_*) hâlâ tanınsın. */
-		formatex(vipPath, charsmax(vipPath), "models/w_vip_%s.mdl", g_goldBase[i]);
+		formatex(vipPath, charsmax(vipPath), "models/w_viprw_%s.mdl", g_goldBase[i]);
 		if (equal(model, vipPath))
 			return i;
 	}
@@ -235,6 +271,9 @@ public plugin_init()
 	register_clcmd("say_team /vip", "CmdVipMenu");
 	register_clcmd("say /vipmodel", "CmdVipModelMenu");
 	register_clcmd("say_team /vipmodel", "CmdVipModelMenu");
+	register_clcmd("say /vipskin", "CmdVipWeaponSkinMenu");
+	register_clcmd("say_team /vipskin", "CmdVipWeaponSkinMenu");
+	register_clcmd("bcs_vipwpnskin", "CmdVipWeaponSkin");
 	register_clcmd("say /clantag", "CmdClanTagToggle");
 	register_clcmd("say_team /clantag", "CmdClanTagToggle");
 
@@ -246,6 +285,7 @@ public plugin_init()
 	register_event("CurWeapon", "OnCurWeaponEvent", "be", "1=1");
 
 	register_menucmd(register_menuid(MENU_VIP_MODELS), 1023, "MenuVipModels");
+	register_menucmd(register_menuid(MENU_VIP_WPN_SKIN), (1<<0)|(1<<1)|(1<<9), "MenuVipWeaponSkin");
 	g_msgMoney = get_user_msgid("Money");
 
 	/* Safety-net resync — covers clients that missed the per-bind broadcast
@@ -302,14 +342,25 @@ public plugin_precache()
 	}
 	for (i = 0; i < sizeof g_goldBase; i++)
 	{
-		formatex(path, charsmax(path), "models/p_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[i]);
+		formatex(path, charsmax(path), "models/p_vip_%s.mdl", g_goldBase[i]);
 		precache_model(path);
-		formatex(path, charsmax(path), "models/v_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[i]);
+		formatex(path, charsmax(path), "models/v_vip_%s.mdl", g_goldBase[i]);
 		precache_model(path);
 		count += 2;
 		if (GoldHasWorldModel(i))
 		{
-			formatex(path, charsmax(path), "models/w_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[i]);
+			formatex(path, charsmax(path), "models/w_vip_%s.mdl", g_goldBase[i]);
+			precache_model(path);
+			count++;
+		}
+		formatex(path, charsmax(path), "models/p_viprw_%s.mdl", g_goldBase[i]);
+		precache_model(path);
+		formatex(path, charsmax(path), "models/v_viprw_%s.mdl", g_goldBase[i]);
+		precache_model(path);
+		count += 2;
+		if (GoldHasWorldModel(i))
+		{
+			formatex(path, charsmax(path), "models/w_viprw_%s.mdl", g_goldBase[i]);
 			precache_model(path);
 			count++;
 		}
@@ -332,6 +383,8 @@ GoldWeaponIndexFor(ent)
 
 public OnGoldWeaponSpawn(ent)
 {
+	if (ent > 0 && ent < MAX_EDICTS_GOLD)
+		g_weaponSkin[ent] = 0;
 	if (ent > 0 && ent < MAX_EDICTS_GOLD)
 		g_weaponGolden[ent] = false;
 	return HAM_IGNORED;
@@ -453,22 +506,21 @@ public OnGoldWeaponDeploy_Post(ent)
 
 	if (is_user_connected(owner) && golden)
 	{
-		new path[64];
-		formatex(path, charsmax(path), "models/p_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[idx]);
+		new path[64], skin;
+		skin = VipWpnSkinForWeapon(ent, owner);
+		if (ent > 0 && ent < MAX_EDICTS_GOLD)
+			g_weaponSkin[ent] = skin;
+
+		VipBuildWeaponModel(path, charsmax(path), "p", skin, g_goldBase[idx]);
 		set_pev(owner, pev_weaponmodel2, path);
 
-		/* Birinci sahis golden model, sadece baglanti/team-spawn asamasi
-		 * bittikten sonra atanir. Bu, golden gorunumu korurken WASM'in erken
-		 * v_ model gecisindeki OOB riskini engeller. */
 		if (g_goldVisualReady[owner])
 		{
-			formatex(path, charsmax(path), "models/v_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[idx]);
+			VipBuildWeaponModel(path, charsmax(path), "v", skin, g_goldBase[idx]);
 			set_pev(owner, pev_viewmodel2, path);
 		}
 
-		/* Test asamasinda gozlem icin — canary disinda hic calismiyor,
-		 * dolayisiyla diger sunucularda log gurultusu yaratmiyor. */
-		log_amx("[VipRwWeapon] owner=%d weapon=%s golden=%d", owner, g_goldBase[idx], golden);
+		log_amx("[VipWpnSkin] owner=%d weapon=%s skin=%d", owner, g_goldBase[idx], skin);
 	}
 	else if (is_user_connected(owner))
 	{
@@ -556,8 +608,15 @@ public OnGoldWeaponBoxSetModel(ent, const model[])
 		set_task(0.15, "TaskConfirmGoldenWeaponEntity", weaponEnt + 2000, data, sizeof data);
 	}
 
-	new vipWorldModel[64];
-	formatex(vipWorldModel, charsmax(vipWorldModel), "models/w_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[idx]);
+	new vipWorldModel[64], skin = WPN_SKIN_GOLD, ownerBox;
+	ownerBox = pev(ent, pev_owner);
+	if (weaponEnt > 0 && weaponEnt < MAX_EDICTS_GOLD && g_weaponSkin[weaponEnt])
+		skin = g_weaponSkin[weaponEnt];
+	else if (is_user_connected(ownerBox))
+		skin = VipWpnSkinForPlayer(ownerBox);
+	if (weaponEnt > 0 && weaponEnt < MAX_EDICTS_GOLD)
+		g_weaponSkin[weaponEnt] = skin;
+	VipBuildWeaponModel(vipWorldModel, charsmax(vipWorldModel), "w", skin, g_goldBase[idx]);
 	engfunc(EngFunc_SetModel, ent, vipWorldModel);
 	return FMRES_SUPERCEDE;
 }
@@ -588,8 +647,8 @@ OnGoldGrenadeSetModel(ent, const model[])
 	if (!golden)
 		return FMRES_IGNORED;
 
-	new vipModel[64];
-	formatex(vipModel, charsmax(vipModel), "models/w_%s_%s.mdl", VIP_WPN_TAG, g_goldBase[idx]);
+	new vipModel[64], skin = VipWpnSkinForWeapon(0, owner);
+	VipBuildWeaponModel(vipModel, charsmax(vipModel), "w", skin, g_goldBase[idx]);
 	engfunc(EngFunc_SetModel, ent, vipModel);
 	return FMRES_SUPERCEDE;
 }
@@ -769,6 +828,7 @@ public client_putinserver(id)
 	 * bozabiliyor. Golden viewmodel'leri ancak baglanti tamamen oturduktan
 	 * sonra etkinlestir. */
 	g_goldVisualReady[id] = false;
+	g_wpnSkin[id] = WPN_SKIN_GOLD;
 	g_vipModelVisualReady[id] = false;
 	/* Xash WASM, ilk team/spawn paketleri devam ederken dynamic player/weapon
 	 * modeli yazilirsa OOB ile dusuyor. Kozmetikleri baglanti oturduktan sonra
@@ -897,6 +957,7 @@ ClearSlot(id)
 	g_namePrefixed[id] = false;
 	g_roundBonusDone[id] = false;
 	g_goldVisualReady[id] = false;
+	g_wpnSkin[id] = WPN_SKIN_GOLD;
 	g_vipModelVisualReady[id] = false;
 	g_vipModel[id][0] = 0;
 	g_pendingGoldWeaponId[id] = 0;
@@ -1511,15 +1572,81 @@ public CmdVipMenu(id)
 
 	if (g_tier[id] >= TIER_GOLD)
 	{
-		client_print(id, print_chat, "[VIP] Durum: %s | /vipmodel klasik model | round para+kevlar aktif", tierName);
+		client_print(id, print_chat, "[VIP] Durum: %s | /vipskin silah | /vipmodel klasik model | round para+kevlar", tierName);
 		if (g_tier[id] >= TIER_PLATINUM && g_clanTag[id][0])
 			client_print(id, print_chat, "[VIP] Clan tag: %s (%s) | /clantag ile ac/kapa | oncelikli slot aktif", g_clanTag[id], g_clanTagEnabled[id] ? "ACIK" : "KAPALI");
+		CmdVipWeaponSkinMenu(id);
 	}
 	else
 	{
 		client_print(id, print_chat, "[VIP] Durum: %s | rezerve slot + votekick bagisikligi", tierName);
 	}
 	return PLUGIN_HANDLED;
+}
+
+public CmdVipWeaponSkinMenu(id)
+{
+	if (!is_user_connected(id))
+		return PLUGIN_HANDLED;
+
+	if (!g_vip[id] || g_tier[id] < TIER_GOLD)
+	{
+		client_print(id, print_chat, "[VIP] Silah skin menusu Gold/Platinum icin.");
+		return PLUGIN_HANDLED;
+	}
+
+	new menu[256], skin;
+	skin = VipWpnSkinForPlayer(id);
+	formatex(menu, charsmax(menu), "\yVIP Silah Skin^n^n\r1. \wAltin (Gold)%s^n\r2. \wKirmizi-Beyaz%s^n^n\r0. \wKapat",
+		(skin == WPN_SKIN_GOLD) ? " \y[SECILI]" : "",
+		(skin == WPN_SKIN_RW) ? " \y[SECILI]" : "");
+	show_menu(id, (1<<0)|(1<<1)|(1<<9), menu, 20, MENU_VIP_WPN_SKIN);
+	return PLUGIN_HANDLED;
+}
+
+public MenuVipWeaponSkin(id, key)
+{
+	if (!is_user_connected(id) || !g_vip[id] || g_tier[id] < TIER_GOLD)
+		return PLUGIN_HANDLED;
+
+	if (key == 9)
+		return PLUGIN_HANDLED;
+
+	if (key == 0)
+		VipSetWeaponSkin(id, WPN_SKIN_GOLD);
+	else if (key == 1)
+		VipSetWeaponSkin(id, WPN_SKIN_RW);
+
+	return PLUGIN_HANDLED;
+}
+
+public CmdVipWeaponSkin(id)
+{
+	if (!is_user_connected(id))
+		return PLUGIN_HANDLED;
+
+	if (!g_vip[id] || g_tier[id] < TIER_GOLD)
+	{
+		client_print(id, print_chat, "[VIP] Silah skin sadece Gold/Platinum.");
+		return PLUGIN_HANDLED;
+	}
+
+	new arg[16];
+	read_argv(1, arg, charsmax(arg));
+	if (equali(arg, "rw") || equali(arg, "red") || equali(arg, "viprw") || equali(arg, "2"))
+		VipSetWeaponSkin(id, WPN_SKIN_RW);
+	else
+		VipSetWeaponSkin(id, WPN_SKIN_GOLD);
+	return PLUGIN_HANDLED;
+}
+
+stock VipSetWeaponSkin(id, skin)
+{
+	if (skin != WPN_SKIN_RW)
+		skin = WPN_SKIN_GOLD;
+	g_wpnSkin[id] = skin;
+	client_print(id, print_chat, "[VIP] Silah skin: %s", (skin == WPN_SKIN_RW) ? "Kirmizi-Beyaz" : "Altin");
+	return 1;
 }
 
 public CmdClanTagToggle(id)
