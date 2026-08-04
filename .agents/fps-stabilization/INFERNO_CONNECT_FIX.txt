@@ -1,19 +1,17 @@
 # de_inferno connect fix (2026-08-04)
 
-## Root cause
-Live oyna bundle fetches `/cs-assets/valve/halflife.wad` which is NOT on CF Pages
-(37MB exceeds Pages file limit). Split files `halflife1.wad` + `halflife2.wad` exist
-(~19MB each). Without the combined WAD, de_inferno external textures are missing and
-clients fail/drop after WebRTC connect.
+## Root causes
+1. CDN `de_inferno.bsp` CRC/MD5 != server BSP (same size, different file).
+   Client loaded CDN map → connect rejected / dropped. dust2 matched; inferno+aztec did not.
+2. Live oyna also fetched missing `valve/halflife.wad` (CF 37MB limit). Split hl1+hl2 exist.
 
-## Fix
-Additive script: `/assets/bcs-halflife-fix.js` (loaded BEFORE oyna bundle in oyna/index.html)
-- Intercepts fetch of valve/halflife.wad → concatenates hl1+hl2
-- Purges stale cs-assets-v2 cache entries for inferno bsp / stub halflife
+## Fixes (live)
+- Synced server BSPs to CF Pages: de_inferno + de_aztec
+- Additive `/assets/bcs-halflife-fix.js?v=2`:
+  - fetch-intercept concatenates halflife1+2 → halflife.wad
+  - cache-busts de_inferno/de_aztec bsp downloads
+  - purges stale Cache Storage entries
+- YaPB `yb_chat 0` on official servers
 
-## Bot chat
-YaPB `yb_chat 0` on host `cstrike/addons/yapb/conf/yapb.cfg` + all official server.cfg
-Live rcon applied. en_chat.cfg emptied.
-
-## Deploy rule
-Always deploy from live-snapshot + `_headers` + `functions/` + additive assets. Never wipe with vite dist.
+## Verify
+md5 CDN de_inferno.bsp must equal host /home/ubuntu/cstrike/maps/de_inferno.bsp
