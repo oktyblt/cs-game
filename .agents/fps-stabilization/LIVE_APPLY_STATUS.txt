@@ -57,3 +57,9 @@ Next (Phase 4) — decided 2026-07-28:
 - Live game bundle oyna-DkF3HDE8.js preserved
 - Backend AWS GET /api/servers/:id/players already live
 - Click player count in server browser → score modal
+
+2026-08-04 SAB regression fix (e71ba90c):
+- Players roster additive deploys omitted `_headers` → /oyna lost COOP/COEP
+- Restored `/oyna` + `/oyna/` COOP same-origin + COEP credentialless
+- Verify: curl -sI https://browsercs.com/oyna/ | grep -i cross-origin
+- Hard refresh required for crossOriginIsolated / SharedArrayBuffer

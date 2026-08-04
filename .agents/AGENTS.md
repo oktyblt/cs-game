@@ -51,6 +51,7 @@ ssh -i /tmp/cs-ssh/cs-key.pem -o StrictHostKeyChecking=no ubuntu@35.159.95.54 '.
 ```
 
 ### Cloudflare (frontend) — hazır kurallar
+- Her CF deploy paketinde **`_headers` ZORUNLU** (`/oyna` COOP `same-origin` + COEP `credentialless`). Yoksa SharedArrayBuffer / crossOriginIsolated düşer.
 - Pages proje: `cs-web-game` → https://browsercs.com
 - GitHub↔CF otomatik bağ yok; manuel `wrangler pages deploy`
 - **ASLA** GitHub `main` vite `dist` ile production üzerine basma
