@@ -1,5 +1,5 @@
-/*! BrowserCS — server browser player roster (additive) v2
- * Adds a visible "👥 OYUNCULAR" button next to join on each online server card.
+/*! BrowserCS — server browser player roster (additive) v3
+ * Makes the existing "👤 X/Y Oyuncu" count clickable (no extra button).
  */
 (function () {
   'use strict';
@@ -48,9 +48,10 @@
       '#sp-refresh,#sp-close{flex:1;padding:.5rem;border-radius:4px;font-family:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;cursor:pointer}',
       '#sp-refresh{background:rgba(255,204,0,.12);border:1px solid rgba(255,204,0,.35);color:#ffcc00}',
       '#sp-close{background:transparent;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.45)}',
-      '.btn-bcs-players{flex:0 0 auto;min-width:7.5rem;padding:0 .7rem;background:rgba(76,175,80,.14);border:1px solid #4caf50;color:#4caf50;font-family:var(--font-hud),monospace;font-size:.62rem;font-weight:700;letter-spacing:.06em;border-radius:4px;cursor:pointer;white-space:nowrap}',
-      '.btn-bcs-players:hover{background:rgba(76,175,80,.28);color:#fff}',
-      '.map-item .btn-bcs-players{width:100%;margin-top:6px;padding:.35rem .5rem}'
+      /* Make existing player-count look clickable */
+      '.sb-players-hit{cursor:pointer!important;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(76,175,80,.55)}',
+      '.sb-players-hit:hover{color:#fff!important;text-decoration-color:#4caf50}',
+      '.map-item .sb-players-hit:hover{background:rgba(76,175,80,.25)!important;border-color:#81c784!important}'
     ].join('');
     document.head.appendChild(st);
   }
@@ -100,6 +101,12 @@
       displayName: nameEl ? nameEl.textContent.trim() : '',
       map: mapEl ? mapEl.textContent.trim() : ''
     };
+  }
+
+  function isPlayerCountText(t) {
+    t = String(t || '');
+    if (/Kapalı|KAPALI/.test(t)) return false;
+    return (t.indexOf('Oyuncu') !== -1 || t.indexOf('👤') !== -1) && t.indexOf('/') !== -1;
   }
 
   window.openServerPlayersModal = function (serverOrPort) {
@@ -187,52 +194,49 @@
     load(false);
   };
 
-  function enhanceCard(card) {
-    if (!card || card.dataset.bcsPlayersReady === '1') return;
+  function bindHit(el, card) {
+    if (!el || el.dataset.bcsPlayersBound === '1') return;
     var meta = cardMeta(card);
     var srv = resolveServer(card.dataset.port, meta.map, meta.displayName);
-    if (!srv || !srv.port || srv.state === 'stopped') {
-      // still mark offline cards so we don't loop forever; allow retry if list refreshes
-      if (!srv) return;
+    if (!srv || !srv.port) return;
+    if (srv.state && srv.state !== 'running') return;
+
+    el.dataset.bcsPlayersBound = '1';
+    card.dataset.port = String(srv.port);
+    el.classList.add('sb-players-hit');
+    el.title = 'Oyuncu listesini göster';
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+    if (el.style) el.style.cursor = 'pointer';
+
+    function open(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var s = resolveServer(card.dataset.port, meta.map, meta.displayName) || srv;
+      window.openServerPlayersModal(s);
     }
-    if (srv && srv.state && srv.state !== 'running') return;
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') open(e);
+    });
+  }
 
-    card.dataset.bcsPlayersReady = '1';
-    if (srv && srv.port) card.dataset.port = String(srv.port);
+  function enhanceCard(card) {
+    if (!card) return;
 
-    // Prefer actions row next to join button
-    var join = card.querySelector('.btn-join-room');
-    var actions = join ? join.parentElement : null;
-    if (actions && !actions.querySelector('.btn-bcs-players')) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn-bcs-players';
-      btn.textContent = '👥 OYUNCULAR';
-      btn.title = 'Odadaki oyuncuları ve skorları göster';
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var s = resolveServer(card.dataset.port, meta.map, meta.displayName) || srv;
-        window.openServerPlayersModal(s);
+    // Remove leftover v2 buttons if any
+    card.querySelectorAll('.btn-bcs-players').forEach(function (b) { b.remove(); });
+
+    // Full cards: meta span "👤 X/Y Oyuncu"
+    card.querySelectorAll('.server-card-meta span').forEach(function (span) {
+      if (isPlayerCountText(span.textContent)) bindHit(span, card);
+    });
+
+    // Mini cards: green badge with 👤 X/Y
+    if (card.classList.contains('map-item')) {
+      card.querySelectorAll('div').forEach(function (d) {
+        if (isPlayerCountText(d.textContent) && d.children.length === 0) bindHit(d, card);
       });
-      if (join && join.nextSibling) actions.insertBefore(btn, join.nextSibling);
-      else actions.appendChild(btn);
-      return;
-    }
-
-    // Mini cards without join row
-    if (card.classList.contains('map-item') && !card.querySelector('.btn-bcs-players')) {
-      var mbtn = document.createElement('button');
-      mbtn.type = 'button';
-      mbtn.className = 'btn-bcs-players';
-      mbtn.textContent = '👥 OYUNCULAR';
-      mbtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var s = resolveServer(card.dataset.port, meta.map, meta.displayName) || srv;
-        window.openServerPlayersModal(s);
-      });
-      card.appendChild(mbtn);
     }
   }
 

@@ -1,11 +1,4 @@
-Server browser player roster — live CF apply
+Server browser player roster — live CF
 
-v2 deploy: 970698f6 (2026-08-04)
-- Visible button on each online server card: "👥 OYUNCULAR" (next to ODAYA KATIL)
-- Opens score/name modal via AWS GET /api/servers/:port/players
-- Additive only; oyna-DkF3HDE8.js unchanged
-
-How to open:
-1. Open https://browsercs.com/oyna/
-2. Open SUNUCU TARAYICI
-3. On a live server card click "👥 OYUNCULAR"
+v3: no extra button. Click existing "👤 X/Y Oyuncu" on the server card.
+Deploy: additive bcs-players.js (oyna bundle unchanged).
