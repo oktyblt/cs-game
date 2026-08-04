@@ -1,0 +1,19 @@
+# de_inferno connect fix (2026-08-04)
+
+## Root cause
+Live oyna bundle fetches `/cs-assets/valve/halflife.wad` which is NOT on CF Pages
+(37MB exceeds Pages file limit). Split files `halflife1.wad` + `halflife2.wad` exist
+(~19MB each). Without the combined WAD, de_inferno external textures are missing and
+clients fail/drop after WebRTC connect.
+
+## Fix
+Additive script: `/assets/bcs-halflife-fix.js` (loaded BEFORE oyna bundle in oyna/index.html)
+- Intercepts fetch of valve/halflife.wad → concatenates hl1+hl2
+- Purges stale cs-assets-v2 cache entries for inferno bsp / stub halflife
+
+## Bot chat
+YaPB `yb_chat 0` on host `cstrike/addons/yapb/conf/yapb.cfg` + all official server.cfg
+Live rcon applied. en_chat.cfg emptied.
+
+## Deploy rule
+Always deploy from live-snapshot + `_headers` + `functions/` + additive assets. Never wipe with vite dist.
