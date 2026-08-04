@@ -2651,7 +2651,7 @@
     </div>
   </div>
 
-  <script type="module" src="/main.js?v=46"></script>
+  <script type="module" src="/main.js?v=47"></script>
 
 
   <!-- AUTH GATE MODAL: shows when unauthenticated user tries a premium action -->
@@ -3088,6 +3088,87 @@
           <button id="btn-custom-prompt-cancel" class="cs-modal-btn">İPTAL</button>
           <button id="btn-custom-prompt-ok" class="cs-modal-btn primary">ONAYLA</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVER PLAYERS ROSTER MODAL -->
+  <div id="server-players-modal" style="display:none;position:fixed;inset:0;z-index:5200;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;font-family:var(--font-hud);">
+    <style>
+      #server-players-modal.show { display:flex !important; }
+      #sp-panel {
+        background:linear-gradient(145deg,rgba(6,10,18,0.98),rgba(10,18,30,0.97));
+        border:1px solid rgba(255,204,0,0.22);
+        border-top:3px solid var(--cs-yellow,#ffcc00);
+        border-radius:8px;
+        padding:1.4rem 1.5rem 1.2rem;
+        width:min(440px,92vw);
+        max-height:min(78vh,560px);
+        box-shadow:0 24px 64px rgba(0,0,0,0.9);
+        display:flex;
+        flex-direction:column;
+        gap:0.7rem;
+      }
+      #sp-title { font-size:0.95rem; font-weight:700; color:var(--cs-yellow,#ffcc00); letter-spacing:0.1em; text-align:center; margin:0; }
+      #sp-subtitle { font-size:0.68rem; color:rgba(255,255,255,0.45); letter-spacing:0.06em; text-align:center; margin:0; line-height:1.4; }
+      #sp-meta { font-size:0.62rem; color:rgba(255,255,255,0.35); text-align:center; letter-spacing:0.05em; }
+      #sp-list-wrap {
+        flex:1;
+        overflow:auto;
+        border:1px solid rgba(255,255,255,0.08);
+        border-radius:4px;
+        background:rgba(0,0,0,0.35);
+        min-height:120px;
+      }
+      #sp-table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+      #sp-table thead th {
+        position:sticky; top:0; background:rgba(12,18,28,0.98);
+        color:rgba(255,255,255,0.4); font-weight:600; letter-spacing:0.08em;
+        text-align:left; padding:0.45rem 0.65rem; border-bottom:1px solid rgba(255,255,255,0.1);
+        font-size:0.58rem; text-transform:uppercase;
+      }
+      #sp-table tbody td { padding:0.42rem 0.65rem; border-bottom:1px solid rgba(255,255,255,0.05); color:rgba(255,255,255,0.85); }
+      #sp-table tbody tr:last-child td { border-bottom:none; }
+      #sp-table .sp-rank { width:2.2rem; color:rgba(255,255,255,0.35); font-variant-numeric:tabular-nums; }
+      #sp-table .sp-score { text-align:right; color:#4dbb7a; font-weight:700; font-variant-numeric:tabular-nums; }
+      #sp-table .sp-time { text-align:right; color:rgba(255,255,255,0.4); font-variant-numeric:tabular-nums; white-space:nowrap; }
+      #sp-empty, #sp-loading, #sp-error {
+        padding:1.6rem 1rem; text-align:center; font-size:0.72rem; letter-spacing:0.05em;
+        color:rgba(255,255,255,0.4);
+      }
+      #sp-error { color:#e74c3c; }
+      #sp-actions { display:flex; gap:0.5rem; }
+      #sp-refresh, #sp-close {
+        flex:1; padding:0.5rem; border-radius:4px; font-family:var(--font-hud);
+        font-size:0.65rem; font-weight:700; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s;
+      }
+      #sp-refresh {
+        background:rgba(255,204,0,0.12); border:1px solid rgba(255,204,0,0.35); color:var(--cs-yellow,#ffcc00);
+      }
+      #sp-refresh:hover { background:rgba(255,204,0,0.22); color:#fff; }
+      #sp-close {
+        background:transparent; border:1px solid rgba(255,255,255,0.14); color:rgba(255,255,255,0.45);
+      }
+      #sp-close:hover { border-color:rgba(255,255,255,0.35); color:rgba(255,255,255,0.8); }
+      .sb-players-btn {
+        cursor:pointer; transition:color 0.15s, background 0.15s, border-color 0.15s;
+      }
+      .sb-players-btn:hover {
+        color:#fff !important;
+        border-color:var(--cs-yellow,#ffcc00) !important;
+        background:rgba(255,204,0,0.18) !important;
+      }
+    </style>
+    <div id="sp-panel" role="dialog" aria-modal="true" aria-labelledby="sp-title">
+      <h2 id="sp-title">OYUNCULAR</h2>
+      <p id="sp-subtitle">—</p>
+      <div id="sp-meta"></div>
+      <div id="sp-list-wrap">
+        <div id="sp-loading">Oyuncular yükleniyor...</div>
+      </div>
+      <div id="sp-actions">
+        <button type="button" id="sp-refresh">↻ YENİLE</button>
+        <button type="button" id="sp-close">✕ KAPAT</button>
       </div>
     </div>
   </div>
