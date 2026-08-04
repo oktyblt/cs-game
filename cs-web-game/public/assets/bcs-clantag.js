@@ -163,18 +163,26 @@
     window.setBrowserCSVipTiers = patched;
   }
 
+  var _toggleLock = false;
   function toggleLocalFromClantagCommand() {
-    const next = !isClanTagOn();
-    setLocalClanTag(next);
-    if (typeof window.notify === 'function') {
-      window.notify(
-        next ? 'Clan tag: AÇIK [BCS] (F3)' : 'Clan tag: KAPALI / iptal (F3)',
-        next ? 'info' : 'warn'
-      );
-    }
+    // Avoid double-fire if raw bridge also calls executeEngineCommand.
+    if (_toggleLock) return;
+    _toggleLock = true;
     try {
-      console.log('[bcs-clantag] toggle', { active: next });
-    } catch (e) { /* ignore */ }
+      const next = !isClanTagOn();
+      setLocalClanTag(next);
+      if (typeof window.notify === 'function') {
+        window.notify(
+          next ? 'Clan tag: AÇIK [BCS] (F3)' : 'Clan tag: KAPALI / iptal (F3)',
+          next ? 'info' : 'warn'
+        );
+      }
+      try {
+        console.log('[bcs-clantag] toggle', { active: next });
+      } catch (e) { /* ignore */ }
+    } finally {
+      _toggleLock = false;
+    }
   }
 
   function isClantagCmd(cmd) {
