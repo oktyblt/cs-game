@@ -5,11 +5,13 @@
 2. Açılan menüden **Altın** veya **Kırmızı–Beyaz** seç
 3. Tekrar: `/vipskin` veya F2 → `/vip`
 
-## Teknik
+## Teknik (gold parity)
 | Katman | Altın | Kırmızı–Beyaz |
 |--------|-------|----------------|
-| Client boot PK3 | `cstrike_weapons_vip.pk3` (`*_vip_*`) | lazy `cstrike_weapons_viprw.pk3` |
+| Client PK3 | `cstrike_weapons_vip.pk3` (`*_vip_*`) | lazy `cstrike_weapons_viprw.pk3` (`*_viprw_*`) |
+| Client extract | `ensureVipAssetsLoaded` | `bcs-viprw-weapons.js` v6 (aynı yöntem) |
 | FastDL | `/cs-assets/cstrike/models/*_vip_*` | `/cs-assets/.../*_viprw_*` |
-| Plugin | v1.8.4 `bcs_vipwpnskin gold\|rw` | aynı |
+| Server precache | `*_vip_*` | `*_viprw_*` (plugin **1.8.7**, toplam 178) |
+| Komut | `bcs_vipwpnskin gold` | `bcs_vipwpnskin rw` |
 
-RW paketi boot’ta yüklenmez (WASM bellek). VIP seçince indirilir; diğer oyuncular FastDL’den alır.
+RW boot’ta yüklenmez; menü açılınca / seçince PK3 indirilip VFS’e yazılır. Sunucu precache sayesinde viewmodel yolu gold gibi geçerli model index alır.
