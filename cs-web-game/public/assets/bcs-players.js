@@ -1,5 +1,5 @@
-/*! BrowserCS — server browser player roster (additive) v3
- * Makes the existing "👤 X/Y Oyuncu" count clickable (no extra button).
+/*! BrowserCS — server browser player roster (additive) v4
+ * Turns existing "👤 X/Y Oyuncu" into a themed HUD button.
  */
 (function () {
   'use strict';
@@ -27,13 +27,10 @@
   }
 
   function ensureStyle() {
-    if (document.getElementById(STYLE_ID)) return;
-    var st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = [
+    var css = [
       '#server-players-modal.show{display:flex!important}',
-      '#sp-panel{background:linear-gradient(145deg,rgba(6,10,18,.98),rgba(10,18,30,.97));border:1px solid rgba(255,204,0,.22);border-top:3px solid #ffcc00;border-radius:8px;padding:1.4rem 1.5rem 1.2rem;width:min(440px,92vw);max-height:min(78vh,560px);box-shadow:0 24px 64px rgba(0,0,0,.9);display:flex;flex-direction:column;gap:.7rem;font-family:var(--font-hud),monospace}',
-      '#sp-title{font-size:.95rem;font-weight:700;color:#ffcc00;letter-spacing:.1em;text-align:center;margin:0}',
+      '#sp-panel{background:linear-gradient(145deg,rgba(6,10,18,.98),rgba(10,18,30,.97));border:1px solid rgba(255,204,0,.22);border-top:3px solid var(--cs-yellow,#ffcc00);border-radius:8px;padding:1.4rem 1.5rem 1.2rem;width:min(440px,92vw);max-height:min(78vh,560px);box-shadow:0 24px 64px rgba(0,0,0,.9);display:flex;flex-direction:column;gap:.7rem;font-family:var(--font-hud),monospace}',
+      '#sp-title{font-size:.95rem;font-weight:700;color:var(--cs-yellow,#ffcc00);letter-spacing:.1em;text-align:center;margin:0}',
       '#sp-subtitle,#sp-meta{font-size:.65rem;color:rgba(255,255,255,.4);letter-spacing:.05em;text-align:center;margin:0;line-height:1.4}',
       '#sp-list-wrap{flex:1;overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:4px;background:rgba(0,0,0,.35);min-height:120px}',
       '#sp-table{width:100%;border-collapse:collapse;font-size:.72rem}',
@@ -46,14 +43,52 @@
       '#sp-error{padding:1.6rem 1rem;text-align:center;font-size:.72rem;color:#e74c3c}',
       '#sp-actions{display:flex;gap:.5rem}',
       '#sp-refresh,#sp-close{flex:1;padding:.5rem;border-radius:4px;font-family:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;cursor:pointer}',
-      '#sp-refresh{background:rgba(255,204,0,.12);border:1px solid rgba(255,204,0,.35);color:#ffcc00}',
+      '#sp-refresh{background:rgba(255,204,0,.12);border:1px solid rgba(255,204,0,.35);color:var(--cs-yellow,#ffcc00)}',
       '#sp-close{background:transparent;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.45)}',
-      /* Make existing player-count look clickable */
-      '.sb-players-hit{cursor:pointer!important;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(76,175,80,.55)}',
-      '.sb-players-hit:hover{color:#fff!important;text-decoration-color:#4caf50}',
-      '.map-item .sb-players-hit:hover{background:rgba(76,175,80,.25)!important;border-color:#81c784!important}'
+      /* Themed player-count button (matches HUD pills / live badge) */
+      '.server-card-meta .sb-players-hit{',
+      'display:inline-flex;align-items:center;gap:4px;',
+      'font-family:var(--font-hud),monospace;font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;',
+      'color:#4dbb7a!important;',
+      'background:rgba(20,140,60,.16);',
+      'border:1px solid rgba(50,200,100,.4);',
+      'border-radius:3px;',
+      'padding:3px 8px;',
+      'cursor:pointer!important;',
+      'text-decoration:none!important;',
+      'transition:background .15s,border-color .15s,color .15s,box-shadow .15s;',
+      'line-height:1.2;user-select:none;',
+      '}',
+      '.server-card-meta .sb-players-hit:hover{',
+      'color:#fff!important;',
+      'background:rgba(50,200,100,.28);',
+      'border-color:#4caf50;',
+      'box-shadow:0 0 0 1px rgba(76,175,80,.25);',
+      '}',
+      '.server-card-meta .sb-players-hit:active{transform:translateY(1px)}',
+      '.server-card-meta .sb-players-hit::after{content:"▾";opacity:.7;font-size:.55rem;margin-left:1px}',
+      /* Mini map-item badge already green — polish as button */
+      '.map-item .sb-players-hit{',
+      'cursor:pointer!important;',
+      'font-family:var(--font-hud),monospace!important;',
+      'letter-spacing:.04em;',
+      'transition:background .15s,border-color .15s,color .15s,transform .1s;',
+      '}',
+      '.map-item .sb-players-hit:hover{',
+      'background:rgba(0,0,0,.92)!important;',
+      'border-color:#81c784!important;',
+      'color:#b9f6ca!important;',
+      'transform:translateY(-1px);',
+      '}'
     ].join('');
-    document.head.appendChild(st);
+
+    var st = document.getElementById(STYLE_ID);
+    if (!st) {
+      st = document.createElement('style');
+      st.id = STYLE_ID;
+      document.head.appendChild(st);
+    }
+    st.textContent = css;
   }
 
   function ensureModal() {
@@ -194,6 +229,20 @@
     load(false);
   };
 
+  function styleAsButton(el, isMini) {
+    el.classList.add('sb-players-hit');
+    el.title = 'Oyuncu listesini göster';
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+    // Keep original count text; full cards get pill chrome via CSS
+    if (!isMini) {
+      // Normalize label a bit for HUD look, preserve numbers
+      var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      var m = t.match(/(\d+)\s*\/\s*(\d+)/);
+      if (m) el.textContent = '👤 ' + m[1] + '/' + m[2] + ' OYUNCU';
+    }
+  }
+
   function bindHit(el, card) {
     if (!el || el.dataset.bcsPlayersBound === '1') return;
     var meta = cardMeta(card);
@@ -203,11 +252,7 @@
 
     el.dataset.bcsPlayersBound = '1';
     card.dataset.port = String(srv.port);
-    el.classList.add('sb-players-hit');
-    el.title = 'Oyuncu listesini göster';
-    el.setAttribute('role', 'button');
-    el.tabIndex = 0;
-    if (el.style) el.style.cursor = 'pointer';
+    styleAsButton(el, card.classList.contains('map-item'));
 
     function open(e) {
       e.preventDefault();
@@ -223,16 +268,12 @@
 
   function enhanceCard(card) {
     if (!card) return;
-
-    // Remove leftover v2 buttons if any
     card.querySelectorAll('.btn-bcs-players').forEach(function (b) { b.remove(); });
 
-    // Full cards: meta span "👤 X/Y Oyuncu"
     card.querySelectorAll('.server-card-meta span').forEach(function (span) {
       if (isPlayerCountText(span.textContent)) bindHit(span, card);
     });
 
-    // Mini cards: green badge with 👤 X/Y
     if (card.classList.contains('map-item')) {
       card.querySelectorAll('div').forEach(function (d) {
         if (isPlayerCountText(d.textContent) && d.children.length === 0) bindHit(d, card);

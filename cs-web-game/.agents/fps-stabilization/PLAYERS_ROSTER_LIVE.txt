@@ -1,4 +1,5 @@
-Server browser player roster — live CF
+Player roster live notes
 
-v3: no extra button. Click existing "👤 X/Y Oyuncu" on the server card.
-Deploy: additive bcs-players.js (oyna bundle unchanged).
+v4 (58399218): existing "👤 X/Y Oyuncu" styled as themed HUD pill button.
+Click opens score modal. Extra OYUNCULAR button removed.
+_headers COOP/COEP credentialless kept for SharedArrayBuffer.
